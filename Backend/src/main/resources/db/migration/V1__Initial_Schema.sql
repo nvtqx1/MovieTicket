@@ -1,18 +1,15 @@
 CREATE TABLE IF NOT EXISTS component_types (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS master_data (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    master_data_id INT NOT NULL,      -- ID nghiệp vụ (VD: 1, 2, 3)
-    data_value VARCHAR(100) NOT NULL, -- Tên hiển thị (VD: 'PAID')
-    component_type_id INT NOT NULL,   -- Liên kết với nhóm danh mục
-    CONSTRAINT fk_component_type
-    FOREIGN KEY (component_type_id) REFERENCES component_types(id),
-    -- Đảm bảo không trùng lặp cặp (loại danh mục, id nghiệp vụ)
-    UNIQUE KEY unique_master_data (component_type_id, master_data_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    data_value VARCHAR(50) NOT NULL,
+    component_type_id BIGINT NOT NULL,
+    CONSTRAINT fk_master_component FOREIGN KEY (component_type_id) REFERENCES component_types(id),
+    CONSTRAINT unique_master_data UNIQUE (component_type_id, data_value)
+    );
 
 CREATE TABLE IF NOT EXISTS roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,7 +38,7 @@ CREATE TABLE IF NOT EXISTS movies (
 
 CREATE TABLE IF NOT EXISTS theaters (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,         -- Tên rạp (VD: Cineplex 1)
+    name VARCHAR(255) NOT NULL UNIQUE,  -- Tên rạp (VD: Cineplex 1)
     location VARCHAR(255),              -- Địa chỉ rạp
     capacity INT NOT NULL               -- Sức chứa (Số ghế tối đa)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -66,7 +63,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     showtime_id BIGINT NOT NULL,           -- Mua suất nào?
     reservation_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Thời điểm bấm đặt
     -- Trạng thái: 1-LOCKED (Giữ chỗ), 2-PAID (Đã thanh toán), 3-CANCELED (Đã hủy)
-    status_id INT NOT NULL DEFAULT 1,
+    status_id BIGINT NOT NULL DEFAULT 1,
     total_price DECIMAL(10, 2) NOT NULL,   -- Tổng tiền đơn hàng
     paid BOOLEAN NOT NULL DEFAULT FALSE,   -- Cờ đánh dấu đã thanh toán thành công hay chưa
     -- CHI TIẾT BỔ SUNG CHO TICKETRUSH:
@@ -150,6 +147,7 @@ CREATE TABLE IF NOT EXISTS queue_tokens (
     -- Trạng thái để quản lý vòng đời token
     status ENUM('ACTIVE', 'USED', 'EXPIRED') DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
     -- Ràng buộc khóa ngoại
     CONSTRAINT fk_queue_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_queue_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(id),
