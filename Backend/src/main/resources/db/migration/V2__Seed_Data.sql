@@ -9,15 +9,15 @@ INSERT INTO component_types (id, name) VALUES (1, 'RESERVATION_STATUS')
 
 -- Các trạng thái đặt vé - được sử dụng trong bảng reservations
 -- 1=Đã xác nhận (trạng thái ban đầu), 2=Đã thanh toán, 3=Đã hủy
-INSERT INTO master_data (master_data_id, data_value, component_type_id) VALUES (1, 'CONFIRMED', 1)
+INSERT INTO master_data (id, data_value, component_type_id) VALUES (1, 'CONFIRMED', 1)
     ON DUPLICATE KEY UPDATE data_value = 'CONFIRMED';
-INSERT INTO master_data (master_data_id, data_value, component_type_id) VALUES (2, 'PAID', 1)
+INSERT INTO master_data (id, data_value, component_type_id) VALUES (2, 'PAID', 1)
     ON DUPLICATE KEY UPDATE data_value = 'PAID';
-INSERT INTO master_data (master_data_id, data_value, component_type_id) VALUES (3, 'CANCELED', 1)
+INSERT INTO master_data (id, data_value, component_type_id) VALUES (3, 'CANCELED', 1)
     ON DUPLICATE KEY UPDATE data_value = 'CANCELED';
 
 -- BỔ SUNG CHO TICKETRUSH: Trạng thái giữ chỗ tạm thời (dành cho Flash Sale)
-INSERT INTO master_data (master_data_id, data_value, component_type_id) VALUES (4, 'LOCKED', 1)
+INSERT INTO master_data (id, data_value, component_type_id) VALUES (4, 'LOCKED', 1)
     ON DUPLICATE KEY UPDATE data_value = 'LOCKED';
 
 -- Cập nhật bất kỳ đơn đặt vé nào hiện có (nếu có) sang sử dụng ID trạng thái mới
