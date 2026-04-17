@@ -2,6 +2,8 @@ package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.entity.Showtime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -16,4 +18,21 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
 
     // Tùy chọn thêm: Tìm suất chiếu theo Rạp và Ngày (dành cho màn hình "Chọn Rạp trước, chọn Phim sau")
     List<Showtime> findByTheaterIdAndShowDateOrderByShowTimeAsc(Long theaterId, LocalDate showDate);
+
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.theater t
+            WHERE (:movieId IS NULL OR m.id = :movieId)
+              AND (:theaterId IS NULL OR t.id = :theaterId)
+              AND (:fromDate IS NULL OR s.showDate = :fromDate)
+            ORDER BY s.showDate ASC, s.showTime ASC
+            """)
+    List<Showtime> searchShowtimes(
+            @Param("movieId") Long movieId,
+            @Param("theaterId") Long theaterId,
+            @Param("showDate") LocalDate showDate,
+            @Param("fromDate") LocalDate fromDate
+    );
 }
