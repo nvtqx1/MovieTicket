@@ -1,5 +1,5 @@
 import React from "react";
-import MovieCard from "../common/MovieCard";
+import MovieCard from "../ui/MovieCard";
 
 export default function MovieSection() {
     const movies = [
