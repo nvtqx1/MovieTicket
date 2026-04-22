@@ -24,9 +24,9 @@ export default function Navbar() {
             setIsLoggedIn(true);
             try {
                 const userData = typeof user === "string" ? JSON.parse(user) : user;
-                setUserAvatar(userData.avatar || "https://i.pravatar.cc/150?img=11");
+                setUserAvatar(userData.avatar || "../../assets/images/avatarDefault.jpeg");
             } catch {
-                setUserAvatar("https://i.pravatar.cc/150?img=11");
+                setUserAvatar("../../assets/images/avatarDefault.jpeg");
             }
         } else {
             setIsLoggedIn(false);

@@ -35,7 +35,7 @@ const Login = () => {
 
             {/* Footer */}
             <footer className="w-full max-w-6xl mt-10 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-gray-600 uppercase tracking-widest">
-                <p>© 2024 Lumière Noir Cinemas. The Projection is Yours.</p>
+                <p>© 2026 TMT CINEMA. All rights reserved.</p>
                 <div className="flex gap-6">
                     <a href="#" className="hover:text-gray-300">Chính sách bảo mật</a>
                     <a href="#" className="hover:text-gray-300">Điều khoản dịch vụ</a>

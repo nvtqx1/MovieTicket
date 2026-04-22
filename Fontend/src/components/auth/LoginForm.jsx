@@ -6,6 +6,8 @@ import SocialButton from '../ui/SocialButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';
 
+import defaultAvatar from "../../assets/images/avatarDefault.jpeg";// avatar mặc định của người dùng
+
 const LoginForm = ({ onSwitch }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [errors, setErrors] = useState({});
@@ -38,7 +40,7 @@ const LoginForm = ({ onSwitch }) => {
         const mockUser = {
             name: "Người Dùng",
             email: formData.email,
-            avatar: "https://i.pravatar.cc/150?img=11"
+            avatar: defaultAvatar
         };
 
         // 1. Lưu vào Context toàn cục
@@ -91,7 +93,7 @@ const LoginForm = ({ onSwitch }) => {
                     </div>
                 </div>
 
-                <button className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase
+                <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase
                            tracking-widest rounded shadow-[0_0_20px_rgba(220,38,38,0.3)]
                            transition-all active:scale-[0.98]">
                     Đăng nhập
