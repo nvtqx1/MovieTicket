@@ -96,7 +96,7 @@ const LoginForm = ({ onSwitch }) => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <InputField
-                    label="Email hoặc tên đăng nhập"
+                    label="Email"
                     id="email"
                     type="email"
                     icon={Mail}

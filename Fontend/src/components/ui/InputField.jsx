@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-const InputField = ({ label, id, type, icon: Icon, value, onChange, error, placeholder }) => {
+const InputField = ({ label, id, type, icon: Icon, value, onChange, error, placeholder, autoComplete }) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
 
@@ -21,6 +21,7 @@ const InputField = ({ label, id, type, icon: Icon, value, onChange, error, place
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder}
+                    autoComplete={autoComplete}
                     className={`w-full bg-[#0f0f0f] border ${error ? 'border-red-600' : 'border-gray-800'}
                      text-gray-200 text-sm rounded-md py-3 pl-10 pr-10 outline-none
                      focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-gray-600`}

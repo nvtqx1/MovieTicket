@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import LoginForm from '../components/auth/LoginForm';
-// Import RegisterForm sẵn, khi nào bạn tạo file thì mở comment ra dùng
-// import RegisterForm from '../components/auth/RegisterForm';
+import RegisterForm from '../components/auth/RegisterForm';
 
 const Login = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -19,16 +18,7 @@ const Login = () => {
                     <LoginForm onSwitch={() => setIsLogin(false)} />
                 ) : (
                     <div className="text-white text-center">
-                        {/* Comment đã được đưa vào trong thẻ div để không bị lỗi */}
-                        <p className="mb-4">Form Đăng ký đang được xây dựng...</p>
-                        <button
-                            onClick={() => setIsLogin(true)}
-                            className="text-yellow-500 hover:underline"
-                        >
-                            Quay lại Đăng nhập
-                        </button>
-                        {/* Khi có file RegisterForm, hãy xóa đoạn text trên và mở code dưới đây: */}
-                        {/* <RegisterForm onSwitch={() => setIsLogin(true)} /> */}
+                        <RegisterForm onSwitch={() => setIsLogin(true)} />
                     </div>
                 )}
             </div>
