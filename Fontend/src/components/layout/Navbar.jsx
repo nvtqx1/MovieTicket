@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Bell, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
 
 const navLinks = [
     { name: "Phim", href: "#" },
@@ -43,10 +44,7 @@ export default function Navbar() {
 
             {/* LEFT */}
             <div className="flex items-center gap-12">
-                <span className="text-2xl font-black italic text-red-600 font-headline tracking-tighter uppercase cursor-pointer">
-                    TMT CINEMA
-                </span>
-
+                <span className="text-2xl font-black italic text-red-600 font-headline tracking-tighter uppercase cursor-pointer"><Link to="/">TMT CINEMA</Link></span>
                 <div className="hidden md:flex gap-8">
                     {navLinks.map((link) => (
                         <a
