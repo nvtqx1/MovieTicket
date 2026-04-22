@@ -9,6 +9,21 @@ import { useAuthContext } from '../../context/AuthContext';
 import defaultAvatar from "../../assets/images/avatarDefault.jpeg";// avatar mặc định của người dùng
 import { validateEmail, validateStrongPassword } from '../../utils/validation';
 
+const MOCK_USERS = [
+    {
+        email: "admin@gmail.com",
+        password: "Admin@123",
+        name: "Admin TMT",
+        avatar: "https://i.pravatar.cc/150?img=12"
+    },
+    {
+        email: "user@gmail.com",
+        password: "User@123",
+        name: "Bùi Trọng Đức",
+        avatar: defaultAvatar
+    }
+];
+
 const LoginForm = ({ onSwitch }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [errors, setErrors] = useState({});
@@ -111,7 +126,7 @@ const LoginForm = ({ onSwitch }) => {
                     </div>
                 </div>
 
-                <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase
+                <button type="submit" className="relative z-10 cursor-pointer w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase
                            tracking-widest rounded shadow-[0_0_20px_rgba(220,38,38,0.3)]
                            transition-all active:scale-[0.98]">
                     {isLoading ? (

@@ -3,6 +3,7 @@ import { Search, Bell, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
+import defaultAvatar from "../../assets/images/avatarDefault.jpeg";
 
 const navLinks = [
     { name: "Phim", href: "#" },
@@ -24,9 +25,9 @@ export default function Navbar() {
             setIsLoggedIn(true);
             try {
                 const userData = typeof user === "string" ? JSON.parse(user) : user;
-                setUserAvatar(userData.avatar || "../../assets/images/avatarDefault.jpeg");
+                setUserAvatar(userData.avatar || defaultAvatar);
             } catch {
-                setUserAvatar("../../assets/images/avatarDefault.jpeg");
+                setUserAvatar(defaultAvatar);
             }
         } else {
             setIsLoggedIn(false);
@@ -37,6 +38,7 @@ export default function Navbar() {
 
     const handleLogout = () => {
         logout();
+        navigate("/");
     };
 
     return (
@@ -86,15 +88,15 @@ export default function Navbar() {
                         </div>
 
                         <div className="absolute right-0 mt-2 w-40 bg-neutral-900 border border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <a
-                                href="/profile"
+                            <Link
+                                to="/profile"
                                 className="block px-4 py-2 text-sm text-white hover:bg-red-600 rounded-t-lg transition-colors"
                             >
                                 Hồ sơ cá nhân
-                            </a>
+                            </Link>
                             <button
                                 onClick={handleLogout}
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-red-600 rounded-b-lg transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-red-600 rounded-b-lg transition-colors flex items-center gap-2 cursor-pointer"
                             >
                                 <LogOut size={16} />
                                 Đăng xuất
