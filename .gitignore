@@ -1,0 +1,28 @@
+# === IDE & OS (Dùng chung cho cả dự án) ===
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# === BACKEND (Thư mục Backend - Spring Boot) ===
+Backend/HELP.md
+Backend/target/
+Backend/.mvn/wrapper/maven-wrapper.jar
+Backend/.apt_generated
+Backend/.classpath
+Backend/.factorypath
+Backend/.project
+Backend/.settings
+Backend/.springBeans
+Backend/.sts4-cache
+# Giữ lại các file target quan trọng nếu cần
+!Backend/**/src/main/**/target/
+!Backend/**/src/test/**/target/
+
+# === Các file build khác ===
+bin/
+out/
