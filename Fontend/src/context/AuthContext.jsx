@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+//Chưa xong
+
 // 1. Tạo Context
 export const AuthContext = createContext();
 
