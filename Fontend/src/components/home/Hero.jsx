@@ -23,8 +23,8 @@ export default function Hero({
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-transparent to-transparent hidden md:block" />
             </div>
 
-            {/* Content Container - Sửa lỗi mx-auto và px */}
-            <div className="relative z-10 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-16 pb-16 md:pb-24">
+            {/* Content Container */}
+            <div className="relative w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 pb-16 md:pb-24">
                 <div className="max-w-3xl space-y-4 md:space-y-6">
 
                     {/* Tagline */}

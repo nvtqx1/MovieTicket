@@ -1,19 +1,22 @@
 import React from "react";
 import MovieCard from "../ui/MovieCard";
+import { useMovies } from "../../hooks/useMovies";
 
 export default function MovieSection() {
-    const movies = [
-        { title: "THE SILENT SHADOW", genre: "Crime", img: "https://images.unsplash.com/photo-1509281373149-e957c6296406" },
-        { title: "VOID VOYAGER", genre: "Sci-Fi", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564" },
-    ];
+    const { movies, loading, error } = useMovies();
+
+    if (loading) return <p className="mt-20 text-center">Đang tải...</p>;
+    if (error) return <p className="mt-20 text-center text-red-500">{error}</p>;
 
     return (
-        <section className="mt-20 px-8">
-            <h2 className="text-3xl font-bold mb-6">PHIM ĐANG CHIẾU</h2>
+        <section className="mt-20 px-4 md:px-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6">
+                PHIM ĐANG CHIẾU
+            </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {movies.map((m, i) => (
-                    <MovieCard key={i} movie={m} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {movies.map((movie) => (
+                    <MovieCard key={movie.id} movie={movie} />
                 ))}
             </div>
         </section>

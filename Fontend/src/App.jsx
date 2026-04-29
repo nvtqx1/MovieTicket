@@ -9,12 +9,14 @@ import Register from './pages/Register';
 function App() {
   return (
     <AuthProvider>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
+      <div className="overflow-x-hidden">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </div>
     </AuthProvider>
   );
 }
