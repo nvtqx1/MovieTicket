@@ -99,7 +99,7 @@ const RegisterForm = ({ onSwitch }) => {
     };
 
     return (
-        <div className="w-full max-w-md p-10 bg-[#1a1a1a]/90 backdrop-blur-md rounded-lg shadow-2xl border border-white/5">
+        <div className="w-full max-w-md p-6 sm:p-10 bg-[#1a1a1a]/90 backdrop-blur-md rounded-lg shadow-2xl border border-white/5">
             <div className="text-center space-y-2 mb-8">
                 {/* Cập nhật tên thương hiệu theo đúng file bài tập */}
                 <h1 className="text-3xl font-black text-white uppercase tracking-tighter">ĐĂNG KÝ</h1>
@@ -130,7 +130,7 @@ const RegisterForm = ({ onSwitch }) => {
                 </div>
 
                 {/* Mật khẩu và Xác nhận */}
-                <div className="grid grid-cols-2 gap-4 text-left">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                     <InputField
                         label="MẬT KHẨU"
                         id="password"

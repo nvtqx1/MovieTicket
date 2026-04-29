@@ -3,7 +3,7 @@ import RegisterForm from '../components/auth/RegisterForm';
 
 const Register = () => {
     return (
-        <div className="min-h-screen bg-[#0a0a0a] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black flex flex-col items-center justify-between py-10 px-4">
+        <div className="min-h-screen bg-[#0a0a0a] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black flex flex-col items-center justify-between pt-28 pb-10 px-4">
             {/* Brand Logo */}
             <div className="mb-10 text-center">
                 <h2 className="text-2xl font-black text-red-600 tracking-[0.2em] uppercase">TMT CINEMA</h2>
