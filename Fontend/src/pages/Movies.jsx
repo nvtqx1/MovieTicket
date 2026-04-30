@@ -22,7 +22,7 @@ export default function Movies() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0d0d0d] text-white">
+        <div className="min-h-screen bg-[#0d0d0d] pt-24 text-white">
             <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-10 flex flex-col lg:flex-row gap-8">
 
                 {/* Sidebar */}
@@ -42,7 +42,6 @@ export default function Movies() {
 
                     <Pagination />
                 </section>
-
             </main>
         </div>
     );
