@@ -25,8 +25,8 @@ public class Showtime {
     private Movie movie;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "theater_id")
-    private Theater theater;
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
     @Column(name = "show_date", nullable = false)
     private LocalDate showDate;
@@ -46,9 +46,6 @@ public class Showtime {
     @Column(name = "is_flash_sale", nullable = false)
     private Boolean isFlashSale = false;
 
-    @Column(name = "room", length = 50)
-    private String room;
-
     /**
      * Convert showDate and showTime to LocalDateTime
      * @return LocalDateTime combining date and time
@@ -58,5 +55,10 @@ public class Showtime {
             return LocalDateTime.of(showDate, showTime);
         }
         return null;
+    }
+
+    @Transient
+    public Theater getTheater() {
+        return room != null ? room.getTheater() : null;
     }
 }

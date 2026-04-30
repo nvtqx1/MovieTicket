@@ -25,8 +25,11 @@ public class Payment {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
-    @Column(name = "payment_intent_id", nullable = false)
-    private String paymentIntentID;
+    @Column(name = "transaction_reference", nullable = false)
+    private String transactionReference;
+
+    @Column(name = "provider", nullable = false, length = 50)
+    private String provider;
 
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;

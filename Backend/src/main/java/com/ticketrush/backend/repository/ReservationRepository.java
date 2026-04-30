@@ -63,7 +63,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             "  COUNT(DISTINCT r.id) " +
             ") " +
             "FROM Theater t " +
-            "LEFT JOIN Showtime s ON s.theater.id = t.id " +
+            "LEFT JOIN Showtime s ON s.room.theater.id = t.id " +
             "LEFT JOIN Reservation r ON r.showtime.id = s.id AND r.paid = true " +
             "GROUP BY t.id, t.name, t.location " +
             "ORDER BY SUM(COALESCE(r.totalPrice, 0)) DESC")

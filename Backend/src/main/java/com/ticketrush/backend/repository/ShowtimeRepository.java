@@ -17,13 +17,14 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findByMovieIdAndShowDateOrderByShowTimeAsc(Long movieId, LocalDate showDate);
 
     // Tùy chọn thêm: Tìm suất chiếu theo Rạp và Ngày (dành cho màn hình "Chọn Rạp trước, chọn Phim sau")
-    List<Showtime> findByTheaterIdAndShowDateOrderByShowTimeAsc(Long theaterId, LocalDate showDate);
+    List<Showtime> findByRoomTheaterIdAndShowDateOrderByShowTimeAsc(Long theaterId, LocalDate showDate);
 
     @Query("""
             SELECT s
             FROM Showtime s
             JOIN FETCH s.movie m
-            JOIN FETCH s.theater t
+            JOIN FETCH s.room r
+            JOIN FETCH r.theater t
             WHERE (:movieId IS NULL OR m.id = :movieId)
               AND (:theaterId IS NULL OR t.id = :theaterId)
               AND (:fromDate IS NULL OR s.showDate = :fromDate)
