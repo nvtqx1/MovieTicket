@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
@@ -45,4 +46,17 @@ public class Showtime {
     @Column(name = "is_flash_sale", nullable = false)
     private Boolean isFlashSale = false;
 
+    @Column(name = "room", length = 50)
+    private String room;
+
+    /**
+     * Convert showDate and showTime to LocalDateTime
+     * @return LocalDateTime combining date and time
+     */
+    public LocalDateTime getStartTime() {
+        if (showDate != null && showTime != null) {
+            return LocalDateTime.of(showDate, showTime);
+        }
+        return null;
+    }
 }

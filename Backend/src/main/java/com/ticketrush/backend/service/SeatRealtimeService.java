@@ -133,4 +133,36 @@ public class SeatRealtimeService {
             log.error("❌ Lỗi phát payload tùy chỉnh cho suất chiếu {}: {}", showtimeId, e.getMessage(), e);
         }
     }
+
+    /**
+     * Broadcast tín hiệu thay đổi tình trạng ghế với description và user ID
+     * (Ngày 17-18: Chốt đơn - gọi khi confirm reservation)
+     * 
+     * @param showtimeId ID của suất chiếu
+     * @param seatNumbers Danh sách mã ghế
+     * @param status Tình trạng ghế (VD: "SOLD")
+     * @param description Mô tả thêm (VD: "Đơn #123")
+     * @param userId ID của user thực hiện hành động
+     */
+    public void broadcastSeatStatus(Long showtimeId, List<String> seatNumbers, String status, String description, Long userId) {
+        try {
+            SeatStatusPayload payload = SeatStatusPayload.builder()
+                    .showtimeId(showtimeId)
+                    .seatNumbers(seatNumbers)
+                    .status(status)
+                    .description(description)
+                    .userId(userId)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            
+            String destination = "/topic/showtimes/" + showtimeId;
+            messagingTemplate.convertAndSend(destination, payload);
+            
+            log.info("✅ Phát tín hiệu tình trạng ghế: {} ghế với trạng thái {} cho suất chiếu {} - {} (user: {})", 
+                    seatNumbers.size(), status, showtimeId, description, userId);
+            
+        } catch (Exception e) {
+            log.error("❌ Lỗi phát tín hiệu tình trạng ghế cho suất chiếu {}: {}", showtimeId, e.getMessage(), e);
+        }
+    }
 }
