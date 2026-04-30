@@ -1,0 +1,634 @@
+{
+  "info": {
+    "_postman_id": "d963247d-caab-4340-b523-edd750f1b786",
+    "name": "MovieTicket",
+    "description": "Collection for testing Admin Seat Generation APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48399209"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userName\": \"john_doe\",\r\n  \"email\": \"john@example.com\",\r\n  \"password\": \"SecurePassword123\",\r\n  \"phoneNumber\": \"0123456789\",\r\n  \"dateOfBirth\": \"1990-01-15\",\r\n  \"gender\": \"Male\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/auth/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyNjAzMiwiZXhwIjoxNzc2NDI5NjMyfQ.M7j7r301W9e2tMfwKfM6riNo77axUAlHkV4jWpFvUasVwx0xpdKm9noVWO-SCiK_vBw3PtsuL8dNiJdjUYb6hg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NTgyNzkyNSwiZXhwIjoxNzc1ODMxNTI1fQ.WC_6zTBY03bZ5NPPQHLRlZQmELobbVd_EBmwj0u7dFTUnbJXeoBSQsqFHtQkZA88i_p6TIVp1HuVIW8Zo5P8Yw",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/auth/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user@moviereview.com\", \r\n  \"password\": \"password\"\r\n//   \"email\": \"admin@moviereview.com\", \r\n//   \"password\": \"password\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Seats API",
+      "item": [
+        {
+          "name": "Generate 10x15 Seat Matrix",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBtb3ZpZXJldmlldy5jb20iLCJpYXQiOjE3NzY0MjkxODIsImV4cCI6MTc3NjQzMjc4Mn0.mje0XgatZZdzACBPQ6YyVKqc9K5jBUmkJLigd-Lsx_wY4DJpjKKJyaVQBJylVEZMlhN2taM9iVjxbqi_JD9oJw",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "Replace with actual JWT token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": 2,\n  \"rows\": 10,\n  \"cols\": 15\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Generate a 10x15 seat matrix (150 seats total)\nRows: A-J, Columns: 1-15"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate 20x25 Seat Matrix (Large Theater)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": 2,\n  \"rows\": 20,\n  \"cols\": 25\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Generate a 20x25 seat matrix (500 seats total)\nRows: A-T, Columns: 1-25"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate 5x8 Seat Matrix (Small Theater)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": 3,\n  \"rows\": 5,\n  \"cols\": 8\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Generate a 5x8 seat matrix (40 seats total)\nRows: A-E, Columns: 1-8"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Error - Missing ShowtimeId",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyOTgzMiwiZXhwIjoxNzc2NDMzNDMyfQ.Qr1tE_lKq4l1gw-SytwTXj2L0khwB0PfhcdIOkN3lFwHPbwgGU75DhgUUucNn_7LKtsCNBWdESnGssE2Ex8zWA",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rows\": 10,\n  \"cols\": 15\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Test 400 Bad Request - showtimeId is required"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Error - Invalid Rows",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": 1,\n  \"rows\": 0,\n  \"cols\": 15\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Test 400 Bad Request - rows must be > 0"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Error - Invalid ShowtimeId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": 9999,\n  \"rows\": 10,\n  \"cols\": 15\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Test 404 Not Found - showtime does not exist"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Error - Duplicate Seats",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtimeId\": 1,\n  \"rows\": 10,\n  \"cols\": 15\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/seats/matrix/generate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "matrix",
+                "generate"
+              ]
+            },
+            "description": "Test 400 Bad Request - seats already exist for this showtime\n(Run after successful generation for the same showtimeId)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Database Verification",
+      "item": [
+        {
+          "name": "View Generated Seats (SQL Query)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "/",
+              "path": [
+                ""
+              ]
+            },
+            "description": "Run this SQL query in MySQL client to verify seats were created:\nSELECT seat_number, is_reserved, showtime_id FROM seats WHERE showtime_id = 1 ORDER BY seat_number LIMIT 20;\n\nExpected output:\nA1  | false | 1\nA2  | false | 1\nA3  | false | 1\n...\nA15 | false | 1\nB1  | false | 1\n...\n\nTo count all seats:\nSELECT COUNT(*) FROM seats WHERE showtime_id = 1;\nShould return 150 for a 10x15 matrix."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "API",
+      "item": [
+        {
+          "name": "Get All Movies",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyNjAzMiwiZXhwIjoxNzc2NDI5NjMyfQ.M7j7r301W9e2tMfwKfM6riNo77axUAlHkV4jWpFvUasVwx0xpdKm9noVWO-SCiK_vBw3PtsuL8dNiJdjUYb6hg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/movies",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "movies"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetMovieById",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyNjAzMiwiZXhwIjoxNzc2NDI5NjMyfQ.M7j7r301W9e2tMfwKfM6riNo77axUAlHkV4jWpFvUasVwx0xpdKm9noVWO-SCiK_vBw3PtsuL8dNiJdjUYb6hg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/movies/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Theaters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/theaters",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "theaters"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetThreaterById",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyNjAzMiwiZXhwIjoxNzc2NDI5NjMyfQ.M7j7r301W9e2tMfwKfM6riNo77axUAlHkV4jWpFvUasVwx0xpdKm9noVWO-SCiK_vBw3PtsuL8dNiJdjUYb6hg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/theaters/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "theaters",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SeachShowtimes",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyNjAzMiwiZXhwIjoxNzc2NDI5NjMyfQ.M7j7r301W9e2tMfwKfM6riNo77axUAlHkV4jWpFvUasVwx0xpdKm9noVWO-SCiK_vBw3PtsuL8dNiJdjUYb6hg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/showtimes",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "showtimes"
+              ],
+              "query": [
+                {
+                  "key": "movieId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "theaterId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "showDate",
+                  "value": "2026-04-13",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetShowtimeById",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQG1vdmllcmV2aWV3LmNvbSIsImlhdCI6MTc3NjQyNjAzMiwiZXhwIjoxNzc2NDI5NjMyfQ.M7j7r301W9e2tMfwKfM6riNo77axUAlHkV4jWpFvUasVwx0xpdKm9noVWO-SCiK_vBw3PtsuL8dNiJdjUYb6hg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/showtimes/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "showtimes",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
