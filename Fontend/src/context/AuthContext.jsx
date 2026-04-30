@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-// 3. Custom Hook (Khớp đúng với import trong Navbar của bạn)
+// 3. Custom Hook
 export const useAuthContext = () => {
     const context = useContext(AuthContext);
     if (!context) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Loader2 } from 'lucide-react';
-import InputField from '../ui/InputField';
-import SocialButton from '../ui/SocialButton';
+import InputField from '../common/InputField';
+import SocialButton from '../common/SocialButton';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';

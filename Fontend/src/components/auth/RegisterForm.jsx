@@ -3,7 +3,7 @@ import { Mail, Lock, User, ShieldCheck, Loader2, Calendar, Users } from 'lucide-
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';
 import { validateEmail, validateStrongPassword, validateFullName } from '../../utils/validation';
-import InputField from '../ui/InputField';
+import InputField from '../common/InputField';
 
 const RegisterForm = ({ onSwitch }) => {
     const [formData, setFormData] = useState({
@@ -224,7 +224,7 @@ const RegisterForm = ({ onSwitch }) => {
                     Đã có tài khoản?{" "}
                     <button
                         type="button"
-                        onClick={() => navigate('/login')} // Chuyển URL chuyên nghiệp
+                        onClick={() => navigate('/login')}
                         className="text-yellow-500 font-bold hover:underline cursor-pointer"
                     >
                         Đăng nhập
