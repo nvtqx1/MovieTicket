@@ -2,15 +2,20 @@ package com.ticketrush.backend.service.impl;
 
 import com.ticketrush.backend.dto.GenerateSeatRequest;
 import com.ticketrush.backend.dto.GenerateSeatResponse;
+import com.ticketrush.backend.dto.SeatResponse;
 import com.ticketrush.backend.entity.Seat;
+import com.ticketrush.backend.entity.SeatType;
 import com.ticketrush.backend.entity.Showtime;
 import com.ticketrush.backend.repository.SeatRepository;
+import com.ticketrush.backend.repository.SeatTypeRepository;
 import com.ticketrush.backend.repository.ShowtimeRepository;
 import com.ticketrush.backend.service.SeatService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +23,7 @@ import java.util.List;
  * Triển khai của SeatService interface
  * 
  * Chức năng chính: Tự động sinh sơ đồ ghế cho suất chiếu
+ * Lấy danh sách ghế để Frontend vẽ sơ đồ
  * 
  * Core Logic:
  * 1. Validate: Kiểm tra suất chiếu tồn tại, chưa có ghế
@@ -41,6 +47,7 @@ import java.util.List;
  * @version 1.0
  * @since NGÀY 7 (2026-04-17)
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SeatServiceImpl implements SeatService {
@@ -56,6 +63,7 @@ public class SeatServiceImpl implements SeatService {
      * Được inject tự động bởi Spring
      */
     private final ShowtimeRepository showtimeRepository;
+    private final SeatTypeRepository seatTypeRepository;
 
     /**
      * Tự động sinh sơ đồ ghế hoàn chỉnh cho suất chiếu
@@ -115,6 +123,9 @@ public class SeatServiceImpl implements SeatService {
         }
 
         // Step 2: Generate - Tạo danh sách ghế
+        SeatType normalSeatType = seatTypeRepository.findByName("NORMAL")
+                .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe NORMAL"));
+
         List<Seat> seats = new ArrayList<>();
 
         // Nested Loop: Hàng (Row) từ A đến chữ cái tương ứng với rows
@@ -136,6 +147,7 @@ public class SeatServiceImpl implements SeatService {
                 Seat seat = new Seat();
                 seat.setShowtime(showtime);
                 seat.setSeatNumber(seatNumber);
+                seat.setSeatType(normalSeatType);
                 seat.setIsReserved(false);  // Ghế mới luôn là chưa được đặt
                 seat.setReservation(null);
 
@@ -159,6 +171,61 @@ public class SeatServiceImpl implements SeatService {
                 String.format("Đã tạo thành công %d ghế cho suất chiếu (Hàng: %d, Cột: %d)",
                         totalSeats, request.getRows(), request.getCols())
         );
+    }
+
+    /**
+     * VỀ LỖ HỔNG 2: API Lấy danh sách ghế của suất chiếu
+     * 
+     * GET /v1/showtimes/{id}/seats
+     * 
+     * Phục vụ cho Frontend vẽ sơ đồ ghế (150 ghế)
+     * 
+     * @param showtimeId ID của suất chiếu
+     * @return Danh sách ghế với trạng thái is_reserved
+     * @throws IllegalArgumentException nếu suất chiếu không tồn tại
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeatResponse> getSeatsByShowtime(Long showtimeId) {
+        try {
+            log.info("🪑 Lấy danh sách ghế cho suất chiếu: {}", showtimeId);
+
+            // Verify showtime exists
+            Showtime showtime = showtimeRepository.findById(showtimeId)
+                    .orElseThrow(() -> new IllegalArgumentException("❌ Suất chiếu không tồn tại"));
+
+            // Get all seats for this showtime
+            List<Seat> seats = seatRepository.findByShowtimeId(showtimeId);
+            log.info("📋 Tìm được {} ghế", seats.size());
+
+            // Map to DTO with pricing information
+            return seats.stream()
+                    .map(seat -> mapToSeatResponse(seat, showtime))
+                    .toList();
+
+        } catch (Exception e) {
+            log.error("❌ Lỗi lấy danh sách ghế: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("❌ Lỗi lấy danh sách ghế: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Map Seat entity sang SeatResponse DTO
+     * Bao gồm tính giá bán cuối cùng dựa trên seat type multiplier
+     */
+    private SeatResponse mapToSeatResponse(Seat seat, Showtime showtime) {
+        BigDecimal basePrice = showtime.getPrice();
+        BigDecimal priceMultiplier = seat.getSeatType().getPriceMultiplier();
+        BigDecimal finalPrice = basePrice.multiply(priceMultiplier);
+
+        return SeatResponse.builder()
+                .id(seat.getId())
+                .seatNumber(seat.getSeatNumber())
+                .seatType(seat.getSeatType().getName())
+                .isReserved(seat.getIsReserved())
+                .basePrice(basePrice)
+                .finalPrice(finalPrice)
+                .build();
     }
 }
 

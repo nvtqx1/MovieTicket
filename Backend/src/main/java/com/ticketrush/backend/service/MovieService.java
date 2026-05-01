@@ -1,6 +1,8 @@
 package com.ticketrush.backend.service;
 
 import com.ticketrush.backend.dto.MovieResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -25,13 +27,14 @@ import java.util.List;
 public interface MovieService {
 
     /**
-     * Lấy danh sách tất cả phim đang chiếu
+     * Lấy danh sách phim với phân trang
      * 
-     * Sắp xếp: Theo năm phát hành từ mới nhất đến cũ nhất
+     * ⚠️ Bắt buộc phân trang để tránh OutOfMemory khi có hàng ngàn bộ phim
      * 
-     * @return List<MovieResponse> danh sách phim
+     * @param pageable Pageable object (page, size, sort)
+     * @return Page<MovieResponse> danh sách phim với thông tin phân trang
      */
-    List<MovieResponse> getNowShowingMovies();
+    Page<MovieResponse> getNowShowingMovies(Pageable pageable);
 
     /**
      * Lấy chi tiết một phim theo ID
@@ -41,4 +44,15 @@ public interface MovieService {
      * @throws RuntimeException nếu không tìm thấy phim
      */
     MovieResponse getMovieById(Long id);
+
+    /**
+     * Admin API: Tạo phim mới
+     * 
+     * POST /v1/admin/movies
+     * 
+     * @param request CreateMovieRequest chứa title, description, releaseYear, genre, posterImageUrl
+     * @return MovieResponse thông tin phim vừa tạo
+     * @throws IllegalArgumentException nếu dữ liệu không hợp lệ
+     */
+    MovieResponse createMovie(com.ticketrush.backend.dto.CreateMovieRequest request);
 }

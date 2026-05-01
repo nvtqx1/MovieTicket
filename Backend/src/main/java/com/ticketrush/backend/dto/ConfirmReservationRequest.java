@@ -39,6 +39,16 @@ public class ConfirmReservationRequest {
     private String transactionCode;
 
     /**
+     * Payment provider, for example: VNPAY, MOMO, STRIPE.
+     */
+    private String provider;
+
+    /**
+     * Optional voucher code applied by the customer.
+     */
+    private String voucherCode;
+
+    /**
      * Danh sách mã ghế được đặt
      * Ví dụ: ["A1", "A2", "A3"]
      */
