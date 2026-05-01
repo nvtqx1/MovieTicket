@@ -1,7 +1,10 @@
 package com.ticketrush.backend.controller;
 
 import com.ticketrush.backend.dto.ConfirmReservationRequest;
+import com.ticketrush.backend.dto.CreateReservationRequest;
+import com.ticketrush.backend.dto.CreateReservationResponse;
 import com.ticketrush.backend.dto.ReservationResponse;
+import com.ticketrush.backend.dto.TicketResponse;
 import com.ticketrush.backend.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +20,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * API Controller quản lý chốt đơn đặt vé (Confirm Reservation).
@@ -267,6 +273,170 @@ public class ReservationController {
         return ResponseEntity.ok("✅ 🎫 Dịch vụ Chốt Đơn (Reservation Confirmation) hoạt động bình thường");
     }
 
+    /**
+     * API Tạo Đơn Hàng (Init Reservation) - VỀ LỖ HỔNG 1
+     * 
+     * API Endpoint: POST /api/v1/reservations/init
+     * 
+     * Tạo đơn đặt vé mới với trạng thái PENDING.
+     * Logic:
+     * 1. Chặn thời gian chiếu (15 phút trước suất chiếu)
+     * 2. Tính tiền kèm loại ghế (dùng priceMultiplier)
+     * 3. Xử lý voucher nếu có
+     * 4. Lưu database
+     * 5. Trả về thông tin đơn vừa tạo
+     *
+     * HTTP Status:
+     * - 201 Created: Tạo đơn thành công
+     * - 400 Bad Request: Dữ liệu không hợp lệ
+     * - 401 Unauthorized: Chưa đăng nhập
+     * - 409 Conflict: Quá thời gian mở bán
+     * - 500 Internal Server Error: Lỗi server
+     */
+    @PostMapping("/init")
+    @Operation(
+            summary = "🎫 Tạo Đơn Hàng (Init Reservation)",
+            description = "Tạo đơn đặt vé mới với trạng thái PENDING. " +
+                    "Validate thời gian, tính tiền kèm loại ghế, xử lý voucher. " +
+                    "Trả về thông tin đơn vừa tạo. Khách có 15 phút để thanh toán.",
+            security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "✅ Tạo đơn thành công",
+                    content = @Content(schema = @Schema(implementation = CreateReservationResponse.class))),
+            @ApiResponse(responseCode = "400", description = "❌ Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "❌ Chưa đăng nhập"),
+            @ApiResponse(responseCode = "409", description = "❌ Quá thời gian mở bán (15 phút trước suất chiếu)"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    public ResponseEntity<CreateReservationResponse> createReservation(
+            Authentication authentication,
+            @RequestBody
+            @Parameter(description = "Dữ liệu tạo đơn", required = true)
+            CreateReservationRequest request) {
+        try {
+            Long userId = extractUserId(authentication);
+            log.info("📱 Tạo đơn đặt vé cho user: {} với suất chiếu: {}", userId, request.getShowtimeId());
+
+            // Validate input
+            if (request.getShowtimeId() == null || request.getShowtimeId() <= 0) {
+                log.warn("❌ ID suất chiếu không hợp lệ: {}", request.getShowtimeId());
+                return ResponseEntity.badRequest().body(
+                        CreateReservationResponse.builder()
+                                .apiStatus("FAILED")
+                                .message("❌ ID suất chiếu phải > 0")
+                                .build()
+                );
+            }
+
+            if (request.getSeatNumbers() == null || request.getSeatNumbers().isEmpty()) {
+                log.warn("❌ Danh sách ghế trống");
+                return ResponseEntity.badRequest().body(
+                        CreateReservationResponse.builder()
+                                .apiStatus("FAILED")
+                                .message("❌ Danh sách ghế không được để trống")
+                                .build()
+                );
+            }
+
+            // Gọi service để tạo đơn
+            CreateReservationResponse response = reservationService.createReservation(userId, request);
+
+            if ("SUCCESS".equals(response.getApiStatus())) {
+                log.info("✅ Tạo đơn thành công: {}", response.getReservationId());
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            } else {
+                log.error("❌ Tạo đơn thất bại: {}", response.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (IllegalArgumentException e) {
+            log.warn("⚠️ Lỗi validation: {}", e.getMessage());
+            // Nếu là lỗi thời gian, trả về 409 Conflict
+            if (e.getMessage().contains("Đã đóng quầy bán vé")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                        CreateReservationResponse.builder()
+                                .apiStatus("FAILED")
+                                .message("❌ " + e.getMessage())
+                                .build()
+                );
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    CreateReservationResponse.builder()
+                            .apiStatus("FAILED")
+                            .message("❌ " + e.getMessage())
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("❌ Lỗi tạo đơn không xác định: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    CreateReservationResponse.builder()
+                            .apiStatus("FAILED")
+                            .message("❌ Lỗi server: " + e.getMessage())
+                            .build()
+            );
+        }
+    }
+
+    /**
+     * API Vé Của Tôi (My Tickets) - VỀ LỖ HỔNG 2
+     * 
+     * API Endpoint: GET /api/v1/reservations/my-tickets
+     * 
+     * Lấy danh sách vé của khách hàng (từ Security Context).
+     * V3: Bắt buộc phải có roomName để khách biết đường đi.
+     * Format: "Rạp: Beta Cinemas - Phòng: IMAX 01"
+     *
+     * HTTP Status:
+     * - 200 OK: Lấy thành công
+     * - 401 Unauthorized: Chưa đăng nhập
+     * - 404 Not Found: Không tìm thấy user
+     * - 500 Internal Server Error: Lỗi server
+     */
+    @GetMapping("/my-tickets")
+    @Operation(
+            summary = "🎫 Vé Của Tôi (My Tickets)",
+            description = "Lấy danh sách vé của khách hàng hiện tại. " +
+                    "Hiển thị chi tiết hơn với tên phòng chiếu. " +
+                    "Format: Rạp: Beta Cinemas - Phòng: IMAX 01",
+            security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "✅ Lấy danh sách vé thành công"),
+            @ApiResponse(responseCode = "401", description = "❌ Chưa đăng nhập"),
+            @ApiResponse(responseCode = "404", description = "❌ Không tìm thấy user"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    public ResponseEntity<?> getMyTickets(Authentication authentication) {
+        try {
+            log.info("🎫 Lấy danh sách vé của user hiện tại");
+
+            // Lấy email từ authentication
+            String userEmail = extractUserEmail(authentication);
+            log.info("📧 Email: {}", userEmail);
+
+            // Gọi service
+            List<TicketResponse> tickets = reservationService.getUserReservations(userEmail);
+
+            log.info("✅ Tìm được {} vé", tickets.size());
+            return ResponseEntity.ok(tickets);
+
+        } catch (IllegalArgumentException e) {
+            log.warn("⚠️ Lỗi: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ResponseEntity<>(
+                            Map.of("message", "❌ " + e.getMessage(), "apiStatus", "FAILED"),
+                            HttpStatus.NOT_FOUND
+                    ).getBody()
+            );
+        } catch (Exception e) {
+            log.error("❌ Lỗi lấy danh sách vé: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    Map.of("message", "❌ Lỗi server: " + e.getMessage(), "apiStatus", "FAILED")
+            );
+        }
+    }
+
     // ========== Private Helper Methods ==========
 
     /**
@@ -292,6 +462,35 @@ public class ReservationController {
         } catch (NumberFormatException e) {
             log.error("❌ Lỗi parse user ID: {}", e.getMessage());
             throw new IllegalArgumentException("❌ User ID không hợp lệ");
+        }
+    }
+
+    /**
+     * Trích xuất User Email từ Authentication object.
+     *
+     * @param authentication Spring Security Authentication
+     * @return User Email
+     * @throws IllegalArgumentException nếu không tìm thấy email
+     */
+    private String extractUserEmail(Authentication authentication) throws IllegalArgumentException {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalArgumentException("❌ Chưa đăng nhập");
+        }
+
+        try {
+            // Nếu principal là String, có thể đó là email hoặc username
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof String) {
+                return (String) principal;
+            }
+            // Nếu có UserDetails object, lấy username/email từ đó
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                return ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            }
+            throw new IllegalArgumentException("❌ Không thể trích xuất email");
+        } catch (Exception e) {
+            log.error("❌ Lỗi parse email: {}", e.getMessage());
+            throw new IllegalArgumentException("❌ Email không hợp lệ");
         }
     }
 }

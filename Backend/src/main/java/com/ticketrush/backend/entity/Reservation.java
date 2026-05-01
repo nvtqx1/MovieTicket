@@ -40,6 +40,10 @@ public class Reservation {
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
+
     @Column(nullable = false)
     private Boolean paid = false;
 
@@ -48,5 +52,8 @@ public class Reservation {
 
     @Column(name = "qr_code_hash", length = 255)
     private String qrCodeHash;
+
+    @Column(name = "checkin_time")
+    private LocalDateTime checkinTime;
 
 }

@@ -67,7 +67,12 @@ public record ShowtimeResponse(
          * false: Giá bình thường
          */
         Boolean isFlashSale,
-        
+
+        /**
+         * Ten phong chieu.
+         */
+        String roomName,
+
         /**
          * Thông tin tóm tắt của phim
          * Bao gồm: id, title, posterImageUrl, genre

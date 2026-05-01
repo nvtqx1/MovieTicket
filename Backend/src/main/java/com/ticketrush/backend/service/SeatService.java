@@ -2,6 +2,9 @@ package com.ticketrush.backend.service;
 
 import com.ticketrush.backend.dto.GenerateSeatRequest;
 import com.ticketrush.backend.dto.GenerateSeatResponse;
+import com.ticketrush.backend.dto.SeatResponse;
+
+import java.util.List;
 
 /**
  * Service interface để tự động sinh sơ đồ ghế cho suất chiếu
@@ -76,5 +79,18 @@ public interface SeatService {
      * @throws RuntimeException nếu suất chiếu không tồn tại hoặc ghế đã tồn tại
      */
     GenerateSeatResponse generateSeatMatrix(GenerateSeatRequest request);
+
+    /**
+     * API: Lấy danh sách tất cả ghế của suất chiếu
+     * 
+     * GET /v1/showtimes/{id}/seats
+     * 
+     * Phục vụ cho Frontend vẽ sơ đồ ghế
+     * 
+     * @param showtimeId ID của suất chiếu
+     * @return Danh sách ghế với trạng thái is_reserved
+     * @throws IllegalArgumentException nếu suất chiếu không tồn tại
+     */
+    List<SeatResponse> getSeatsByShowtime(Long showtimeId);
 }
 
