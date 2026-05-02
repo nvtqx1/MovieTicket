@@ -22,6 +22,10 @@ public class Seat {
     @Column(name = "seat_number", nullable = false, length = 10)
     private String seatNumber;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seat_type_id", nullable = false)
+    private SeatType seatType;
+
     @Column(name = "is_reserved", nullable = false)
     private Boolean isReserved = false;
 
