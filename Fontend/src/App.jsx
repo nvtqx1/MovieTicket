@@ -1,24 +1,56 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/layout/Navbar';
+
+import MainLayout from './components/layout/MainLayout';
+import AdminLayout from './components/layout/AdminLayout';
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Movies from "./pages/Movies";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
     <AuthProvider>
-      <div className="overflow-x-hidden">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/movies" element={<Movies />} />
-        </Routes>
-      </div>
+      <Routes>
+
+        {/* USER ROUTES */}
+        <Route path="/" element={
+          <MainLayout>
+            <Home />
+          </MainLayout>
+        } />
+
+        <Route path="/movies" element={
+          <MainLayout>
+            <Movies />
+          </MainLayout>
+        } />
+
+        <Route path="/login" element={
+          <MainLayout>
+            <Login />
+          </MainLayout>
+        } />
+
+        <Route path="/register" element={
+          <MainLayout>
+            <Register />
+          </MainLayout>
+        } />
+
+        {/* ADMIN ROUTES */}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
+        <Route path="/admin/dashboard" element={
+          <AdminLayout>
+            <AdminDashboard />
+          </AdminLayout>
+        } />
+
+      </Routes>
     </AuthProvider>
   );
 }
