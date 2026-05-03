@@ -8,4 +8,6 @@ import java.util.Optional;
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Integer> { // Chú ý: Khóa chính của Role là Integer
     Optional<Role> findByName(String name);
+
+    Boolean existsByName(String name);
 }

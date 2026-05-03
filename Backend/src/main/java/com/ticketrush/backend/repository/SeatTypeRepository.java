@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SeatTypeRepository extends JpaRepository<SeatType, Integer> {
+public interface SeatTypeRepository extends JpaRepository<SeatType, Double> {
     Optional<SeatType> findByName(String name);
+
+    Boolean existsByName(String name);
 }
