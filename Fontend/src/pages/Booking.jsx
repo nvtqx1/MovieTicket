@@ -59,7 +59,10 @@ export default function Booking() {
             return;
         }
 
-        navigate("/checkout", {
+        //Cần đưa thông tin showtime, ghế đã chọn, tổng tiền... sang trang thanh toán(Chưa hoàn thiện)
+        const reservationId = Date.now();
+
+        navigate(`/checkout/${reservationId}`, {
             state: {
                 showtimeId: id,
                 seats: selectedSeats,
