@@ -1,10 +1,7 @@
 import React from "react";
 import MovieCard from "./MovieCard";
-import { useMovies } from "../../hooks/useMovies";
 
-export default function MovieSection() {
-    const { movies, loading, error } = useMovies();
-
+export default function MovieSection({ movies = [], loading = false, error = null }) {
     if (loading) return <p className="mt-20 text-center">Đang tải...</p>;
     if (error) return <p className="mt-20 text-center text-red-500">{error}</p>;
 

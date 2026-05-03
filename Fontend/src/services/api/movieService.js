@@ -5,25 +5,25 @@ const mockMovies = [
         id: 1,
         title: "THE SILENT SHADOW",
         genre: "Crime",
-        posterUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406",
+        posterImageUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406",
     },
     {
         id: 2,
         title: "VOID VOYAGER",
         genre: "Sci-Fi",
-        posterUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
+        posterImageUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
     },
     {
         id: 3,
         title: "NEON DREAMS",
         genre: "Cyberpunk",
-        posterUrl: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
+        posterImageUrl: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
     },
     {
         id: 4,
         title: "LAST SUNRISE",
         genre: "Drama",
-        posterUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+        posterImageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     },
 ];
 
@@ -34,7 +34,6 @@ export const getMovies = async (params = {}) => {
         setTimeout(() => {
             let data = [...mockMovies];
 
-            // filter theo query giống backend thật
             if (params.search) {
                 data = data.filter(m =>
                     m.title.toLowerCase().includes(params.search.toLowerCase())
@@ -46,7 +45,7 @@ export const getMovies = async (params = {}) => {
             }
 
             resolve(data);
-        }, 800); // giả lập delay mạng
+        }, 800);
     });
 };
 
