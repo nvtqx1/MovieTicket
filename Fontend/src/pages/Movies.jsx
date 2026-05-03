@@ -8,12 +8,21 @@ const ITEMS_PER_PAGE = 8;
 
 export default function Movies() {
     const [search, setSearch] = useState("");
-    const [activeFilter, setActiveFilter] = useState("all"); // "all" | "nowShowing" | "comingSoon"
+    const [selectedGenre, setSelectedGenre] = useState("");
+    const [selectedReleaseYear, setSelectedReleaseYear] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
 
     const { movies, loading, error } = useMovies();
 
-    // Filter theo search và checkbox
+    const genres = useMemo(() => {
+        return [...new Set(movies.map((movie) => movie.genre).filter(Boolean))].sort();
+    }, [movies]);
+
+    const releaseYears = useMemo(() => {
+        return [...new Set(movies.map((movie) => movie.releaseYear).filter(Boolean))].sort((a, b) => b - a);
+    }, [movies]);
+
+    // Filter FE theo search, genre và releaseYear từ MovieResponse
     const filteredMovies = useMemo(() => {
         let data = [...movies];
 
@@ -23,13 +32,16 @@ export default function Movies() {
             );
         }
 
-        // Sau khi có API: filter theo status từ BE
-        // if (activeFilter !== "all") {
-        //     data = data.filter((m) => m.status === activeFilter);
-        // }
+        if (selectedGenre) {
+            data = data.filter((m) => m.genre === selectedGenre);
+        }
+
+        if (selectedReleaseYear) {
+            data = data.filter((m) => m.releaseYear === Number(selectedReleaseYear));
+        }
 
         return data;
-    }, [movies, search, activeFilter]);
+    }, [movies, search, selectedGenre, selectedReleaseYear]);
 
     // Pagination
     const totalPages = Math.ceil(filteredMovies.length / ITEMS_PER_PAGE);
@@ -44,8 +56,13 @@ export default function Movies() {
         setCurrentPage(1);
     };
 
-    const handleFilterChange = (filter) => {
-        setActiveFilter(filter);
+    const handleGenreChange = (genre) => {
+        setSelectedGenre(genre);
+        setCurrentPage(1);
+    };
+
+    const handleReleaseYearChange = (releaseYear) => {
+        setSelectedReleaseYear(releaseYear);
         setCurrentPage(1);
     };
 
@@ -56,9 +73,13 @@ export default function Movies() {
                 <aside className="w-full lg:w-[260px] shrink-0">
                     <FilterSidebar
                         search={search}
-                        activeFilter={activeFilter}
+                        selectedGenre={selectedGenre}
+                        selectedReleaseYear={selectedReleaseYear}
+                        genres={genres}
+                        releaseYears={releaseYears}
                         onSearchChange={handleSearchChange}
-                        onFilterChange={handleFilterChange}
+                        onGenreChange={handleGenreChange}
+                        onReleaseYearChange={handleReleaseYearChange}
                     />
                 </aside>
 

@@ -21,7 +21,7 @@ export default function MovieCard({ movie }) {
 
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 transition-opacity duration-300">
                     <button
-                        onClick={() => navigate(`/booking/${id}`)}
+                        onClick={() => navigate(`/movies/${id}`)}
                         className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 mb-2 rounded"
                     >
                         ĐẶT

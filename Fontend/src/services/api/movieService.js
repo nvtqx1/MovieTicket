@@ -6,24 +6,28 @@ const mockMovies = [
         id: 1,
         title: "THE SILENT SHADOW",
         genre: "Crime",
+        releaseYear: 2024,
         posterImageUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406",
     },
     {
         id: 2,
         title: "VOID VOYAGER",
         genre: "Sci-Fi",
+        releaseYear: 2025,
         posterImageUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
     },
     {
         id: 3,
         title: "NEON DREAMS",
         genre: "Cyberpunk",
+        releaseYear: 2025,
         posterImageUrl: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
     },
     {
         id: 4,
         title: "LAST SUNRISE",
         genre: "Drama",
+        releaseYear: 2024,
         posterImageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     },
 ];
@@ -69,11 +73,13 @@ const mockMovieDetails = {
 // showDate, showTime, price, isFlashSale
 //
 const mockShowtimes = [
-    { id: 101, showDate: "2026-10-24", showTime: "14:20", price: 80000, isFlashSale: false },
-    { id: 102, showDate: "2026-10-24", showTime: "17:45", price: 90000, isFlashSale: true },
-    { id: 103, showDate: "2026-10-24", showTime: "21:00", price: 90000, isFlashSale: false },
-    { id: 104, showDate: "2026-10-25", showTime: "14:00", price: 80000, isFlashSale: false },
-    { id: 105, showDate: "2026-10-25", showTime: "19:30", price: 120000, isFlashSale: true },
+    { id: 101, movieId: 1, showDate: "2026-10-24", showTime: "14:20", price: 80000, isFlashSale: false },
+    { id: 102, movieId: 1, showDate: "2026-10-24", showTime: "17:45", price: 90000, isFlashSale: true },
+    { id: 103, movieId: 1, showDate: "2026-10-25", showTime: "21:00", price: 90000, isFlashSale: false },
+    { id: 201, movieId: 2, showDate: "2026-10-24", showTime: "15:30", price: 85000, isFlashSale: false },
+    { id: 202, movieId: 2, showDate: "2026-10-25", showTime: "19:30", price: 120000, isFlashSale: true },
+    { id: 301, movieId: 3, showDate: "2026-10-24", showTime: "18:15", price: 90000, isFlashSale: false },
+    { id: 401, movieId: 4, showDate: "2026-10-25", showTime: "14:00", price: 80000, isFlashSale: false },
 ];
 
 // ==========================================
@@ -95,6 +101,9 @@ export const getMovies = async (params = {}) => {
             }
             if (params.genre) {
                 data = data.filter((m) => m.genre === params.genre);
+            }
+            if (params.releaseYear) {
+                data = data.filter((m) => m.releaseYear === Number(params.releaseYear));
             }
 
             resolve(data);
@@ -126,7 +135,7 @@ export const getMovieById = async (id) => {
 export const getShowtimesByMovieId = async (movieId) => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            resolve(mockShowtimes);
+            resolve(mockShowtimes.filter((st) => st.movieId === Number(movieId)));
         }, 600);
     });
 
