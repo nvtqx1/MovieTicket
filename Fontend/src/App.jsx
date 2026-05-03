@@ -9,6 +9,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Movies from "./pages/Movies";
+import MovieDetail from "./pages/MovieDetail";
+import Booking from "./pages/Booking";
 import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
@@ -26,6 +28,18 @@ function App() {
         <Route path="/movies" element={
           <MainLayout>
             <Movies />
+          </MainLayout>
+        } />
+
+        <Route path="/movies/:id" element={
+          <MainLayout>
+            <MovieDetail />
+          </MainLayout>
+        } />
+
+        <Route path="/booking/:id" element={
+          <MainLayout>
+            <Booking />
           </MainLayout>
         } />
 
