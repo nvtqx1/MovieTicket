@@ -1,10 +1,11 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
-import { LayoutDashboard, Film, Users, Settings } from "lucide-react";
+import { BarChart3, LayoutDashboard, Film, Users, Settings } from "lucide-react";
 
 const menuItems = [
-    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+    { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Thống kê", path: "/admin/revenue-analytics", icon: BarChart3 },
     { name: "Phim", path: "/admin/movies", icon: Film },
     { name: "Người dùng", path: "/admin/users", icon: Users },
     { name: "Cài đặt", path: "/admin/settings", icon: Settings },
@@ -35,7 +36,7 @@ export default function AdminSidebar() {
                     <NavLink
                         key={item.name}
                         to={item.path}
-                        end={item.path === "/admin"}
+                        end
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-lg transition-all
               ${isActive

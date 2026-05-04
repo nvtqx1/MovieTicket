@@ -14,6 +14,7 @@ import MovieDetail from "./pages/MovieDetail";
 import Theaters from "./pages/Theaters";
 import Booking from "./pages/Booking";
 import AdminDashboard from "./pages/AdminDashboard";
+import RevenueAnalytics from "./pages/RevenueAnalytics";
 import Checkout from "./pages/Checkout";
 
 function App() {
@@ -88,6 +89,12 @@ function App() {
         <Route path="/admin/dashboard" element={
           <AdminLayout>
             <AdminDashboard />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/revenue-analytics" element={
+          <AdminLayout>
+            <RevenueAnalytics />
           </AdminLayout>
         } />
 
