@@ -176,7 +176,24 @@ export default function Navbar() {
                         </Link>
                     ))}
 
-                    {!isLoggedIn && (
+                    {isLoggedIn ? (
+                        <>
+                            <Link
+                                to="/profile"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-red-500"
+                            >
+                                Hồ sơ cá nhân
+                            </Link>
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full py-3 bg-zinc-900 text-gray-300 font-bold rounded-lg uppercase text-[10px] flex items-center justify-center gap-2"
+                            >
+                                <LogOut size={16} /> Đăng xuất
+                            </button>
+                        </>
+                    ) : (
                         <button
                             onClick={() => {
                                 navigate("/login");

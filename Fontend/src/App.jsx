@@ -8,10 +8,12 @@ import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Profile from './pages/Profile';
 import Movies from "./pages/Movies";
 import MovieDetail from "./pages/MovieDetail";
 import Booking from "./pages/Booking";
 import AdminDashboard from "./pages/AdminDashboard";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
@@ -55,6 +57,24 @@ function App() {
           </MainLayout>
         } />
 
+        <Route path="/profile" element={
+          <MainLayout>
+            <Profile />
+          </MainLayout>
+        } />
+
+        <Route path="/checkout/:reservationId" element={
+          <MainLayout>
+            <Checkout />
+          </MainLayout>
+        } />
+
+        <Route path="/checkout" element={
+          <MainLayout>
+            <Checkout />
+          </MainLayout>
+        } />
+
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
@@ -63,6 +83,8 @@ function App() {
             <AdminDashboard />
           </AdminLayout>
         } />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </AuthProvider>
