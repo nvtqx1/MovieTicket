@@ -1,13 +1,16 @@
 package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.entity.Showtime;
+import org.flywaydb.core.internal.sqlscript.ShouldExecuteEvaluator;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
@@ -18,6 +21,8 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
 
     // Tùy chọn thêm: Tìm suất chiếu theo Rạp và Ngày (dành cho màn hình "Chọn Rạp trước, chọn Phim sau")
     List<Showtime> findByRoomTheaterIdAndShowDateOrderByShowTimeAsc(Long theaterId, LocalDate showDate);
+
+    Optional<Showtime> findFistByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
 
     @Query("""
             SELECT s
@@ -36,4 +41,6 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("showDate") LocalDate showDate,
             @Param("fromDate") LocalDate fromDate
     );
+
+    Optional<Showtime> findFirstByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
 }

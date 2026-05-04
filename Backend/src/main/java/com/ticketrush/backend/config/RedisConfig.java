@@ -10,6 +10,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -45,6 +46,19 @@ public class RedisConfig {
 
         template.afterPropertiesSet();
         return template;
+    }
+
+    /**
+     * phuc vu cho pub/sub, neu chi can cache thi khong can bean nay
+     * lam viec voi RedisMessageListenerContainer de lang nghe cac message tu Redis va xu ly khi co message den
+     * @param connectionFactory
+     * @return
+     */
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        return container;
     }
 
     // ObjectMapper dùng chung toàn project

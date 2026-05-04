@@ -24,4 +24,6 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     // Tìm các ghế đang bị khóa bởi 1 đơn hàng cụ thể (Dùng khi user hủy đơn, muốn nhả ghế ra)
     List<Seat> findByReservationId(Long reservationId);
+
+    long countByShowtimeId(Long showtimeid);
 }
