@@ -1,21 +1,40 @@
-import axios from 'axios';
-
 const API_URL = 'http://localhost:8080/api/v1'; // Thay đổi theo URL Backend
 
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Interceptor để tự động đính kèm Token vào Header
-api.interceptors.request.use((config) => {
+const request = async (path, options = {}) => {
     const token = localStorage.getItem('token');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+    };
+
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        headers.Authorization = `Bearer ${token}`;
     }
-    return config;
-});
+
+    const response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers,
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.message || `Request failed with status ${response.status}`);
+    }
+
+    if (response.status === 204) {
+        return { data: null };
+    }
+
+    return { data: await response.json() };
+};
+
+const api = {
+    get: (path, options) => request(path, { ...options, method: 'GET' }),
+    post: (path, body, options) => request(path, {
+        ...options,
+        method: 'POST',
+        body: JSON.stringify(body),
+    }),
+};
 
 export default api;

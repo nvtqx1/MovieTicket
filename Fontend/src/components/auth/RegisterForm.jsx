@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, ShieldCheck, Loader2, Calendar, Users } from 'lucide-react';
+import { Mail, Lock, User, ShieldCheck, Loader2, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../context/AuthContext';
 import { validateEmail, validateStrongPassword, validateFullName } from '../../utils/validation';
-import InputField from '../ui/InputField';
+import InputField from '../common/InputField';
+import { authService } from '../../services/api/authService';
 
 const RegisterForm = ({ onSwitch }) => {
     const [formData, setFormData] = useState({
+        userName: '',
         email: '',
         password: '',
         confirmPassword: '',
-        age: '',
-        gender: '',
+        phoneNumber: '',
         agreeTerms: false
     });
     const [errors, setErrors] = useState({});
@@ -19,7 +19,6 @@ const RegisterForm = ({ onSwitch }) => {
     const [serverError, setServerError] = useState("");
 
     const navigate = useNavigate();
-    const { login } = useAuthContext();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,6 +26,10 @@ const RegisterForm = ({ onSwitch }) => {
         setServerError("");
 
         let newErrors = {};
+
+        if (!validateFullName(formData.userName)) {
+            newErrors.userName = "Tên người dùng không hợp lệ";
+        }
 
         // Validate Email
         if (!validateEmail(formData.email)) {
@@ -44,14 +47,8 @@ const RegisterForm = ({ onSwitch }) => {
             newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
         }
 
-        // Validate tuổi
-        if (!formData.age || isNaN(formData.age) || Number(formData.age) < 13) {
-            newErrors.age = "Tuổi không hợp lệ (yêu cầu từ 13 tuổi trở lên)";
-        }
-
-        // Validate gender
-        if (!formData.gender) {
-            newErrors.gender = "Vui lòng chọn giới tính";
+        if (!/^(0|\+84)[0-9]{9,10}$/.test(formData.phoneNumber.trim())) {
+            newErrors.phoneNumber = "Số điện thoại không hợp lệ";
         }
 
         // Validate điều khoản
@@ -68,31 +65,18 @@ const RegisterForm = ({ onSwitch }) => {
 
         try {
 
-            // Payload
             const apiPayload = {
+                userName: formData.userName.trim(),
                 email: formData.email,
                 password: formData.password,
-                age: Number(formData.age),
-                gender: formData.gender
+                phoneNumber: formData.phoneNumber.trim()
             };
 
-            // Giả lập gọi API đăng ký (1.5s)
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            console.log("Dữ liệu gửi lên API:", apiPayload);
-
-            // Giả lập đăng nhập sau khi đăng ký thành công
-            const newUser = {
-                email: apiPayload.email,
-                age: apiPayload.age,
-                gender: apiPayload.gender,
-                avatar: null
-            };
-
-            login(newUser);
+            await authService.register(apiPayload);
             alert("Đăng ký thành công!");
-            navigate('/');
+            navigate('/login');
         } catch (err) {
-            setServerError("Có lỗi xảy ra, vui lòng thử lại sau.");
+            setServerError(err.message || "Có lỗi xảy ra, vui lòng thử lại sau.");
         } finally {
             setIsLoading(false);
         }
@@ -114,7 +98,20 @@ const RegisterForm = ({ onSwitch }) => {
 
             <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
 
-                {/* Email */}
+                <div className="text-left">
+                    <InputField
+                        label="TÊN NGƯỜI DÙNG"
+                        id="userName"
+                        type="text"
+                        icon={User}
+                        placeholder="Nguyễn Văn A"
+                        value={formData.userName}
+                        onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                        error={errors.userName}
+                        autoComplete="name"
+                    />
+                </div>
+
                 <div className="text-left">
                     <InputField
                         label="EMAIL"
@@ -129,7 +126,20 @@ const RegisterForm = ({ onSwitch }) => {
                     />
                 </div>
 
-                {/* Mật khẩu và Xác nhận */}
+                <div className="text-left">
+                    <InputField
+                        label="SỐ ĐIỆN THOẠI"
+                        id="phoneNumber"
+                        type="tel"
+                        icon={Phone}
+                        placeholder="0912345678"
+                        value={formData.phoneNumber}
+                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        error={errors.phoneNumber}
+                        autoComplete="tel"
+                    />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                     <InputField
                         label="MẬT KHẨU"
@@ -153,47 +163,6 @@ const RegisterForm = ({ onSwitch }) => {
                         error={errors.confirmPassword}
                         autoComplete="new-password"
                     />
-                </div>
-
-                {/* Grid 2 cột cho Tuổi và Giới tính để tiết kiệm không gian */}
-                <div className="text-left">
-                    {/* Age */}
-                    <InputField
-                        label="Tuổi"
-                        id="age"
-                        type="number"
-                        icon={Calendar}
-                        placeholder="VD: 18"
-                        value={formData.age}
-                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                        error={errors.age}
-                        min="13"
-                    />
-                </div>
-
-                {/* Gender Custom Select */}
-                <div className="text-left">
-                    <label htmlFor="gender" className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        GIỚI TÍNH
-                    </label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Users size={18} className="text-gray-500" />
-                        </div>
-                        <select
-                            id="gender"
-                            value={formData.gender}
-                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                            className={`w-full pl-10 pr-4 py-2.5 bg-black/50 border ${errors.gender ? 'border-red-500' : 'border-gray-800'
-                                } rounded text-white text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors appearance-none cursor-pointer`}
-                        >
-                            <option value="" disabled className="text-gray-500">Chọn giới tính</option>
-                            <option value="Male">Nam</option>
-                            <option value="Female">Nữ</option>
-                            <option value="Other">Khác</option>
-                        </select>
-                    </div>
-                    {errors.gender && <p className="text-[10px] text-red-500 uppercase italic tracking-wider">{errors.gender}</p>}
                 </div>
 
                 {/* Checkbox điều khoản */}
@@ -224,7 +193,7 @@ const RegisterForm = ({ onSwitch }) => {
                     Đã có tài khoản?{" "}
                     <button
                         type="button"
-                        onClick={() => navigate('/login')} // Chuyển URL chuyên nghiệp
+                        onClick={() => navigate('/login')}
                         className="text-yellow-500 font-bold hover:underline cursor-pointer"
                     >
                         Đăng nhập

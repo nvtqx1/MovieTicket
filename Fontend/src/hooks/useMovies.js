@@ -1,26 +1,40 @@
 import { useEffect, useState } from "react";
 import { getMovies } from "../services/api/movieService";
 
-export const useMovies = (params) => {
+export const useMovies = (params = {}, refreshTrigger = 0) => {
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Key ổn định để so sánh theo giá trị
+    const paramsKey = JSON.stringify(params);
+
     useEffect(() => {
+        let isMounted = true;
+
         const fetchData = async () => {
             try {
                 setLoading(true);
                 const data = await getMovies(params);
+
+                if (!isMounted) return;
+
                 setMovies(data);
+                setError(null);
             } catch (err) {
+                if (!isMounted) return;
                 setError(err.message);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchData();
-    }, [JSON.stringify(params)]);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [paramsKey, refreshTrigger]); // chỉ chạy lại khi giá trị params đổi hoặc refreshTrigger đổi
 
     return { movies, loading, error };
 };

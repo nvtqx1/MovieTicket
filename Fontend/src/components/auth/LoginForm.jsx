@@ -1,34 +1,13 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Loader2 } from 'lucide-react';
-import InputField from '../ui/InputField';
-import SocialButton from '../ui/SocialButton';
+import InputField from '../common/InputField';
+import SocialButton from '../common/SocialButton';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';
 
-import defaultAvatar from "../../assets/images/avatarDefault.jpeg";// avatar mặc định của người dùng
-import { validateEmail, validateStrongPassword } from '../../utils/validation';
-
-const MOCK_USERS = [
-    {
-        email: "admin@ticketrush.com",
-        password: "Admin@123",
-        name: "Admin TicketRush",
-        role: "admin", // Dùng để phân quyền truy cập Dashboard Admin
-        age: 30,
-        gender: "Male",
-        avatar: "https://i.pravatar.cc/150?img=12"
-    },
-    {
-        email: "user@gmail.com",
-        password: "User@123",
-        name: "Bùi Trọng Đức",
-        role: "customer", // Khán giả
-        age: 22,
-        gender: "Male",
-        avatar: defaultAvatar
-    }
-];
+import { validateEmail } from '../../utils/validation';
+import { authService } from '../../services/api/authService';
 
 const LoginForm = ({ onSwitch }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -65,28 +44,15 @@ const LoginForm = ({ onSwitch }) => {
 
         setIsLoading(true);
 
-        //Xử lý Async và Loading
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const jwtResponse = await authService.login(formData.email, formData.password);
+            login(jwtResponse);
 
-            const foundUser = MOCK_USERS.find(
-                (u) => u.email === formData.email && u.password === formData.password
-            );
-
-            if (foundUser) {
-                // Xóa password trước khi lưu vào Context/LocalStorage để bảo mật
-                const { password, ...userWithoutPassword } = foundUser;
-
-                login(userWithoutPassword);
-
-                // Chuyển hướng dựa trên Role
-                if (foundUser.role === 'admin') {
-                    navigate('/admin/dashboard');
-                } else {
-                    navigate('/');
-                }
+            const roles = jwtResponse.roles || [];
+            if (roles.includes("ROLE_ADMIN") || roles.includes("ADMIN")) {
+                navigate('/admin/dashboard');
             } else {
-                throw new Error("Email hoặc mật khẩu không chính xác");
+                navigate('/');
             }
         } catch (err) {
             setLoginError(err.message);
