@@ -27,14 +27,79 @@ const MOCK_THEATERS = [
     },
 ];
 
+// GET /v1/theaters
+export const getTheaters = async () => {
+    return new Promise((resolve) => {
+        setTimeout(() => resolve([...MOCK_THEATERS]), 500);
+    });
+};
+
+// GET /v1/theaters/{id}
+export const getTheaterById = async (id) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const theater = MOCK_THEATERS.find(t => t.id === Number(id));
+            if (!theater) reject(new Error("Không tìm thấy rạp."));
+            else resolve(theater);
+        }, 500);
+    });
+};
+
+// POST /v1/theaters
+export const createTheater = async (theaterData) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const newTheater = {
+                id: Math.max(...MOCK_THEATERS.map(t => t.id), 0) + 1,
+                ...theaterData,
+                capacity: Number(theaterData.capacity),
+            };
+            MOCK_THEATERS.push(newTheater);
+            console.log("Theater created:", newTheater);
+            resolve(newTheater);
+        }, 500);
+    });
+};
+
+// PUT /v1/theaters/{id}
+export const updateTheater = async (id, theaterData) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const index = MOCK_THEATERS.findIndex(t => t.id === Number(id));
+            if (index === -1) {
+                reject(new Error("Không tìm thấy rạp để cập nhật."));
+                return;
+            }
+            const updatedTheater = {
+                id: Number(id),
+                ...theaterData,
+                capacity: Number(theaterData.capacity),
+            };
+            MOCK_THEATERS[index] = updatedTheater;
+            console.log("Theater updated:", updatedTheater);
+            resolve(updatedTheater);
+        }, 500);
+    });
+};
+
+// DELETE /v1/theaters/{id}
+export const deleteTheater = async (id) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const index = MOCK_THEATERS.findIndex(t => t.id === Number(id));
+            if (index === -1) {
+                reject(new Error("Không tìm thấy rạp để xóa."));
+                return;
+            }
+            const deletedTheater = MOCK_THEATERS.splice(index, 1)[0];
+            console.log("Theater deleted:", deletedTheater);
+            resolve(deletedTheater);
+        }, 500);
+    });
+};
+
 export const theaterService = {
     getAll: async () => {
-        // giả lập API
-        return new Promise((resolve) => {
-            setTimeout(() => resolve(MOCK_THEATERS), 500);
-        });
-
-        // 👉 sau này:
-        // return axios.get('/v1/theaters')
+        return getTheaters();
     },
 };

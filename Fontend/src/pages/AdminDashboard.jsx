@@ -1,13 +1,61 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import StatCard from '../components/admin/StatCard';
-
-const activeShows = [
-    { id: 1, title: 'SINNERS', price: '$ 200', time: 'Thu, Jan 12 10:00 PM', image: 'https://via.placeholder.com/150x200' },
-    { id: 2, title: 'LILO & STITCH', price: '$ 120', time: 'Thu, Jan 12 08:30 PM', image: 'https://via.placeholder.com/150x200' },
-    // Thêm các show khác...
-];
+import { getDashboardSummary, getDailyRevenue } from '../services/api/dashboardService';
 
 const AdminDashboard = () => {
+    const [summary, setSummary] = useState(null);
+    const [dailyRevenue, setDailyRevenue] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const [summaryData, revenueData] = await Promise.all([
+                    getDashboardSummary(),
+                    getDailyRevenue(),
+                ]);
+
+                setSummary(summaryData);
+                setDailyRevenue(Array.isArray(revenueData) ? revenueData : []);
+            } catch (err) {
+                setError(err.message || 'Lỗi khi tải dữ liệu');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Format currency
+    const formatCurrency = (value) =>
+        new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+            notation: 'compact',
+        }).format(value ?? 0);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96 text-white">
+                <div className="w-10 h-10 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-96 text-red-500">
+                {error}
+            </div>
+        );
+    }
+
     return (
         <div className="p-10">
             <header className="mb-10">
@@ -15,40 +63,121 @@ const AdminDashboard = () => {
                 <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Chào mừng trở lại, Quản trị viên TMT.</p>
             </header>
 
-            {/* Thống kê nhanh */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <StatCard title="Tổng vé đã đặt" value="3,124" icon="🎟️" color="text-blue-500" />
-                <StatCard title="Doanh thu" value="$128,450" icon="💰" color="text-green-500" />
-                <StatCard title="Khán giả mới" value="42" icon="📈" color="text-yellow-500" />
-                <StatCard title="Phim đang chiếu" value="12" icon="🎥" color="text-red-500" />
-            </div>
-
-            {/* Danh sách Active Shows */}
-            <section>
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                        <span className="w-1 h-4 bg-red-600 rounded-full"></span> Suất chiếu đang hoạt động
-                    </h2>
-                    <button className="text-[10px] font-bold text-red-500 hover:underline uppercase tracking-widest">Xem tất cả</button>
+            {/* Thống kê nhanh từ API */}
+            {summary && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <StatCard
+                        title="Tổng vé đã đặt"
+                        value={summary.totalTicketsSold?.toLocaleString() || '0'}
+                        icon="🎟️"
+                        color="text-blue-500"
+                    />
+                    <StatCard
+                        title="Doanh thu"
+                        value={formatCurrency(summary.totalRevenue)}
+                        icon="💰"
+                        color="text-green-500"
+                    />
+                    <StatCard
+                        title="Doanh thu hôm nay"
+                        value={formatCurrency(summary.todayRevenue)}
+                        icon="📊"
+                        color="text-yellow-500"
+                    />
+                    <StatCard
+                        title="Phim đang chiếu"
+                        value={summary.totalMovies?.toString() || '0'}
+                        icon="🎥"
+                        color="text-red-500"
+                    />
                 </div>
+            )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-                    {activeShows.map(show => (
-                        <div key={show.id} className="bg-[#111] rounded-lg border border-white/5 overflow-hidden hover:border-red-600/30 transition-all cursor-pointer group">
-                            <div className="aspect-[3/4] overflow-hidden relative">
-                                <img src={show.image} alt={show.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
-                                    <p className="text-[10px] font-black text-white truncate">{show.title}</p>
-                                    <p className="text-[9px] text-red-500 font-bold">{show.price}</p>
-                                </div>
+            {/* Biểu đồ doanh thu 7 ngày */}
+            <section className="bg-[#111] border border-white/5 rounded-lg p-6 mb-12">
+                <h2 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span className="w-1 h-4 bg-red-600 rounded-full"></span> Doanh thu 7 ngày gần nhất
+                </h2>
+
+                {dailyRevenue.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={dailyRevenue}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                            <XAxis
+                                dataKey="date"
+                                stroke="#999"
+                                style={{ fontSize: '12px' }}
+                            />
+                            <YAxis
+                                stroke="#999"
+                                style={{ fontSize: '12px' }}
+                                tickFormatter={(value) => formatCurrency(value)}
+                            />
+                            <Tooltip
+                                formatter={(value) => formatCurrency(value)}
+                                contentStyle={{ backgroundColor: '#222', border: '1px solid #666' }}
+                                labelStyle={{ color: '#fff' }}
+                            />
+                            <Legend />
+                            <Line
+                                type="monotone"
+                                dataKey="totalRevenue"
+                                stroke="#dc2626"
+                                strokeWidth={2}
+                                dot={{ fill: '#dc2626' }}
+                                name="Doanh thu"
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <p className="text-gray-400">Không có dữ liệu doanh thu</p>
+                )}
+            </section>
+
+            {/* Thông tin tóm tắt */}
+            {summary && (
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-[#111] border border-white/5 rounded-lg p-6">
+                        <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-1 h-4 bg-red-600 rounded-full"></span> Thống kê chung
+                        </h3>
+                        <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex justify-between">
+                                <span>Tổng rạp:</span>
+                                <span className="font-bold text-white">{summary.totalTheaters || 0}</span>
                             </div>
-                            <div className="p-3">
-                                <p className="text-[8px] text-gray-500 font-bold uppercase">{show.time}</p>
+                            <div className="flex justify-between">
+                                <span>Tổng lịch chiếu:</span>
+                                <span className="font-bold text-white">{summary.totalShowtimes || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Tổng đơn đặt:</span>
+                                <span className="font-bold text-white">{summary.totalReservations?.toLocaleString() || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Tổng người dùng:</span>
+                                <span className="font-bold text-white">{summary.totalUsers?.toLocaleString() || 0}</span>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </section>
+                    </div>
+
+                    <div className="bg-[#111] border border-white/5 rounded-lg p-6">
+                        <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-1 h-4 bg-red-600 rounded-full"></span> Hôm nay
+                        </h3>
+                        <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex justify-between">
+                                <span>Doanh thu:</span>
+                                <span className="font-bold text-green-400">{formatCurrency(summary.todayRevenue)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Đơn đặt:</span>
+                                <span className="font-bold text-blue-400">{summary.todayReservations?.toLocaleString() || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
         </div>
     );
 };

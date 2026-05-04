@@ -143,3 +143,81 @@ export const getShowtimesByMovieId = async (movieId) => {
     // if (!res.ok) throw new Error("Failed to fetch showtimes");
     // return res.json();
 };
+
+// POST /v1/movies — Tạo phim mới
+export const createMovie = async (movieData) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const newMovie = {
+                id: Math.max(...mockMovies.map(m => m.id), 0) + 1,
+                ...movieData,
+                releaseYear: Number(movieData.releaseYear),
+            };
+            mockMovies.push(newMovie);
+            mockMovieDetails[newMovie.id] = newMovie;
+            console.log("Movie created:", newMovie);
+            resolve(newMovie);
+        }, 500);
+    });
+
+    // const res = await fetch(`${API_URL}`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(movieData)
+    // });
+    // if (!res.ok) throw new Error("Failed to create movie");
+    // return res.json();
+};
+
+// PUT /v1/movies/{id} — Cập nhật phim
+export const updateMovie = async (id, movieData) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const index = mockMovies.findIndex(m => m.id === Number(id));
+            if (index === -1) {
+                reject(new Error("Không tìm thấy phim để cập nhật."));
+                return;
+            }
+            const updatedMovie = {
+                id: Number(id),
+                ...movieData,
+                releaseYear: Number(movieData.releaseYear),
+            };
+            mockMovies[index] = updatedMovie;
+            mockMovieDetails[id] = updatedMovie;
+            console.log("Movie updated:", updatedMovie);
+            resolve(updatedMovie);
+        }, 500);
+    });
+
+    // const res = await fetch(`${API_URL}/${id}`, {
+    //   method: 'PUT',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(movieData)
+    // });
+    // if (!res.ok) throw new Error("Failed to update movie");
+    // return res.json();
+};
+
+// DELETE /v1/movies/{id} — Xóa phim
+export const deleteMovie = async (id) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const index = mockMovies.findIndex(m => m.id === Number(id));
+            if (index === -1) {
+                reject(new Error("Không tìm thấy phim để xóa."));
+                return;
+            }
+            const deletedMovie = mockMovies.splice(index, 1)[0];
+            delete mockMovieDetails[id];
+            console.log("Movie deleted:", deletedMovie);
+            resolve(deletedMovie);
+        }, 500);
+    });
+
+    // const res = await fetch(`${API_URL}/${id}`, {
+    //   method: 'DELETE'
+    // });
+    // if (!res.ok) throw new Error("Failed to delete movie");
+    // return res.json();
+};

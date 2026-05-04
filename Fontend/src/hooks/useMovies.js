@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getMovies } from "../services/api/movieService";
 
-export const useMovies = (params = {}) => {
+export const useMovies = (params = {}, refreshTrigger = 0) => {
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,7 +34,7 @@ export const useMovies = (params = {}) => {
         return () => {
             isMounted = false;
         };
-    }, [paramsKey]); // chỉ chạy lại khi giá trị params đổi
+    }, [paramsKey, refreshTrigger]); // chỉ chạy lại khi giá trị params đổi hoặc refreshTrigger đổi
 
     return { movies, loading, error };
 };

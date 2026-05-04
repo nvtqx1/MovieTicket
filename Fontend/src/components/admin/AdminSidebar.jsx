@@ -1,14 +1,13 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
-import { BarChart3, LayoutDashboard, Film, Users, Settings } from "lucide-react";
+import { BarChart3, LayoutDashboard, Film, Grid2X2 } from "lucide-react";
 
 const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Thống kê", path: "/admin/revenue-analytics", icon: BarChart3 },
     { name: "Phim", path: "/admin/movies", icon: Film },
-    { name: "Người dùng", path: "/admin/users", icon: Users },
-    { name: "Cài đặt", path: "/admin/settings", icon: Settings },
+    { name: "Ghế", path: "/admin/seat-creator", icon: Grid2X2 },
 ];
 
 export default function AdminSidebar() {

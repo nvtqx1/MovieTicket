@@ -15,6 +15,8 @@ import Theaters from "./pages/Theaters";
 import Booking from "./pages/Booking";
 import AdminDashboard from "./pages/AdminDashboard";
 import RevenueAnalytics from "./pages/RevenueAnalytics";
+import AdminMovies from "./pages/AdminMovies";
+import AdminSeatCreator from "./pages/AdminSeatCreator";
 import Checkout from "./pages/Checkout";
 
 function App() {
@@ -98,6 +100,19 @@ function App() {
           </AdminLayout>
         } />
 
+        <Route path="/admin/movies" element={
+          <AdminLayout>
+            <AdminMovies />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/seat-creator" element={
+          <AdminLayout>
+            <AdminSeatCreator />
+          </AdminLayout>
+        } />
+
+        {/* Catch-all route - phải ở cuối */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
