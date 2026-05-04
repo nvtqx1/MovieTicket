@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Movies from "./pages/Movies";
 import MovieDetail from "./pages/MovieDetail";
+import Theaters from "./pages/Theaters";
 import Booking from "./pages/Booking";
 import AdminDashboard from "./pages/AdminDashboard";
 import Checkout from "./pages/Checkout";
@@ -36,6 +37,12 @@ function App() {
         <Route path="/movies/:id" element={
           <MainLayout>
             <MovieDetail />
+          </MainLayout>
+        } />
+
+        <Route path="/theaters" element={
+          <MainLayout>
+            <Theaters />
           </MainLayout>
         } />
 

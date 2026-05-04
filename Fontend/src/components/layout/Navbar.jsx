@@ -7,7 +7,7 @@ import defaultAvatar from "../../assets/images/avatarDefault.jpeg";
 const navLinks = [
     { name: "Home", href: "/" },
     { name: "Phim", href: "/movies" },
-
+    { name: "Rạp", href: "/theaters" },
 ];
 
 export default function Navbar() {
