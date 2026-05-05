@@ -5,6 +5,7 @@ import com.ticketrush.backend.dto.CreateReservationRequest;
 import com.ticketrush.backend.dto.CreateReservationResponse;
 import com.ticketrush.backend.dto.ReservationResponse;
 import com.ticketrush.backend.dto.TicketResponse;
+import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -440,6 +441,45 @@ public class ReservationController {
     // ========== Private Helper Methods ==========
 
     /**
+     * Hủy đơn đặt vé (Cancel Reservation).
+     *
+     * API Endpoint: POST /api/v1/reservations/{reservationId}/cancel
+     */
+    @PostMapping("/{reservationId}/cancel")
+    @Operation(
+            summary = "🚫 Hủy đơn đặt vé",
+            description = "Hủy đơn đặt vé. Chỉ người tạo đơn hoặc Admin mới được hủy.",
+            security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    public ResponseEntity<?> cancelReservation(
+            @PathVariable Long reservationId,
+            Authentication authentication) {
+        try {
+            Long userId = extractUserId(authentication);
+            log.info("🚫 User {} yêu cầu hủy đơn {}", userId, reservationId);
+            
+            reservationService.cancelReservation(reservationId, userId);
+            
+            return ResponseEntity.ok(Map.of(
+                    "apiStatus", "SUCCESS",
+                    "message", "✅ Hủy đơn thành công"
+            ));
+        } catch (IllegalArgumentException e) {
+            log.warn("⚠️ Lỗi: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "apiStatus", "FAILED",
+                    "message", "❌ " + e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("❌ Lỗi hệ thống khi hủy đơn: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "apiStatus", "FAILED",
+                    "message", "❌ Lỗi hệ thống"
+            ));
+        }
+    }
+
+    /**
      * Trích xuất User ID từ Authentication object.
      *
      * @param authentication Spring Security Authentication
@@ -451,18 +491,11 @@ public class ReservationController {
             throw new IllegalArgumentException("❌ Chưa đăng nhập");
         }
 
-        try {
-            // Giả sử user ID được lưu trong principal (tùy implement)
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof String) {
-                return Long.parseLong((String) principal);
-            }
-            // Nếu có UserDetails object khác, sửa logic này
-            throw new IllegalArgumentException("❌ Không thể trích xuất user ID");
-        } catch (NumberFormatException e) {
-            log.error("❌ Lỗi parse user ID: {}", e.getMessage());
-            throw new IllegalArgumentException("❌ User ID không hợp lệ");
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetailsImpl userDetails) {
+            return userDetails.getId();
         }
+        throw new IllegalArgumentException("❌ Không thể trích xuất user ID");
     }
 
     /**

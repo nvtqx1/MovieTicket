@@ -9,4 +9,7 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     // Kéo toàn bộ bình luận của 1 bộ phim ra
     List<Review> findByMovieId(Long movieId);
+    
+    // Kéo bình luận của 1 bộ phim theo trạng thái
+    List<Review> findByMovieIdAndStatus(Long movieId, com.ticketrush.backend.entity.enums.ReviewStatus status);
 }

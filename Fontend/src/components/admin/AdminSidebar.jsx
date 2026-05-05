@@ -1,12 +1,14 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
-import { BarChart3, LayoutDashboard, Film, Grid2X2 } from "lucide-react";
+import { BarChart3, LayoutDashboard, Film, Grid2X2, Calendar, Ticket } from "lucide-react";
 
 const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Thống kê", path: "/admin/revenue-analytics", icon: BarChart3 },
     { name: "Phim", path: "/admin/movies", icon: Film },
+    { name: "Lịch Chiếu", path: "/admin/showtimes", icon: Calendar },
+    { name: "Voucher", path: "/admin/vouchers", icon: Ticket },
     { name: "Ghế", path: "/admin/seat-creator", icon: Grid2X2 },
 ];
 

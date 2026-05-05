@@ -1,7 +1,7 @@
 package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.dto.GenderStatDTO;
-import com.ticketrush.backend.dto.AgeGroupStatDTO;
+import com.ticketrush.backend.dto.AgeGroupStatProjection;
 import com.ticketrush.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -51,36 +51,33 @@ public interface UserRepository extends JpaRepository<User, Long> {
      *
      * @return Danh sách AgeGroupStatDTO chứa nhóm tuổi và số lượng
      */
-     @Query("SELECT new com.ticketrush.backend.dto.AgeGroupStatDTO(" +
-            "  CASE " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 18 THEN '< 18' " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 25 THEN '18-24' " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 35 THEN '25-34' " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 50 THEN '35-49' " +
-            "    ELSE '50+' " +
-            "  END, " +
-            "  COUNT(u), " +
-            "  CAST(CAST(COUNT(u) AS double) * 100 / (SELECT COUNT(u2) FROM User u2) AS double) " +
-            ") " +
-            "FROM User u " +
-            "WHERE u.dateOfBirth IS NOT NULL " +
-            "GROUP BY " +
-            "  CASE " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 18 THEN '< 18' " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 25 THEN '18-24' " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 35 THEN '25-34' " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 50 THEN '35-49' " +
-            "    ELSE '50+' " +
-            "  END " +
-            "ORDER BY " +
-            "  CASE " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 18 THEN 1 " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 25 THEN 2 " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 35 THEN 3 " +
-            "    WHEN CAST(YEAR(CURRENT_DATE()) AS int) - CAST(YEAR(u.dateOfBirth) AS int) < 50 THEN 4 " +
-            "    ELSE 5 " +
-            "  END")
-    List<AgeGroupStatDTO> getAgeGroupStatistics();
+     @Query(value =
+             "SELECT age_group AS ageGroup, cnt AS count, " +
+             "  ROUND(cnt * 100.0 / (SELECT COUNT(*) FROM users), 2) AS percentage " +
+             "FROM ( " +
+             "  SELECT " +
+             "    CASE " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 18 THEN '< 18' " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 25 THEN '18-24' " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 35 THEN '25-34' " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 50 THEN '35-49' " +
+             "      ELSE '50+' " +
+             "    END AS age_group, " +
+             "    CASE " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 18 THEN 1 " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 25 THEN 2 " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 35 THEN 3 " +
+             "      WHEN YEAR(CURDATE()) - YEAR(date_of_birth) < 50 THEN 4 " +
+             "      ELSE 5 " +
+             "    END AS sort_order, " +
+             "    COUNT(*) AS cnt " +
+             "  FROM users " +
+             "  WHERE date_of_birth IS NOT NULL " +
+             "  GROUP BY age_group, sort_order " +
+             ") AS sub " +
+             "ORDER BY sort_order",
+             nativeQuery = true)
+    List<AgeGroupStatProjection> getAgeGroupStatistics();
 
     /**
      * Lấy tổng số người dùng

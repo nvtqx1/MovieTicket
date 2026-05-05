@@ -104,7 +104,7 @@ public class DashboardService {
      *
      * @return Danh sách AgeGroupStatDTO chứa nhóm tuổi, số lượng, và phần trăm
      */
-    public List<AgeGroupStatDTO> getAgeGroupStatistics() {
+    public List<AgeGroupStatProjection> getAgeGroupStatistics() {
         try {
             log.info("📊 Lấy thống kê nhóm tuổi");
             return userRepository.getAgeGroupStatistics();

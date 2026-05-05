@@ -1,223 +1,103 @@
-const API_URL = "/api/v1/movies";
+import api from './api';
 
-// GET /v1/movies — Danh sách phim (Home page)
-const mockMovies = [
-    {
-        id: 1,
-        title: "THE SILENT SHADOW",
-        genre: "Crime",
-        releaseYear: 2024,
-        posterImageUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406",
-    },
-    {
-        id: 2,
-        title: "VOID VOYAGER",
-        genre: "Sci-Fi",
-        releaseYear: 2025,
-        posterImageUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
-    },
-    {
-        id: 3,
-        title: "NEON DREAMS",
-        genre: "Cyberpunk",
-        releaseYear: 2025,
-        posterImageUrl: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
-    },
-    {
-        id: 4,
-        title: "LAST SUNRISE",
-        genre: "Drama",
-        releaseYear: 2024,
-        posterImageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-    },
-];
-
-// GET /v1/movies/{id} — Chi tiết phim
-// id, title, genre, posterImageUrl, description, releaseYear
-const mockMovieDetails = {
-    1: {
-        id: 1,
-        title: "THE SILENT SHADOW",
-        genre: "Crime",
-        posterImageUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406",
-        description: "Một thám tử kỳ cựu bị cuốn vào vụ án bí ẩn khi những tội ác trong quá khứ dần được hé lộ.",
-        releaseYear: 2024,
-    },
-    2: {
-        id: 2,
-        title: "VOID VOYAGER",
-        genre: "Sci-Fi",
-        posterImageUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
-        description: "Hành trình xuyên không gian của một phi hành gia cô đơn tìm kiếm ý nghĩa sự tồn tại.",
-        releaseYear: 2025,
-    },
-    3: {
-        id: 3,
-        title: "NEON DREAMS",
-        genre: "Cyberpunk",
-        posterImageUrl: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
-        description: "Trong siêu đô thị rực rỡ ánh đèn neon, một hacker trẻ phát hiện âm mưu thay đổi thực tại.",
-        releaseYear: 2025,
-    },
-    4: {
-        id: 4,
-        title: "LAST SUNRISE",
-        genre: "Drama",
-        posterImageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-        description: "Câu chuyện cảm động về tình người trong những ngày cuối cùng của một cuộc đời.",
-        releaseYear: 2024,
-    },
-};
-
-// GET /v1/showtimes?movieId={id}
-// showDate, showTime, price, isFlashSale
-//
-const mockShowtimes = [
-    { id: 101, movieId: 1, showDate: "2026-10-24", showTime: "14:20", price: 80000, isFlashSale: false },
-    { id: 102, movieId: 1, showDate: "2026-10-24", showTime: "17:45", price: 90000, isFlashSale: true },
-    { id: 103, movieId: 1, showDate: "2026-10-25", showTime: "21:00", price: 90000, isFlashSale: false },
-    { id: 201, movieId: 2, showDate: "2026-10-24", showTime: "15:30", price: 85000, isFlashSale: false },
-    { id: 202, movieId: 2, showDate: "2026-10-25", showTime: "19:30", price: 120000, isFlashSale: true },
-    { id: 301, movieId: 3, showDate: "2026-10-24", showTime: "18:15", price: 90000, isFlashSale: false },
-    { id: 401, movieId: 4, showDate: "2026-10-25", showTime: "14:00", price: 80000, isFlashSale: false },
-];
-
-// ==========================================
-// API FUNCTIONS
-// ==========================================
-
-// GET /v1/movies
+/**
+ * GET /api/v1/movies?page=0&size=10
+ * Backend returns Page<MovieResponse>: { content: [...], totalPages, totalElements, ... }
+ * 
+ * @param {{ page?: number, size?: number, search?: string, genre?: string }} params
+ * @returns {{ content: MovieResponse[], totalPages: number, totalElements: number }}
+ */
 export const getMovies = async (params = {}) => {
-    console.log("Mock API called with:", params);
+    const query = new URLSearchParams();
+    if (params.page !== undefined) query.set('page', params.page);
+    if (params.size !== undefined) query.set('size', params.size);
 
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let data = [...mockMovies];
+    const queryStr = query.toString();
+    const path = queryStr ? `/movies?${queryStr}` : '/movies';
+    const response = await api.get(path);
 
-            if (params.search) {
-                data = data.filter((m) =>
-                    m.title.toLowerCase().includes(params.search.toLowerCase())
-                );
-            }
-            if (params.genre) {
-                data = data.filter((m) => m.genre === params.genre);
-            }
-            if (params.releaseYear) {
-                data = data.filter((m) => m.releaseYear === Number(params.releaseYear));
-            }
+    // Backend returns Page<MovieResponse>, extract content array
+    const data = response.data;
 
-            resolve(data);
-        }, 800);
-    });
+    // If paginated response, return content array for backward compat
+    if (data && Array.isArray(data.content)) {
+        return data.content;
+    }
 
-    // const query = new URLSearchParams(params).toString();
-    // const res = await fetch(`${API_URL}?${query}`);
-    // if (!res.ok) throw new Error("Failed to fetch movies");
-    // return res.json();
+    // If it's already an array (fallback)
+    if (Array.isArray(data)) {
+        return data;
+    }
+
+    return [];
 };
 
-// GET /v1/movies/{id}
+/**
+ * GET /api/v1/movies?page=0&size=10 (returns full page object)
+ * Use this when you need pagination info
+ */
+export const getMoviesPaginated = async (page = 0, size = 10) => {
+    const response = await api.get(`/movies?page=${page}&size=${size}`);
+    return response.data; // Page<MovieResponse>
+};
+
+/**
+ * GET /api/v1/movies/{id}
+ * @returns MovieResponse: { id, title, description, releaseYear, genre, posterImageUrl }
+ */
 export const getMovieById = async (id) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const movie = mockMovieDetails[id];
-            if (!movie) reject(new Error("Không tìm thấy phim."));
-            else resolve(movie);
-        }, 600);
-    });
-
-    // const res = await fetch(`${API_URL}/${id}`);
-    // if (!res.ok) throw new Error("Không tìm thấy phim.");
-    // return res.json();
+    const response = await api.get(`/movies/${id}`);
+    return response.data;
 };
 
-// GET /v1/showtimes?movieId={id}
+/**
+ * GET /api/v1/showtimes?movieId={id}
+ * @returns Page<ShowtimeResponse>
+ */
 export const getShowtimesByMovieId = async (movieId) => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(mockShowtimes.filter((st) => st.movieId === Number(movieId)));
-        }, 600);
-    });
+    const response = await api.get(`/showtimes?movieId=${movieId}&size=50`);
+    const data = response.data;
 
-    // const res = await fetch(`/api/v1/showtimes?movieId=${movieId}`);
-    // if (!res.ok) throw new Error("Failed to fetch showtimes");
-    // return res.json();
+    // Backend returns Page<ShowtimeResponse>, extract content
+    if (data && Array.isArray(data.content)) {
+        return data.content;
+    }
+    if (Array.isArray(data)) {
+        return data;
+    }
+    return [];
 };
 
-// POST /v1/movies — Tạo phim mới
+/**
+ * POST /api/v1/movies
+ * @param {{ title, description, releaseYear, genre, posterImageUrl }} movieData
+ * @returns MovieResponse
+ */
 export const createMovie = async (movieData) => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const newMovie = {
-                id: Math.max(...mockMovies.map(m => m.id), 0) + 1,
-                ...movieData,
-                releaseYear: Number(movieData.releaseYear),
-            };
-            mockMovies.push(newMovie);
-            mockMovieDetails[newMovie.id] = newMovie;
-            console.log("Movie created:", newMovie);
-            resolve(newMovie);
-        }, 500);
+    const response = await api.post('/movies', {
+        ...movieData,
+        releaseYear: Number(movieData.releaseYear),
     });
-
-    // const res = await fetch(`${API_URL}`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(movieData)
-    // });
-    // if (!res.ok) throw new Error("Failed to create movie");
-    // return res.json();
+    return response.data;
 };
 
-// PUT /v1/movies/{id} — Cập nhật phim
+/**
+ * PUT /api/v1/movies/{id}
+ * Note: Backend may not have PUT endpoint yet, keeping for future use
+ */
 export const updateMovie = async (id, movieData) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const index = mockMovies.findIndex(m => m.id === Number(id));
-            if (index === -1) {
-                reject(new Error("Không tìm thấy phim để cập nhật."));
-                return;
-            }
-            const updatedMovie = {
-                id: Number(id),
-                ...movieData,
-                releaseYear: Number(movieData.releaseYear),
-            };
-            mockMovies[index] = updatedMovie;
-            mockMovieDetails[id] = updatedMovie;
-            console.log("Movie updated:", updatedMovie);
-            resolve(updatedMovie);
-        }, 500);
+    const response = await api.put(`/movies/${id}`, {
+        ...movieData,
+        releaseYear: Number(movieData.releaseYear),
     });
-
-    // const res = await fetch(`${API_URL}/${id}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(movieData)
-    // });
-    // if (!res.ok) throw new Error("Failed to update movie");
-    // return res.json();
+    return response.data;
 };
 
-// DELETE /v1/movies/{id} — Xóa phim
+/**
+ * DELETE /api/v1/movies/{id}
+ * Note: Backend may not have DELETE endpoint yet, keeping for future use
+ */
 export const deleteMovie = async (id) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const index = mockMovies.findIndex(m => m.id === Number(id));
-            if (index === -1) {
-                reject(new Error("Không tìm thấy phim để xóa."));
-                return;
-            }
-            const deletedMovie = mockMovies.splice(index, 1)[0];
-            delete mockMovieDetails[id];
-            console.log("Movie deleted:", deletedMovie);
-            resolve(deletedMovie);
-        }, 500);
-    });
-
-    // const res = await fetch(`${API_URL}/${id}`, {
-    //   method: 'DELETE'
-    // });
-    // if (!res.ok) throw new Error("Failed to delete movie");
-    // return res.json();
+    const response = await api.delete(`/movies/${id}`);
+    return response.data;
 };

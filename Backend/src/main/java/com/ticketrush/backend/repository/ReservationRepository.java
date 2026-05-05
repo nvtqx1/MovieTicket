@@ -19,6 +19,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     // Lấy lịch sử đặt vé của một người dùng (Sắp xếp mới nhất lên đầu)
     List<Reservation> findByUserIdOrderByReservationTimeDesc(Long userId);
 
+    // Tìm các đơn đặt vé đã quá hạn giữ ghế
+    @Query("SELECT r FROM Reservation r WHERE r.status = com.ticketrush.backend.entity.enums.ReservationStatus.LOCKED AND r.expiresAt < :now")
+    List<Reservation> findExpiredLockedReservations(@Param("now") LocalDateTime now);
+
     // ========== NGÀY 19-21: DASHBOARD QUERIES (JPQL NÂNG CAO) ==========
 
     /**

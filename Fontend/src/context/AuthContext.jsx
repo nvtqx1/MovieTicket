@@ -18,11 +18,22 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
+    // Lắng nghe sự kiện auto-logout khi token hết hạn (401)
+    useEffect(() => {
+        const handleAutoLogout = () => {
+            setUser(null);
+            setRoles([]);
+        };
+        window.addEventListener('auth:logout', handleAutoLogout);
+        return () => window.removeEventListener('auth:logout', handleAutoLogout);
+    }, []);
+
     // Hàm xử lý Đăng nhập
     const login = (jwtResponse) => {
         const authData = {
             token: jwtResponse.token,
             type: jwtResponse.type || "Bearer",
+            email: jwtResponse.email || null,
             roles: jwtResponse.roles || [],
             avatar: null,
         };

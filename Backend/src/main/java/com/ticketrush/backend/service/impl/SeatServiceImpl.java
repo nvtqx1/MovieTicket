@@ -214,8 +214,10 @@ public class SeatServiceImpl implements SeatService {
      * Bao gồm tính giá bán cuối cùng dựa trên seat type multiplier
      */
     private SeatResponse mapToSeatResponse(Seat seat, Showtime showtime) {
-        BigDecimal basePrice = showtime.getPrice();
-        BigDecimal priceMultiplier = seat.getSeatType().getPriceMultiplier();
+        BigDecimal basePrice = showtime.getPrice() != null ? showtime.getPrice() : BigDecimal.ZERO;
+        BigDecimal priceMultiplier = seat.getSeatType() != null && seat.getSeatType().getPriceMultiplier() != null 
+            ? seat.getSeatType().getPriceMultiplier() 
+            : BigDecimal.ONE;
         BigDecimal finalPrice = basePrice.multiply(priceMultiplier);
 
         return SeatResponse.builder()

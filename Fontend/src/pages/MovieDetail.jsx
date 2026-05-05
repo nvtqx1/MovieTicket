@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Clock, Tag, Calendar, Ticket, Play } from "lucide-react";
 import { getMovieById, getShowtimesByMovieId } from "../services/api/movieService";
+import ReviewSection from "../components/movie/ReviewSection";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -9,6 +10,13 @@ const formatPrice = (price) =>
 const parseLocalDate = (dateStr) => {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
+};
+
+// Backend trả về LocalTime dạng "19:30:00", cắt bỏ giây
+const formatTime = (timeStr) => {
+    if (!timeStr) return "";
+    const parts = timeStr.split(":");
+    return `${parts[0]}:${parts[1]}`;
 };
 
 // ==========================================
@@ -190,6 +198,9 @@ export default function MovieDetail() {
                             </span>
                         </div>
                     </section>
+
+                    {/* REVIEWS SECTION */}
+                    <ReviewSection movieId={id} />
                 </div>
 
                 {/* CỘT PHẢI - BOOKING PANEL */}
@@ -245,7 +256,7 @@ export default function MovieDetail() {
                                                         : "bg-[#1a1a1a] border border-white/10 text-gray-300 hover:border-white/30"
                                                     }`}
                                             >
-                                                {st.showTime}
+                                                {formatTime(st.showTime)}
                                                 {st.isFlashSale && (
                                                     <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse" />
                                                 )}
@@ -257,14 +268,34 @@ export default function MovieDetail() {
                         </div>
 
                         {/* Summary + CTA */}
-                        <div className="mt-6 pt-4 border-t border-white/5 space-y-4">
+                        <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
                             {selectedShowtime && (
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-400">Giá vé</span>
-                                    <span className="font-bold text-white">
-                                        {formatPrice(selectedShowtime.price)}
-                                    </span>
-                                </div>
+                                <>
+                                    {selectedShowtime.theater && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400">Rạp</span>
+                                            <span className="text-white text-right">{selectedShowtime.theater.name}</span>
+                                        </div>
+                                    )}
+                                    {selectedShowtime.roomName && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400">Phòng</span>
+                                            <span className="text-white">{selectedShowtime.roomName}</span>
+                                        </div>
+                                    )}
+                                    {selectedShowtime.availableSeats != null && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400">Ghế trống</span>
+                                            <span className="text-white">{selectedShowtime.availableSeats}/{selectedShowtime.totalSeats}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Giá vé</span>
+                                        <span className="font-bold text-white">
+                                            {formatPrice(selectedShowtime.price)}
+                                        </span>
+                                    </div>
+                                </>
                             )}
 
                             <button

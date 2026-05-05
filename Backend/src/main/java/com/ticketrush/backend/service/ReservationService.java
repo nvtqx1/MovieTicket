@@ -116,12 +116,13 @@ public class ReservationService {
                 throw new IllegalArgumentException("Mot hoac nhieu ghe khong ton tai trong suat chieu nay");
             }
 
-            if (seats.stream().anyMatch(seat -> Boolean.TRUE.equals(seat.getIsReserved()))) {
-                throw new IllegalArgumentException("Mot hoac nhieu ghe da duoc dat");
+            if (seats.stream().anyMatch(seat -> 
+                    seat.getReservation() == null || !seat.getReservation().getId().equals(reservation.getId()))) {
+                throw new IllegalArgumentException("Mot hoac nhieu ghe da bi nguoi khac dat hoac khong thuoc don hang nay");
             }
 
             BigDecimal totalPrice = BigDecimal.ZERO;
-            BigDecimal basePrice = reservation.getShowtime().getPrice();
+            BigDecimal basePrice = reservation.getShowtime().getPrice() != null ? reservation.getShowtime().getPrice() : BigDecimal.ZERO;
             for (Seat seat : seats) {
                 totalPrice = totalPrice.add(basePrice.multiply(seat.getSeatType().getPriceMultiplier()));
             }
@@ -340,13 +341,14 @@ public class ReservationService {
                 throw new IllegalArgumentException("❌ Một hoặc nhiều ghế không tồn tại trong suất chiếu này");
             }
 
-            if (seats.stream().anyMatch(seat -> Boolean.TRUE.equals(seat.getIsReserved()))) {
-                throw new IllegalArgumentException("❌ Một hoặc nhiều ghế đã được đặt");
+            // Kiểm tra ghế đã có người giữ (isReserved = true hoặc có reservation_id)
+            if (seats.stream().anyMatch(seat -> Boolean.TRUE.equals(seat.getIsReserved()) || seat.getReservation() != null)) {
+                throw new IllegalArgumentException("❌ Một hoặc nhiều ghế đã được đặt hoặc có người đang giữ chỗ");
             }
 
             // VỀ LỖ HỔNG 1: Tính tiền kèm Loại Ghế (dùng priceMultiplier)
             BigDecimal totalPrice = BigDecimal.ZERO;
-            BigDecimal basePrice = showtime.getPrice();
+            BigDecimal basePrice = showtime.getPrice() != null ? showtime.getPrice() : BigDecimal.ZERO;
             for (Seat seat : seats) {
                 BigDecimal seatPrice = basePrice.multiply(seat.getSeatType().getPriceMultiplier());
                 totalPrice = totalPrice.add(seatPrice);
@@ -406,10 +408,10 @@ public class ReservationService {
             Reservation savedReservation = reservationRepository.save(reservation);
             log.info("✅ Đơn đặt vé đã tạo: ID = {}", savedReservation.getId());
 
-            // Cập nhật reservation_id vào các ghế đã chọn
+            // Cập nhật reservation_id vào các ghế đã chọn và đánh dấu là đang được giữ (isReserved = true)
             for (Seat seat : seats) {
                 seat.setReservation(savedReservation);
-                // Lưu ý: KHÔNG set isReserved = true vì chưa thanh toán
+                seat.setIsReserved(true);
             }
             seatRepository.saveAll(seats);
             log.info("✅ Cập nhật {} ghế thành công", seats.size());
@@ -721,6 +723,95 @@ public class ReservationService {
             log.error("❌ Lỗi xử lý callback: {}", e.getMessage(), e);
             throw new Exception("❌ Lỗi xử lý callback: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Hủy đơn đặt vé do người dùng yêu cầu
+     */
+    @Transactional
+    public void cancelReservation(Long reservationId, Long userId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Đơn đặt vé không tồn tại"));
+
+        // Chỉ user tạo đơn (hoặc Admin - tuỳ logic) mới được hủy
+        if (!reservation.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Không có quyền hủy đơn này");
+        }
+
+        if (reservation.getStatus() == ReservationStatus.CANCELED) {
+            throw new IllegalArgumentException("Đơn đã bị hủy từ trước");
+        }
+        
+        // Cập nhật trạng thái
+        reservation.setStatus(ReservationStatus.CANCELED);
+        
+        // Nhả ghế
+        List<Seat> seats = seatRepository.findByReservationId(reservationId);
+        for (Seat seat : seats) {
+            seat.setIsReserved(false);
+            seat.setReservation(null);
+        }
+        seatRepository.saveAll(seats);
+
+        // Broadcast realtime
+        if (!seats.isEmpty()) {
+            List<String> seatNumbers = seats.stream().map(Seat::getSeatNumber).toList();
+            seatRealtimeService.broadcastSeatStatus(
+                    reservation.getShowtime().getId(),
+                    seatNumbers,
+                    "AVAILABLE",
+                    "Đơn bị hủy bởi người dùng",
+                    null
+            );
+        }
+
+        reservationRepository.save(reservation);
+        log.info("✅ Đã hủy đơn {} và giải phóng {} ghế", reservationId, seats.size());
+    }
+
+    /**
+     * Tự động dọn dẹp các đơn đặt vé đã quá hạn giữ ghế (chạy mỗi phút).
+     * Giải phóng ghế cho người khác mua.
+     */
+    @Transactional
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
+    public void cleanupExpiredReservations() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Reservation> expiredReservations = reservationRepository.findExpiredLockedReservations(now);
+
+        if (expiredReservations.isEmpty()) {
+            return;
+        }
+
+        log.info("🧹 Đang dọn dẹp {} đơn đặt vé quá hạn giữ ghế", expiredReservations.size());
+
+        for (Reservation reservation : expiredReservations) {
+            log.info("  - Hủy đơn: {}, hết hạn lúc: {}", reservation.getId(), reservation.getExpiresAt());
+            reservation.setStatus(ReservationStatus.CANCELED);
+            
+            // Lấy danh sách ghế đang bị đơn này giữ
+            List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
+            for (Seat seat : seats) {
+                seat.setIsReserved(false);
+                seat.setReservation(null);
+            }
+            seatRepository.saveAll(seats);
+
+            // Gửi realtime báo ghế trống lại
+            if (!seats.isEmpty()) {
+                List<String> seatNumbers = seats.stream().map(Seat::getSeatNumber).toList();
+                seatRealtimeService.broadcastSeatStatus(
+                        reservation.getShowtime().getId(),
+                        seatNumbers,
+                        "AVAILABLE",
+                        "Đơn #" + reservation.getId() + " quá hạn",
+                        null
+                );
+            }
+        }
+
+        reservationRepository.saveAll(expiredReservations);
+        log.info("✅ Dọn dẹp hoàn tất");
     }
 }
 

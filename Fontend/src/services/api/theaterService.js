@@ -1,105 +1,77 @@
-// Sau này chỉ cần đổi mock → axios là xong
+import api from './api';
 
-const MOCK_THEATERS = [
-    {
-        id: 1,
-        name: "Lumière Landmark 72",
-        location: "Hà Nội",
-        capacity: 500,
-        image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80",
-        type: "Premium",
-    },
-    {
-        id: 2,
-        name: "Lumière Bitexco",
-        location: "TP. Hồ Chí Minh",
-        capacity: 800,
-        image: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80",
-        type: "IMAX",
-    },
-    {
-        id: 3,
-        name: "Lumière Đà Nẵng",
-        location: "Đà Nẵng",
-        capacity: 450,
-        image: null,
-        type: "Standard",
-    },
-];
-
-// GET /v1/theaters
+/**
+ * GET /api/v1/theaters
+ * @returns TheaterResponse[]: [{ id, name, location, capacity }]
+ */
 export const getTheaters = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve([...MOCK_THEATERS]), 500);
-    });
+    const response = await api.get('/theaters');
+    return response.data;
 };
 
-// GET /v1/theaters/{id}
+/**
+ * GET /api/v1/theaters/{id}
+ * Note: Backend doesn't have this endpoint explicitly, but keeping for future
+ */
 export const getTheaterById = async (id) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const theater = MOCK_THEATERS.find(t => t.id === Number(id));
-            if (!theater) reject(new Error("Không tìm thấy rạp."));
-            else resolve(theater);
-        }, 500);
-    });
+    const response = await api.get(`/theaters/${id}`);
+    return response.data;
 };
 
-// POST /v1/theaters
+/**
+ * POST /api/v1/theaters
+ * @param {{ name, location, capacity }} theaterData
+ * @returns TheaterResponse
+ */
 export const createTheater = async (theaterData) => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const newTheater = {
-                id: Math.max(...MOCK_THEATERS.map(t => t.id), 0) + 1,
-                ...theaterData,
-                capacity: Number(theaterData.capacity),
-            };
-            MOCK_THEATERS.push(newTheater);
-            console.log("Theater created:", newTheater);
-            resolve(newTheater);
-        }, 500);
+    const response = await api.post('/theaters', {
+        ...theaterData,
+        capacity: Number(theaterData.capacity),
     });
+    return response.data;
 };
 
-// PUT /v1/theaters/{id}
+/**
+ * PUT /api/v1/theaters/{id}
+ * Note: Backend may not have this yet
+ */
 export const updateTheater = async (id, theaterData) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const index = MOCK_THEATERS.findIndex(t => t.id === Number(id));
-            if (index === -1) {
-                reject(new Error("Không tìm thấy rạp để cập nhật."));
-                return;
-            }
-            const updatedTheater = {
-                id: Number(id),
-                ...theaterData,
-                capacity: Number(theaterData.capacity),
-            };
-            MOCK_THEATERS[index] = updatedTheater;
-            console.log("Theater updated:", updatedTheater);
-            resolve(updatedTheater);
-        }, 500);
+    const response = await api.put(`/theaters/${id}`, {
+        ...theaterData,
+        capacity: Number(theaterData.capacity),
     });
+    return response.data;
 };
 
-// DELETE /v1/theaters/{id}
+/**
+ * DELETE /api/v1/theaters/{id}
+ * Note: Backend may not have this yet
+ */
 export const deleteTheater = async (id) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const index = MOCK_THEATERS.findIndex(t => t.id === Number(id));
-            if (index === -1) {
-                reject(new Error("Không tìm thấy rạp để xóa."));
-                return;
-            }
-            const deletedTheater = MOCK_THEATERS.splice(index, 1)[0];
-            console.log("Theater deleted:", deletedTheater);
-            resolve(deletedTheater);
-        }, 500);
-    });
+    const response = await api.delete(`/theaters/${id}`);
+    return response.data;
 };
 
+/**
+ * GET /api/v1/theaters/{theaterId}/rooms
+ * @returns RoomResponse[]: [{ id, name, capacity }]
+ */
+export const getRoomsByTheater = async (theaterId) => {
+    const response = await api.get(`/theaters/${theaterId}/rooms`);
+    return response.data;
+};
+
+/**
+ * POST /api/v1/theaters/{theaterId}/rooms
+ * @param {{ name, capacity }} roomData
+ * @returns RoomResponse
+ */
+export const createRoom = async (theaterId, roomData) => {
+    const response = await api.post(`/theaters/${theaterId}/rooms`, roomData);
+    return response.data;
+};
+
+// Named export for backward compatibility
 export const theaterService = {
-    getAll: async () => {
-        return getTheaters();
-    },
+    getAll: getTheaters,
 };

@@ -17,6 +17,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import RevenueAnalytics from "./pages/RevenueAnalytics";
 import AdminMovies from "./pages/AdminMovies";
 import AdminSeatCreator from "./pages/AdminSeatCreator";
+import AdminShowtimes from "./pages/AdminShowtimes";
+import AdminVouchers from "./pages/AdminVouchers";
 import Checkout from "./pages/Checkout";
 
 function App() {
@@ -103,6 +105,18 @@ function App() {
         <Route path="/admin/movies" element={
           <AdminLayout>
             <AdminMovies />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/showtimes" element={
+          <AdminLayout>
+            <AdminShowtimes />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/vouchers" element={
+          <AdminLayout>
+            <AdminVouchers />
           </AdminLayout>
         } />
 

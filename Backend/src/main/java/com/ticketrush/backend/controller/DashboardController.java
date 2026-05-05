@@ -133,10 +133,10 @@ public class DashboardController {
             description = "Hiển thị phân bố người dùng theo nhóm tuổi"
     )
     @ApiResponse(responseCode = "200", description = "✅ Lấy thống kê thành công")
-    public ResponseEntity<List<AgeGroupStatDTO>> getAgeGroupStatistics() {
+    public ResponseEntity<List<AgeGroupStatProjection>> getAgeGroupStatistics() {
         try {
             log.info("📊 Admin yêu cầu thống kê nhóm tuổi");
-            List<AgeGroupStatDTO> stats = dashboardService.getAgeGroupStatistics();
+            List<AgeGroupStatProjection> stats = dashboardService.getAgeGroupStatistics();
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             log.error("❌ Lỗi lấy thống kê nhóm tuổi: {}", e.getMessage());
