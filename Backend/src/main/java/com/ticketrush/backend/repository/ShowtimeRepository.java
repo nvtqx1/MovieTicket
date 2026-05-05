@@ -22,8 +22,6 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     // Tùy chọn thêm: Tìm suất chiếu theo Rạp và Ngày (dành cho màn hình "Chọn Rạp trước, chọn Phim sau")
     List<Showtime> findByRoomTheaterIdAndShowDateOrderByShowTimeAsc(Long theaterId, LocalDate showDate);
 
-    Optional<Showtime> findFistByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
-
     @Query("""
             SELECT s
             FROM Showtime s
