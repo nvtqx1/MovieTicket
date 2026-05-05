@@ -5,9 +5,9 @@ import { useAuthContext } from "../../context/AuthContext";
 import defaultAvatar from "../../assets/images/avatarDefault.jpeg";
 
 const navLinks = [
+    { name: "Home", href: "/" },
     { name: "Phim", href: "/movies" },
-    { name: "Rạp chiếu", href: "/cinemas" },
-    { name: "Ưu đãi", href: "/promotions" },
+    { name: "Rạp", href: "/theaters" },
 ];
 
 export default function Navbar() {
@@ -98,7 +98,7 @@ export default function Navbar() {
                     </div>
 
                     {/* Bell */}
-                    <button className="hidden sm:block text-gray-400 hover:text-white p-1">
+                    <button className="hidden sm:block text-gray-400 hover:text-white p-1 cursor-pointer">
                         <Bell size={18} />
                     </button>
 
@@ -134,7 +134,7 @@ export default function Navbar() {
 
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-red-600 flex items-center gap-2"
+                                    className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-red-600 flex items-center gap-2 cursor-pointer"
                                 >
                                     <LogOut size={16} /> Đăng xuất
                                 </button>
@@ -143,7 +143,7 @@ export default function Navbar() {
                     ) : (
                         <button
                             onClick={() => navigate("/login")}
-                            className="hidden sm:block px-4 py-1.5 bg-red-600 text-white text-[10px] font-bold rounded-full uppercase tracking-widest"
+                            className="hidden sm:block px-4 py-1.5 bg-red-600 text-white text-[10px] font-bold rounded-full uppercase tracking-widest cursor-pointer"
                         >
                             Đăng nhập
                         </button>
@@ -176,7 +176,24 @@ export default function Navbar() {
                         </Link>
                     ))}
 
-                    {!isLoggedIn && (
+                    {isLoggedIn ? (
+                        <>
+                            <Link
+                                to="/profile"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-red-500"
+                            >
+                                Hồ sơ cá nhân
+                            </Link>
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full py-3 bg-zinc-900 text-gray-300 font-bold rounded-lg uppercase text-[10px] flex items-center justify-center gap-2"
+                            >
+                                <LogOut size={16} /> Đăng xuất
+                            </button>
+                        </>
+                    ) : (
                         <button
                             onClick={() => {
                                 navigate("/login");
