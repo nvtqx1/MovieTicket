@@ -122,6 +122,10 @@ public class SeatServiceImpl implements SeatService {
         // Step 2: Generate - Tạo danh sách ghế mới (chỉ thêm những ghế chưa tồn tại)
         SeatType normalSeatType = seatTypeRepository.findByName("NORMAL")
                 .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe NORMAL"));
+        SeatType vipSeatType = seatTypeRepository.findByName("VIP")
+                .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe VIP"));
+        SeatType coupleSeatType = seatTypeRepository.findByName("COUPLE")
+                .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe COUPLE"));
 
         List<Seat> newSeats = new ArrayList<>();
 
@@ -129,32 +133,63 @@ public class SeatServiceImpl implements SeatService {
             char rowChar = (char) ('A' + row);
 
             for (int col = 1; col <= request.getCols(); col++) {
-                String seatNumber = rowChar + String.valueOf(col);
+                // Sửa lỗi cảnh báo ghép chuỗi an toàn hơn
+                String seatNumber = String.valueOf(rowChar) + col;
+
+                SeatType currentType = normalSeatType;
+                
+                // Logic phân loại ghế:
+                // - VIP: Hàng từ 'B' đến 'G', cột từ 2 đến cols-1
+                // - COUPLE: Hàng 'H', số lượng ghế chẵn, đối xứng
+                if (rowChar >= 'B' && rowChar <= 'G') {
+                    if (col > 1 && col < request.getCols()) {
+                        currentType = vipSeatType;
+                    }
+                } else if (rowChar == 'H') {
+                    // Nếu tổng số cột là lẻ, ta đổi ghế cuối cùng thành ghế THƯỜNG
+                    // để tất cả các ghế COUPLE còn lại tạo thành một chuỗi liên tục độ dài chẵn,
+                    // đảm bảo các cặp đôi không bị chia cắt.
+                    if (request.getCols() % 2 != 0 && col == request.getCols()) {
+                        currentType = normalSeatType;
+                    } else {
+                        currentType = coupleSeatType;
+                    }
+                }
 
                 // Nếu ghế chưa tồn tại thì mới tạo mới
                 if (!existingSeatNumbers.contains(seatNumber)) {
                     Seat seat = new Seat();
                     seat.setShowtime(showtime);
                     seat.setSeatNumber(seatNumber);
-                    seat.setSeatType(normalSeatType);
+                    seat.setSeatType(currentType);
                     seat.setIsReserved(false);
                     seat.setReservation(null);
                     newSeats.add(seat);
+                } else {
+                    // Update existing seat type to match new layout (chỉ update nếu chưa có ai đặt)
+                    Seat existingSeat = existingSeats.stream()
+                            .filter(s -> s.getSeatNumber().equals(seatNumber))
+                            .findFirst().orElse(null);
+                    
+                    if (existingSeat != null && !existingSeat.getIsReserved() && !existingSeat.getSeatType().getId().equals(currentType.getId())) {
+                        existingSeat.setSeatType(currentType);
+                        newSeats.add(existingSeat); // saveAll will update it because it has an ID
+                    }
                 }
             }
         }
 
-        // Step 3: Lưu các ghế mới vào DB
-        int totalNewSeats = newSeats.size();
-        if (totalNewSeats > 0) {
+        // Step 3: Lưu các ghế mới và ghế được cập nhật vào DB
+        int totalModifiedSeats = newSeats.size();
+        if (totalModifiedSeats > 0) {
             seatRepository.saveAll(newSeats);
         }
 
         // Step 4: Trả về response
-        int totalFinalSeats = existingSeats.size() + totalNewSeats;
-        String message = totalNewSeats > 0 
-            ? String.format("Đã thêm thành công %d ghế mới. Tổng cộng: %d ghế (Hàng: %d, Cột: %d)", totalNewSeats, totalFinalSeats, request.getRows(), request.getCols())
-            : String.format("Sơ đồ ghế đã đủ %d ghế. Không cần tạo thêm.", totalFinalSeats);
+        int totalFinalSeats = existingSeats.size() + (int) newSeats.stream().filter(s -> s.getId() == null).count();
+        String message = totalModifiedSeats > 0 
+            ? String.format("Đã cập nhật/thêm thành công %d ghế. Tổng: %d ghế.", totalModifiedSeats, totalFinalSeats)
+            : String.format("Sơ đồ ghế đã đủ %d ghế. Không có thay đổi.", totalFinalSeats);
 
         return new GenerateSeatResponse(
                 request.getShowtimeId(),
