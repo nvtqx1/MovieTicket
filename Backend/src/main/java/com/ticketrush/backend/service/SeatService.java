@@ -92,5 +92,15 @@ public interface SeatService {
      * @throws IllegalArgumentException nếu suất chiếu không tồn tại
      */
     List<SeatResponse> getSeatsByShowtime(Long showtimeId);
+
+    /**
+     * API: Xóa toàn bộ ghế của một suất chiếu
+     * 
+     * Phục vụ cho Admin khi cần tạo lại sơ đồ ghế
+     * 
+     * @param showtimeId ID của suất chiếu
+     * @throws RuntimeException nếu suất chiếu đang có vé đã đặt
+     */
+    void deleteSeatsByShowtime(Long showtimeId);
 }
 

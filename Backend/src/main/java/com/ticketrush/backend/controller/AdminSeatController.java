@@ -104,5 +104,15 @@ public class AdminSeatController {
         // Trả về HTTP 200 OK + response data
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/showtime/{showtimeId}")
+    public ResponseEntity<?> deleteSeatsByShowtime(@PathVariable Long showtimeId) {
+        try {
+            seatService.deleteSeatsByShowtime(showtimeId);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
 }
 

@@ -22,3 +22,8 @@ export const getSeatsByShowtime = async (showtimeId) => {
     const response = await api.get(`/showtimes/${showtimeId}/seats`);
     return response.data;
 };
+
+export const deleteSeatsByShowtime = async (showtimeId) => {
+    const response = await api.delete(`/admin/seats/showtime/${showtimeId}`);
+    return response.data;
+};

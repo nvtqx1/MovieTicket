@@ -2,6 +2,8 @@ import React, { useState, useMemo } from "react";
 import { useSeatGenerator } from "../hooks/useSeatGenerator";
 import { useSeats } from "../hooks/useSeats";
 import SeatGrid from "../components/admin/SeatGrid";
+import { deleteSeatsByShowtime } from "../services/api/seatService";
+import { Trash2 } from "lucide-react";
 
 export default function AdminSeatCreator() {
 
@@ -20,6 +22,19 @@ export default function AdminSeatCreator() {
             rows: Number(form.rows),
             cols: Number(form.cols)
         });
+        // Reload page to reflect new seats
+        setTimeout(() => window.location.reload(), 500);
+    };
+
+    const handleDeleteSeats = async () => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa toàn bộ ghế của suất chiếu ${form.showtimeId}?`)) return;
+        try {
+            await deleteSeatsByShowtime(form.showtimeId);
+            alert("Xóa sơ đồ ghế thành công!");
+            window.location.reload();
+        } catch (err) {
+            alert(err.response?.data?.message || "Lỗi khi xóa ghế (có thể đã có vé được đặt).");
+        }
     };
 
     const rowLabels = useMemo(() => {
@@ -92,9 +107,9 @@ export default function AdminSeatCreator() {
                             <button
                                 onClick={handleGenerate}
                                 disabled={loading}
-                                className="w-full bg-red-500 hover:bg-red-600 py-3 rounded-lg font-bold transition"
+                                className="w-full bg-red-500 hover:bg-red-600 py-3 rounded-lg font-bold transition disabled:opacity-50"
                             >
-                                {loading ? "Đang tạo..." : "Tạo sơ đồ ghế"}
+                                {loading ? "Đang xử lý..." : (seats && seats.length > 0 ? "Thêm ghế (Upsert)" : "Tạo sơ đồ ghế")}
                             </button>
                         </div>
                     </div>
@@ -157,11 +172,28 @@ export default function AdminSeatCreator() {
 
                 {/* ================= REAL DATA ================= */}
                 <div className="lg:col-span-3 bg-[#111] border border-white/5 rounded-xl p-6">
-                    <h2 className="font-bold mb-4">Ghế thực tế (Database)</h2>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="font-bold">Ghế thực tế (Database)</h2>
+                        {seats && seats.length > 0 && (
+                            <button
+                                onClick={handleDeleteSeats}
+                                className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                            >
+                                <Trash2 size={16} />
+                                Xóa toàn bộ sơ đồ ghế này
+                            </button>
+                        )}
+                    </div>
 
                     {loadingSeats
-                        ? <p className="text-gray-500">Loading...</p>
-                        : <SeatGrid seats={seats} />
+                        ? <div className="text-center p-10"><div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin inline-block"></div></div>
+                        : !seats || seats.length === 0 ? (
+                            <div className="text-center p-10 text-gray-500">
+                                Chưa có ghế nào được tạo cho suất chiếu này.
+                            </div>
+                        ) : (
+                            <SeatGrid seats={seats} />
+                        )
                     }
                 </div>
             </div>

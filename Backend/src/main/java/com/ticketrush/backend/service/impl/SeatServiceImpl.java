@@ -113,63 +113,55 @@ public class SeatServiceImpl implements SeatService {
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
                 .orElseThrow(() -> new RuntimeException("Suất chiếu không tìm thấy với ID: " + request.getShowtimeId()));
 
-        // Step 1b: Validate - Kiểm tra không có ghế nào đã tạo cho suất chiếu này
-        boolean seatsExist = seatRepository.findAll()
-                .stream()
-                .anyMatch(seat -> seat.getShowtime().getId().equals(request.getShowtimeId()));
+        // Step 1b: Lấy danh sách ghế hiện có
+        List<Seat> existingSeats = seatRepository.findByShowtimeId(request.getShowtimeId());
+        java.util.Set<String> existingSeatNumbers = existingSeats.stream()
+                .map(Seat::getSeatNumber)
+                .collect(java.util.stream.Collectors.toSet());
 
-        if (seatsExist) {
-            throw new RuntimeException("Suất chiếu này đã có sơ đồ ghế. Vui lòng xóa ghế cũ trước khi tạo mới.");
-        }
-
-        // Step 2: Generate - Tạo danh sách ghế
+        // Step 2: Generate - Tạo danh sách ghế mới (chỉ thêm những ghế chưa tồn tại)
         SeatType normalSeatType = seatTypeRepository.findByName("NORMAL")
                 .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe NORMAL"));
 
-        List<Seat> seats = new ArrayList<>();
+        List<Seat> newSeats = new ArrayList<>();
 
-        // Nested Loop: Hàng (Row) từ A đến chữ cái tương ứng với rows
-        // Vòng lặp Cột (Column) từ 1 đến cols
         for (int row = 0; row < request.getRows(); row++) {
-            // Chuyển row index thành chữ cái (A=0, B=1, C=2, ...)
-            // Sử dụng ASCII character arithmetic:
-            // 'A' = 65
-            // 'A' + 0 = 'A' (65)
-            // 'A' + 1 = 'B' (66)
-            // 'A' + 9 = 'J' (74)
             char rowChar = (char) ('A' + row);
 
             for (int col = 1; col <= request.getCols(); col++) {
-                // Ghép chữ cái với số cột để tạo seatNumber (VD: A1, A2, ..., J15)
                 String seatNumber = rowChar + String.valueOf(col);
 
-                // Tạo Entity Seat
-                Seat seat = new Seat();
-                seat.setShowtime(showtime);
-                seat.setSeatNumber(seatNumber);
-                seat.setSeatType(normalSeatType);
-                seat.setIsReserved(false);  // Ghế mới luôn là chưa được đặt
-                seat.setReservation(null);
-
-                // Thêm vào danh sách
-                seats.add(seat);
+                // Nếu ghế chưa tồn tại thì mới tạo mới
+                if (!existingSeatNumbers.contains(seatNumber)) {
+                    Seat seat = new Seat();
+                    seat.setShowtime(showtime);
+                    seat.setSeatNumber(seatNumber);
+                    seat.setSeatType(normalSeatType);
+                    seat.setIsReserved(false);
+                    seat.setReservation(null);
+                    newSeats.add(seat);
+                }
             }
         }
 
-        // Step 3: Batch Save - Lưu toàn bộ ghế vào DB trong một câu SQL duy nhất
-        // seatRepository.saveAll() tối ưu hơn save() vì nó dùng batch insert
-        // 150 seats: 1 SQL query instead of 150 queries
-        int totalSeats = seats.size();
-        seatRepository.saveAll(seats);
+        // Step 3: Lưu các ghế mới vào DB
+        int totalNewSeats = newSeats.size();
+        if (totalNewSeats > 0) {
+            seatRepository.saveAll(newSeats);
+        }
 
-        // Step 4: Return Response - Trả về response
+        // Step 4: Trả về response
+        int totalFinalSeats = existingSeats.size() + totalNewSeats;
+        String message = totalNewSeats > 0 
+            ? String.format("Đã thêm thành công %d ghế mới. Tổng cộng: %d ghế (Hàng: %d, Cột: %d)", totalNewSeats, totalFinalSeats, request.getRows(), request.getCols())
+            : String.format("Sơ đồ ghế đã đủ %d ghế. Không cần tạo thêm.", totalFinalSeats);
+
         return new GenerateSeatResponse(
                 request.getShowtimeId(),
-                totalSeats,
+                totalFinalSeats,
                 request.getRows(),
                 request.getCols(),
-                String.format("Đã tạo thành công %d ghế cho suất chiếu (Hàng: %d, Cột: %d)",
-                        totalSeats, request.getRows(), request.getCols())
+                message
         );
     }
 
@@ -228,6 +220,18 @@ public class SeatServiceImpl implements SeatService {
                 .basePrice(basePrice)
                 .finalPrice(finalPrice)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteSeatsByShowtime(Long showtimeId) {
+        // Kiểm tra xem có ghế nào đã được đặt không
+        List<Seat> seats = seatRepository.findByShowtimeId(showtimeId);
+        boolean hasReserved = seats.stream().anyMatch(Seat::getIsReserved);
+        if (hasReserved) {
+            throw new RuntimeException("Không thể xóa sơ đồ ghế vì đã có khách đặt vé.");
+        }
+        seatRepository.deleteAll(seats);
     }
 }
 

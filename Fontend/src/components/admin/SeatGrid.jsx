@@ -28,7 +28,11 @@ export default function SeatGrid({ seats }) {
                     <div className="w-6 text-xs text-gray-400">{row}</div>
 
                     {grouped[row]
-                        .sort((a, b) => a.seatNumber.localeCompare(b.seatNumber))
+                        .sort((a, b) => {
+                            const numA = parseInt(a.seatNumber.slice(1), 10);
+                            const numB = parseInt(b.seatNumber.slice(1), 10);
+                            return numA - numB;
+                        })
                         .map(seat => {
 
                             const isBooked = seat.status === "BOOKED";

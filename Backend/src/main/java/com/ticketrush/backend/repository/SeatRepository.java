@@ -16,6 +16,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     // PHỤC VỤ NGÀY 5-6: Trả về toàn bộ ghế của 1 suất chiếu để FE vẽ sơ đồ (150 ghế)
     List<Seat> findByShowtimeId(Long showtimeId);
 
+    // Xóa tất cả các ghế của một suất chiếu
+    void deleteByShowtimeId(Long showtimeId);
+
     // PHỤC VỤ TUẦN 2 (CHỐNG TRANH CHẤP - ROW LOCKING):
     // Tìm các ghế cụ thể mà user đang bấm chọn (VD: ["A1", "A2"]).
     @Lock(LockModeType.PESSIMISTIC_WRITE)
