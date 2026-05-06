@@ -19,6 +19,8 @@ import AdminMovies from "./pages/AdminMovies";
 import AdminSeatCreator from "./pages/AdminSeatCreator";
 import AdminShowtimes from "./pages/AdminShowtimes";
 import AdminVouchers from "./pages/AdminVouchers";
+import AdminUsers from "./pages/AdminUsers";
+import AdminTheaters from "./pages/AdminTheaters";
 import Checkout from "./pages/Checkout";
 
 function App() {
@@ -123,6 +125,18 @@ function App() {
         <Route path="/admin/seat-creator" element={
           <AdminLayout>
             <AdminSeatCreator />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/users" element={
+          <AdminLayout>
+            <AdminUsers />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/theaters" element={
+          <AdminLayout>
+            <AdminTheaters />
           </AdminLayout>
         } />
 
