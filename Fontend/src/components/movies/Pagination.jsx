@@ -2,7 +2,7 @@ import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Pagination({ currentPage, totalPages, onPageChange }) {
-    if (totalPages <= 1) return null; // Ẩn nếu chỉ có 1 trang
+    if (totalPages <= 1) return null;
 
     return (
         <div className="flex justify-center items-center gap-2 mt-10">

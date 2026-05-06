@@ -26,13 +26,14 @@ const LoginForm = ({ onSwitch }) => {
 
         let newErrors = {};
 
-        // Validate
+        // Validate Email
         if (!formData.email) {
             newErrors.email = "Vui lòng nhập email";
         } else if (!validateEmail(formData.email)) {
             newErrors.email = "Định dạng email không hợp lệ";
         }
 
+        // Validate Password
         if (!formData.password) {
             newErrors.password = "Vui lòng nhập mật khẩu";
         }
@@ -55,11 +56,10 @@ const LoginForm = ({ onSwitch }) => {
                 navigate('/');
             }
         } catch (err) {
-            setLoginError(err.message);
+            setLoginError(err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
         } finally {
             setIsLoading(false);
         }
-
     };
 
     return (

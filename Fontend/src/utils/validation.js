@@ -1,8 +1,18 @@
+//Username
+/**
+ * Kiểm tra tên người dùng (Không chứa số và ký tự đặc biệt)
+ */
+export const validateUsername = (username) => {
+    const re = /^[a-zA-Z0-9_]{3,20}$/;
+    return re.test(username);
+};
+
+//Email
 /**
  * Kiểm tra định dạng Email
  */
 export const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const re = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
     return re.test(String(email).toLowerCase());
 };
 
@@ -14,6 +24,7 @@ export const validateGmailOnly = (email) => {
     return re.test(String(email).toLowerCase());
 };
 
+//password
 /**
  * Kiểm tra độ mạnh của mật khẩu
  * Yêu cầu:
@@ -26,7 +37,7 @@ export const validateStrongPassword = (password) => {
         { regex: /[A-Z]/, message: "Ít nhất 1 chữ hoa" },
         { regex: /[a-z]/, message: "Ít nhất 1 chữ thường" },
         { regex: /[0-9]/, message: "Ít nhất 1 chữ số" },
-        { regex: /[!@#$%^&*(),.?":{}|<>]/, message: "Ít nhất 1 ký tự đặc biệt" },
+        { regex: /[^A-Za-z0-9]/, message: "Ít nhất 1 ký tự đặc biệt" }
     ];
 
     // Tìm lỗi đầu tiên gặp phải để báo về UI
@@ -35,10 +46,7 @@ export const validateStrongPassword = (password) => {
     return failed ? failed.message : null;
 };
 
-/**
- * Kiểm tra họ tên (Không chứa số và ký tự đặc biệt)
- */
-export const validateFullName = (name) => {
-    const re = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s|_]+$/;
-    return re.test(name) && name.trim().length >= 2;
-};
+export const validatePhoneNumber = (phone) => {
+    const re = /^(0|\+84)[1-9][0-9]{8,9}$/;
+    return re.test(phone.trim());
+}

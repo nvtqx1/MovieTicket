@@ -6,7 +6,6 @@ export const useMovies = (params = {}, refreshTrigger = 0) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Key ổn định để so sánh theo giá trị
     const paramsKey = JSON.stringify(params);
 
     useEffect(() => {

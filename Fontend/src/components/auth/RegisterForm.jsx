@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, ShieldCheck, Loader2, Phone } from 'lucide-react';
+import { Mail, Lock, User, ShieldCheck, Loader2, Phone, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { validateEmail, validateStrongPassword, validateFullName } from '../../utils/validation';
+import { validateEmail, validateStrongPassword, validateUsername, validatePhoneNumber } from '../../utils/validation';
 import InputField from '../common/InputField';
 import { authService } from '../../services/api/authService';
 
@@ -12,6 +12,8 @@ const RegisterForm = ({ onSwitch }) => {
         password: '',
         confirmPassword: '',
         phoneNumber: '',
+        dateOfBirth: '',
+        gender: '',
         agreeTerms: false
     });
     const [errors, setErrors] = useState({});
@@ -27,8 +29,9 @@ const RegisterForm = ({ onSwitch }) => {
 
         let newErrors = {};
 
-        if (!validateFullName(formData.userName)) {
-            newErrors.userName = "Tên người dùng không hợp lệ";
+        // Validate Username
+        if (!validateUsername(formData.userName)) {
+            newErrors.userName = "Username chỉ gồm chữ, số, _ và dài 3-20 ký tự";
         }
 
         // Validate Email
@@ -43,18 +46,46 @@ const RegisterForm = ({ onSwitch }) => {
         }
 
         // Validate Xác nhận mật khẩu
-        if (formData.password !== formData.confirmPassword) {
+        if (!formData.confirmPassword) {
+            newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+        } else if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
         }
 
-        if (!/^(0|\+84)[0-9]{9,10}$/.test(formData.phoneNumber.trim())) {
+        // Validate Số điện thoại
+        const phoneTrimmed = formData.phoneNumber.trim();
+        if (!validatePhoneNumber(phoneTrimmed)) {
             newErrors.phoneNumber = "Số điện thoại không hợp lệ";
+        }
+
+        // Validate ngày sinh
+        if (formData.dateOfBirth) {
+            const dob = new Date(formData.dateOfBirth);
+            const today = new Date();
+
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            if (age < 13) {
+                newErrors.dateOfBirth = "Bạn phải từ 13 tuổi trở lên";
+            }
+        }
+
+        // Validate giới tính
+        if (!formData.gender) {
+            newErrors.gender = "Vui lòng chọn giới tính";
         }
 
         // Validate điều khoản
         if (!formData.agreeTerms) {
             newErrors.agreeTerms = "Bạn cần đồng ý với điều khoản";
         }
+
+
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -69,7 +100,9 @@ const RegisterForm = ({ onSwitch }) => {
                 userName: formData.userName.trim(),
                 email: formData.email,
                 password: formData.password,
-                phoneNumber: formData.phoneNumber.trim()
+                phoneNumber: formData.phoneNumber.trim(),
+                dateOfBirth: formData.dateOfBirth,
+                gender: formData.gender
             };
 
             await authService.register(apiPayload);
@@ -85,7 +118,6 @@ const RegisterForm = ({ onSwitch }) => {
     return (
         <div className="w-full max-w-md p-6 sm:p-10 bg-[#1a1a1a]/90 backdrop-blur-md rounded-lg shadow-2xl border border-white/5">
             <div className="text-center space-y-2 mb-8">
-                {/* Cập nhật tên thương hiệu theo đúng file bài tập */}
                 <h1 className="text-3xl font-black text-white uppercase tracking-tighter">ĐĂNG KÝ</h1>
                 <p className="text-gray-400 text-sm">Trở thành thành viên của TMT CINEMA ngay hôm nay.</p>
             </div>
@@ -164,6 +196,37 @@ const RegisterForm = ({ onSwitch }) => {
                         autoComplete="new-password"
                     />
                 </div>
+
+                <div className="text-left">
+                    <InputField
+                        label="Ngày sinh"
+                        id="dateOfBirth"
+                        type="date"
+                        icon={Calendar}
+                        placeholder="YYYY-MM-DD"
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                        error={errors.dateOfBirth}
+                        autoComplete="bday"
+                    />
+                </div>
+
+                <InputField
+                    label="GIỚI TÍNH"
+                    id="gender"
+                    variant="select"
+                    icon={User} // hoặc icon gender riêng
+                    value={formData.gender}
+                    onChange={(e) =>
+                        setFormData({ ...formData, gender: e.target.value })
+                    }
+                    options={[
+                        { value: "MALE", label: "Nam" },
+                        { value: "FEMALE", label: "Nữ" },
+                        { value: "OTHER", label: "Khác" }
+                    ]}
+                    error={errors.gender}
+                />
 
                 {/* Checkbox điều khoản */}
                 <div className="space-y-1">

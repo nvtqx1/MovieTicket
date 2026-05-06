@@ -1,32 +1,69 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-const InputField = ({ label, id, type, icon: Icon, value, onChange, error, placeholder, autoComplete }) => {
+const InputField = ({
+    label,
+    id,
+    type = "text",
+    icon: Icon,
+    value,
+    onChange,
+    error,
+    placeholder,
+    autoComplete,
+    variant = "input",
+    options = []
+}) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
 
+    const baseClass = `w-full bg-[#0f0f0f] border ${error ? 'border-red-600' : 'border-gray-800'
+        } text-gray-200 text-sm rounded-md py-3 pl-10 pr-10 outline-none
+    focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-gray-600`;
+
     return (
         <div className="w-full space-y-1">
-            <label htmlFor={id} className="block text-[11px] uppercase tracking-wider font-semibold text-gray-400">
+            <label className="block text-[11px] uppercase tracking-wider font-semibold text-gray-400">
                 {label}
             </label>
+
             <div className="relative group">
+                {/* ICON */}
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     {Icon && <Icon className="h-4 w-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />}
                 </div>
-                <input
-                    id={id}
-                    name={id}
-                    type={isPassword ? (showPassword ? 'text' : 'password') : type}
-                    value={value}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    autoComplete={autoComplete}
-                    className={`w-full bg-[#0f0f0f] border ${error ? 'border-red-600' : 'border-gray-800'}
-                     text-gray-200 text-sm rounded-md py-3 pl-10 pr-10 outline-none
-                     focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-gray-600`}
-                />
-                {isPassword && (
+
+                {/* Switch */}
+                {variant === "select" ? (
+                    <select
+                        id={id}
+                        name={id}
+                        value={value}
+                        onChange={onChange}
+                        className={`${baseClass} appearance-none`}
+                    >
+                        <option value="">Chọn...</option>
+                        {options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <input
+                        id={id}
+                        name={id}
+                        type={isPassword ? (showPassword ? 'text' : 'password') : type}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        autoComplete={autoComplete}
+                        className={baseClass}
+                    />
+                )}
+
+                {/* PASSWORD TOGGLE */}
+                {isPassword && variant === "input" && (
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
@@ -36,6 +73,7 @@ const InputField = ({ label, id, type, icon: Icon, value, onChange, error, place
                     </button>
                 )}
             </div>
+
             {error && <p className="text-[11px] text-red-500 mt-1 uppercase">{error}</p>}
         </div>
     );
