@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import StatCard from '../components/admin/StatCard';
 import { getDashboardSummary, getDailyRevenue } from '../services/api/dashboardService';
+import { formatChartDate } from '../utils/date';
+import { Ticket, DollarSign, BarChart3, Film } from "lucide-react";
 
 const AdminDashboard = () => {
     const [summary, setSummary] = useState(null);
@@ -10,6 +12,8 @@ const AdminDashboard = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchData = async () => {
             try {
                 setLoading(true);
@@ -20,19 +24,34 @@ const AdminDashboard = () => {
                     getDailyRevenue(),
                 ]);
 
+                if (!isMounted) return;
+
                 setSummary(summaryData);
                 setDailyRevenue(Array.isArray(revenueData) ? revenueData : []);
             } catch (err) {
+                if (!isMounted) return;
                 setError(err.message || 'Lỗi khi tải dữ liệu');
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchData();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
-    // Format currency
+    // Format date for chart
+    const formattedRevenue = useMemo(() => {
+        return dailyRevenue.map((d) => ({
+            ...d,
+            date: formatChartDate(d.date),
+        }));
+    }, [dailyRevenue]);
+
+    // Format tiền
     const formatCurrency = (value) =>
         new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -40,6 +59,7 @@ const AdminDashboard = () => {
             notation: 'compact',
         }).format(value ?? 0);
 
+    //Loading
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96 text-white">
@@ -69,25 +89,25 @@ const AdminDashboard = () => {
                     <StatCard
                         title="Tổng vé đã đặt"
                         value={summary.totalTicketsSold?.toLocaleString() || '0'}
-                        icon="🎟️"
+                        icon={<Ticket size={20} />}
                         color="text-blue-500"
                     />
                     <StatCard
                         title="Doanh thu"
                         value={formatCurrency(summary.totalRevenue)}
-                        icon="💰"
+                        icon={<DollarSign size={20} />}
                         color="text-green-500"
                     />
                     <StatCard
                         title="Doanh thu hôm nay"
                         value={formatCurrency(summary.todayRevenue)}
-                        icon="📊"
+                        icon={<BarChart3 size={20} />}
                         color="text-yellow-500"
                     />
                     <StatCard
                         title="Phim đang chiếu"
                         value={summary.totalMovies?.toString() || '0'}
-                        icon="🎥"
+                        icon={<Film size={20} />}
                         color="text-red-500"
                     />
                 </div>
@@ -99,9 +119,9 @@ const AdminDashboard = () => {
                     <span className="w-1 h-4 bg-red-600 rounded-full"></span> Doanh thu 7 ngày gần nhất
                 </h2>
 
-                {dailyRevenue.length > 0 ? (
+                {formattedRevenue.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={dailyRevenue}>
+                        <LineChart data={formattedRevenue}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                             <XAxis
                                 dataKey="date"
