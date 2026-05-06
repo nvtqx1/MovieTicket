@@ -1,10 +1,41 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useMovies } from "../hooks/useMovies";
 import { createMovie, updateMovie, deleteMovie } from "../services/api/movieService";
 
 export default function AdminMovies() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const { movies, loading, error } = useMovies({}, refreshTrigger);
+    const { movies, loading, error } = useMovies({ size: 1000 }, refreshTrigger);
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedGenre, setSelectedGenre] = useState("");
+    const [selectedYear, setSelectedYear] = useState("");
+
+    // Compute unique genres and years for dropdowns
+    const genres = useMemo(() => {
+        return [...new Set(movies.map((movie) => movie.genre).filter(Boolean))].sort();
+    }, [movies]);
+
+    const releaseYears = useMemo(() => {
+        return [...new Set(movies.map((movie) => movie.releaseYear).filter(Boolean))].sort((a, b) => b - a);
+    }, [movies]);
+
+    // Apply filters
+    const filteredMovies = useMemo(() => {
+        let data = [...movies];
+        if (searchQuery) {
+            data = data.filter((m) =>
+                m.title.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        if (selectedGenre) {
+            data = data.filter((m) => m.genre === selectedGenre);
+        }
+        if (selectedYear) {
+            data = data.filter((m) => m.releaseYear === Number(selectedYear));
+        }
+        return data;
+    }, [movies, searchQuery, selectedGenre, selectedYear]);
 
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -86,14 +117,51 @@ export default function AdminMovies() {
         <div className="p-6 text-white space-y-6">
 
             {/* HEADER */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-2xl font-bold">Quản lý phim</h1>
                 <button
                     onClick={openCreate}
-                    className="bg-red-600 px-4 py-2 rounded-lg text-sm font-bold"
+                    className="bg-red-600 px-4 py-2 rounded-lg text-sm font-bold flex shrink-0"
                 >
                     + Thêm phim
                 </button>
+            </div>
+
+            {/* FILTER BAR */}
+            <div className="bg-[#111] p-4 rounded-lg border border-white/5 flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm tên phim..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-black border border-white/10 rounded-lg p-2.5 text-sm outline-none focus:border-red-500 transition-colors"
+                    />
+                </div>
+                <div className="w-full md:w-48">
+                    <select
+                        value={selectedGenre}
+                        onChange={(e) => setSelectedGenre(e.target.value)}
+                        className="w-full bg-black border border-white/10 rounded-lg p-2.5 text-sm outline-none focus:border-red-500 transition-colors"
+                    >
+                        <option value="">Tất cả thể loại</option>
+                        {genres.map(g => (
+                            <option key={g} value={g}>{g}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="w-full md:w-48">
+                    <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        className="w-full bg-black border border-white/10 rounded-lg p-2.5 text-sm outline-none focus:border-red-500 transition-colors"
+                    >
+                        <option value="">Tất cả năm</option>
+                        {releaseYears.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* TABLE */}
@@ -111,7 +179,7 @@ export default function AdminMovies() {
                     </thead>
 
                     <tbody>
-                        {movies.map((m) => (
+                        {filteredMovies.map((m) => (
                             <tr key={m.id} className="border-t border-white/5 hover:bg-white/5">
                                 <td className="p-3">#{m.id}</td>
 
@@ -138,6 +206,13 @@ export default function AdminMovies() {
                                 </td>
                             </tr>
                         ))}
+                        {filteredMovies.length === 0 && (
+                            <tr>
+                                <td colSpan="6" className="p-8 text-center text-gray-500">
+                                    Không có dữ liệu phim phù hợp
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
