@@ -34,4 +34,19 @@ public class AdminUserController {
 
         return ResponseEntity.ok(response);
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        try {
+            if (userRepository.existsById(id)) {
+                userRepository.deleteById(id);
+                return ResponseEntity.ok().build();
+            }
+            return ResponseEntity.notFound().build();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Không thể xóa người dùng này vì họ đã phát sinh dữ liệu (vé đặt, đánh giá...). Để bảo toàn doanh thu, hệ thống chặn thao tác này."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi hệ thống khi xóa người dùng: " + e.getMessage()));
+        }
+    }
 }

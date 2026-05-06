@@ -45,4 +45,8 @@ public interface TheaterService {
      * @return Danh sách phòng thuộc rạp
      */
     List<RoomResponse> getRoomsByTheater(Long theaterId);
+
+    TheaterResponse updateTheater(Long id, CreateTheaterRequest request);
+
+    void deleteTheater(Long id);
 }

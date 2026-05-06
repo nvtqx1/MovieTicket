@@ -134,4 +134,28 @@ public class TheaterController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Sửa rạp chiếu")
+    public ResponseEntity<TheaterResponse> updateTheater(
+        @PathVariable Long id,
+        @RequestBody CreateTheaterRequest request
+    ) {
+        try {
+            return ResponseEntity.ok(theaterService.updateTheater(id, request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa rạp chiếu")
+    public ResponseEntity<Void> deleteTheater(@PathVariable Long id) {
+        try {
+            theaterService.deleteTheater(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

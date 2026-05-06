@@ -114,18 +114,21 @@ export default function AdminMovies() {
     if (error) return <div className="p-10 text-red-500">Lỗi: {error}</div>;
 
     return (
-        <div className="p-6 text-white space-y-6">
+        <div className="p-10 text-white space-y-6">
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-2xl font-bold">Quản lý phim</h1>
+            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-black uppercase tracking-[0.1em]">Quản lý <span className="text-red-600">Phim</span></h1>
+                    <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Danh sách phim trong hệ thống TMT.</p>
+                </div>
                 <button
                     onClick={openCreate}
                     className="bg-red-600 px-4 py-2 rounded-lg text-sm font-bold flex shrink-0"
                 >
                     + Thêm phim
                 </button>
-            </div>
+            </header>
 
             {/* FILTER BAR */}
             <div className="bg-[#111] p-4 rounded-lg border border-white/5 flex flex-col md:flex-row gap-4">

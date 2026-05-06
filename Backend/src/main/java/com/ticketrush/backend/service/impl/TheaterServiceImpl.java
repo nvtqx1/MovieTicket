@@ -163,4 +163,31 @@ public class TheaterServiceImpl implements TheaterService {
                 room.getTheater().getName()
         );
     }
+
+    @Override
+    @Transactional
+    public TheaterResponse updateTheater(Long id, CreateTheaterRequest request) {
+        Theater theater = theaterRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("❌ Rạp không tồn tại"));
+        
+        theater.setName(request.getName());
+        theater.setLocation(request.getLocation());
+        theater.setCapacity(request.getCapacity());
+        
+        Theater updated = theaterRepository.save(theater);
+        return toResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTheater(Long id) {
+        if (!theaterRepository.existsById(id)) {
+            throw new IllegalArgumentException("❌ Rạp không tồn tại");
+        }
+        try {
+            theaterRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("❌ Không thể xóa rạp (có thể đang chứa phòng chiếu hoặc đơn hàng)");
+        }
+    }
 }
