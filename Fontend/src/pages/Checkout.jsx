@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { confirmReservation } from "../services/api/reservationService";
 import { checkVoucher } from "../services/api/voucherService";
+import { useAuthContext } from "../context/AuthContext";
 import { CheckCircle, Clock, CreditCard, Wallet, Smartphone, Ticket } from "lucide-react";
 
 const formatPrice = (price) =>
@@ -17,6 +18,7 @@ export default function Checkout() {
     const { reservationId } = useParams();
     const navigate = useNavigate();
     const { state } = useLocation();
+    const { isAuthenticated } = useAuthContext();
 
     const selectedSeats = state?.seats || [];
     const totalFromState = state?.total || 0;
@@ -36,9 +38,14 @@ export default function Checkout() {
     const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
 
     // ======================
-    // COUNTDOWN
+    // COUNTDOWN & AUTH CHECK
     // ======================
     useEffect(() => {
+        if (!isAuthenticated) {
+            navigate("/login");
+            return;
+        }
+
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {

@@ -4,6 +4,7 @@ import { ArrowLeft, Armchair, CreditCard, Star } from "lucide-react";
 import { getShowtimeById } from "../services/api/showtimeService";
 import { getSeatsByShowtime } from "../services/api/seatService";
 import { createReservation } from "../services/api/reservationService";
+import { useAuthContext } from "../context/AuthContext";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -11,6 +12,7 @@ const formatPrice = (price) =>
 export default function Booking() {
     const { id } = useParams(); // showtime ID
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuthContext();
 
     const [showtime, setShowtime] = useState(null);
     const [seats, setSeats] = useState([]);
@@ -21,6 +23,11 @@ export default function Booking() {
 
     // ===== FETCH SHOWTIME + SEATS =====
     useEffect(() => {
+        if (!isAuthenticated) {
+            navigate("/login");
+            return;
+        }
+
         let isMounted = true;
 
         const fetchData = async () => {

@@ -5,24 +5,28 @@ export const AuthContext = createContext();
 
 // 2. Tạo Provider để bọc ứng dụng
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [roles, setRoles] = useState([]);
-
-    // Kiểm tra xem user đã đăng nhập từ trước chưa (giữ đăng nhập khi F5)
-    useEffect(() => {
+    const [user, setUser] = useState(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+    const [roles, setRoles] = useState(() => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setRoles(parsedUser.roles || []);
+            return parsedUser.roles || [];
         }
-    }, []);
+        return [];
+    });
 
     // Lắng nghe sự kiện auto-logout khi token hết hạn (401)
     useEffect(() => {
         const handleAutoLogout = () => {
             setUser(null);
             setRoles([]);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('tokenType');
+            localStorage.removeItem('roles');
         };
         window.addEventListener('auth:logout', handleAutoLogout);
         return () => window.removeEventListener('auth:logout', handleAutoLogout);
