@@ -1,4 +1,6 @@
 import React from "react";
+import { Building2 } from "lucide-react";
+import fallbackImg from "../../assets/images/fallback-theater.jpg";
 
 export default function TheaterCard({ theater, onDetail, onShowtime }) {
     return (
@@ -10,11 +12,13 @@ export default function TheaterCard({ theater, onDetail, onShowtime }) {
                         src={theater.image}
                         alt={theater.name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = fallbackImg;
+                        }}
                     />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-zinc-600">
-                        🏪
-                    </div>
+                    <img src={fallbackImg} alt="fallback" className="w-full h-full object-cover" />
                 )}
             </div>
 
@@ -26,10 +30,11 @@ export default function TheaterCard({ theater, onDetail, onShowtime }) {
                 </p>
 
                 <div className="flex gap-3 mt-auto pt-4">
-                    <button onClick={onDetail} className="flex-1 border py-2 text-sm">
+                    <button type="button" onClick={onDetail} className="flex-1 border py-2 text-sm">
                         Chi tiết
                     </button>
                     <button
+                        type="button"
                         onClick={onShowtime}
                         className="flex-1 bg-red-600 py-2 text-sm"
                     >

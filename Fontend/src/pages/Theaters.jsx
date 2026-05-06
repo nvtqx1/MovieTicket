@@ -6,12 +6,22 @@ import TheaterFilter from "../components/theater/TheaterFilter";
 
 export default function Theaters() {
     const navigate = useNavigate();
-    const { theaters, loading, city, setCity, cities } = useTheaters();
+    const { theaters, loading, error, city, setCity, cities } = useTheaters();
 
+    //Loading state
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black text-white">
                 Loading...
+            </div>
+        );
+    }
+
+    //Error state
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-black text-red-500">
+                {error}
             </div>
         );
     }
@@ -29,22 +39,22 @@ export default function Theaters() {
                 />
             </div>
 
-            {/* GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {theaters.map((t) => (
-                    <TheaterCard
-                        key={t.id}
-                        theater={t}
-                        onDetail={() => navigate(`/theaters/${t.id}`)}
-                        onShowtime={() => navigate(`/movies?theaterId=${t.id}`)}
-                    />
-                ))}
-            </div>
-
-            {theaters.length === 0 && (
+            {/* Render TheaterCard or No Data message */}
+            {theaters.length === 0 ? (
                 <p className="text-center mt-10 text-gray-500">
                     Không có rạp nào
                 </p>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {theaters.map((t) => (
+                        <TheaterCard
+                            key={t.id}
+                            theater={t}
+                            onDetail={() => navigate(`/theaters/${t.id}`)}
+                            onShowtime={() => navigate(`/movies?theaterId=${t.id}`)}
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );
