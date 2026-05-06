@@ -148,6 +148,52 @@ public class VoucherServiceImpl implements VoucherService {
         }
     }
 
+    @Override
+    public java.util.List<VoucherResponse> getAllVouchers() {
+        return voucherRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public VoucherResponse updateVoucher(Long id, CreateVoucherRequest request) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("❌ Không tìm thấy voucher ID: " + id));
+
+        // Validate
+        if (request.getCode() == null || request.getCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("❌ Mã voucher không được để trống");
+        }
+        
+        // Kiểm tra code trùng (trừ chính nó)
+        voucherRepository.findByCodeIgnoreCase(request.getCode())
+                .ifPresent(v -> {
+                    if (!v.getId().equals(id)) {
+                        throw new IllegalArgumentException("❌ Mã voucher đã tồn tại");
+                    }
+                });
+
+        voucher.setCode(request.getCode().toUpperCase());
+        voucher.setDescription(request.getDescription());
+        voucher.setDiscountPercentage(request.getDiscountPercentage());
+        voucher.setMaxDiscountAmount(request.getMaxDiscountAmount());
+        voucher.setMaxUsage(request.getMaxUsage());
+        voucher.setStartTime(request.getStartTime());
+        voucher.setEndTime(request.getEndTime());
+
+        return toResponse(voucherRepository.save(voucher));
+    }
+
+    @Override
+    @Transactional
+    public void deleteVoucher(Long id) {
+        if (!voucherRepository.existsById(id)) {
+            throw new IllegalArgumentException("❌ Không tìm thấy voucher ID: " + id);
+        }
+        voucherRepository.deleteById(id);
+    }
+
     /**
      * Map Voucher entity sang VoucherResponse DTO
      */

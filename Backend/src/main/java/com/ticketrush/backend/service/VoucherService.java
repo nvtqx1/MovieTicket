@@ -45,5 +45,26 @@ public interface VoucherService {
      * @throws IllegalArgumentException nếu code không tồn tại hoặc hết hạn
      */
     VoucherCheckResponse checkVoucher(String code);
+
+    /**
+     * Admin API: Lấy danh sách tất cả mã giảm giá
+     * 
+     * GET /v1/vouchers
+     */
+    java.util.List<VoucherResponse> getAllVouchers();
+
+    /**
+     * Admin API: Cập nhật mã giảm giá
+     * 
+     * PUT /v1/vouchers/{id}
+     */
+    VoucherResponse updateVoucher(Long id, CreateVoucherRequest request);
+
+    /**
+     * Admin API: Xóa mã giảm giá
+     * 
+     * DELETE /v1/vouchers/{id}
+     */
+    void deleteVoucher(Long id);
 }
 

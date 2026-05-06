@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, Plus, Tag, Calendar, Percent } from 'lucide-react';
-import { createVoucher } from '../services/api/voucherService';
+import { Ticket, Plus, Tag, Calendar, Percent, Edit, Trash2 } from 'lucide-react';
+import { createVoucher, getAllVouchers, updateVoucher, deleteVoucher } from '../services/api/voucherService';
 
 export default function AdminVouchers() {
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+    const [vouchers, setVouchers] = useState([]);
     const [successMsg, setSuccessMsg] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
+    const [editingId, setEditingId] = useState(null);
 
     const [formData, setFormData] = useState({
         code: '',
@@ -16,12 +19,64 @@ export default function AdminVouchers() {
         maxUsage: 100
     });
 
+    const fetchVouchers = async () => {
+        try {
+            setFetching(true);
+            const data = await getAllVouchers();
+            setVouchers(data);
+        } catch (error) {
+            console.error("Lỗi lấy danh sách voucher:", error);
+        } finally {
+            setFetching(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchVouchers();
+    }, []);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleEdit = (voucher) => {
+        setEditingId(voucher.id);
+        setFormData({
+            code: voucher.code,
+            discountPercentage: voucher.discountPercentage,
+            maxDiscountAmount: voucher.maxDiscountAmount,
+            validFrom: voucher.startTime.split('T')[0],
+            validTo: voucher.endTime.split('T')[0],
+            maxUsage: voucher.maxUsage
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setFormData({
+            code: '',
+            discountPercentage: 10,
+            maxDiscountAmount: 50000,
+            validFrom: '',
+            validTo: '',
+            maxUsage: 100
+        });
+    };
+
+    const handleDelete = async (id, code) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa mã ${code}?`)) return;
+        try {
+            await deleteVoucher(id);
+            setSuccessMsg(`Xóa mã ${code} thành công!`);
+            fetchVouchers();
+        } catch (error) {
+            setErrorMsg("Lỗi khi xóa mã voucher.");
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -36,23 +91,29 @@ export default function AdminVouchers() {
                 discountPercentage: Number(formData.discountPercentage),
                 maxDiscountAmount: Number(formData.maxDiscountAmount),
                 maxUsage: Number(formData.maxUsage),
-                // Ensure date format is suitable for backend (e.g. ISO string or LocalDate string)
                 startTime: formData.validFrom + "T00:00:00",
                 endTime: formData.validTo + "T23:59:59"
             };
 
-            await createVoucher(dataToSubmit);
-            setSuccessMsg(`Tạo mã ${formData.code} thành công!`);
-            setFormData({
-                code: '',
-                discountPercentage: 10,
-                maxDiscountAmount: 50000,
-                validFrom: '',
-                validTo: '',
-                maxUsage: 100
-            });
+            if (editingId) {
+                await updateVoucher(editingId, dataToSubmit);
+                setSuccessMsg(`Cập nhật mã ${formData.code} thành công!`);
+                handleCancelEdit();
+            } else {
+                await createVoucher(dataToSubmit);
+                setSuccessMsg(`Tạo mã ${formData.code} thành công!`);
+                setFormData({
+                    code: '',
+                    discountPercentage: 10,
+                    maxDiscountAmount: 50000,
+                    validFrom: '',
+                    validTo: '',
+                    maxUsage: 100
+                });
+            }
+            fetchVouchers();
         } catch (error) {
-            setErrorMsg(error.response?.data?.message || "Lỗi khi tạo mã voucher. Có thể mã đã tồn tại.");
+            setErrorMsg(error.response?.data?.message || "Lỗi khi lưu mã voucher. Có thể mã đã tồn tại.");
         } finally {
             setLoading(false);
         }
@@ -70,142 +131,221 @@ export default function AdminVouchers() {
                 </p>
             </header>
 
-            <div className="bg-[#111] p-8 rounded-xl border border-white/5 max-w-2xl">
-                <h2 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <span className="w-1 h-4 bg-red-600 rounded-full"></span> Tạo Voucher Mới
-                </h2>
+            <div className="grid lg:grid-cols-3 gap-8">
+                {/* Form Create/Edit */}
+                <div className="lg:col-span-1 bg-[#111] p-6 rounded-xl border border-white/5 h-fit">
+                    <h2 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-red-600 rounded-full"></span> 
+                        {editingId ? "Cập Nhật Voucher" : "Tạo Voucher Mới"}
+                    </h2>
 
-                {successMsg && (
-                    <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg text-sm font-bold">
-                        {successMsg}
-                    </div>
-                )}
-
-                {errorMsg && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm font-bold">
-                        {errorMsg}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                            Mã Voucher
-                        </label>
-                        <div className="relative">
-                            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                            <input
-                                type="text"
-                                name="code"
-                                value={formData.code}
-                                onChange={handleChange}
-                                required
-                                placeholder="VD: FLASH50"
-                                className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors uppercase"
-                            />
+                    {successMsg && (
+                        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg text-sm font-bold">
+                            {successMsg}
                         </div>
-                    </div>
+                    )}
 
-                    <div className="grid grid-cols-2 gap-6">
+                    {errorMsg && (
+                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm font-bold">
+                            {errorMsg}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Phần trăm giảm (%)
+                                Mã Voucher
                             </label>
                             <div className="relative">
-                                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                                 <input
-                                    type="number"
-                                    name="discountPercentage"
-                                    value={formData.discountPercentage}
+                                    type="text"
+                                    name="code"
+                                    value={formData.code}
                                     onChange={handleChange}
                                     required
-                                    min="1"
-                                    max="100"
-                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
+                                    placeholder="VD: FLASH50"
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors uppercase"
                                 />
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                    Giảm (%)
+                                </label>
+                                <div className="relative">
+                                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                    <input
+                                        type="number"
+                                        name="discountPercentage"
+                                        value={formData.discountPercentage}
+                                        onChange={handleChange}
+                                        required
+                                        min="1"
+                                        max="100"
+                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 whitespace-nowrap">
+                                    Tối đa (VNĐ)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="maxDiscountAmount"
+                                    value={formData.maxDiscountAmount}
+                                    onChange={handleChange}
+                                    required
+                                    min="0"
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 px-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                    Từ ngày
+                                </label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                                    <input
+                                        type="date"
+                                        name="validFrom"
+                                        value={formData.validFrom}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-9 pr-2 text-xs text-white focus:outline-none focus:border-red-600 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                    Đến ngày
+                                </label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                                    <input
+                                        type="date"
+                                        name="validTo"
+                                        value={formData.validTo}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-9 pr-2 text-xs text-white focus:outline-none focus:border-red-600 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Giảm tối đa (VNĐ)
+                                Số lượng mã
                             </label>
                             <input
                                 type="number"
-                                name="maxDiscountAmount"
-                                value={formData.maxDiscountAmount}
+                                name="maxUsage"
+                                value={formData.maxUsage}
                                 onChange={handleChange}
                                 required
-                                min="0"
+                                min="1"
                                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 px-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
                             />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Từ ngày
-                            </label>
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                                <input
-                                    type="date"
-                                    name="validFrom"
-                                    value={formData.validFrom}
-                                    onChange={handleChange}
-                                    required
-                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
-                                />
-                            </div>
+                        <div className="flex gap-3 pt-2">
+                            {editingId && (
+                                <button
+                                    type="button"
+                                    onClick={handleCancelEdit}
+                                    className="flex-1 border border-white/20 hover:bg-white/5 text-white font-bold py-4 rounded-lg transition-colors"
+                                >
+                                    Hủy
+                                </button>
+                            )}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-[2] bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                            >
+                                {loading ? (
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        {editingId ? <Edit size={18} /> : <Plus size={18} />}
+                                        {editingId ? "Lưu Thay Đổi" : "Tạo Voucher"}
+                                    </>
+                                )}
+                            </button>
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                Đến ngày
-                            </label>
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                                <input
-                                    type="date"
-                                    name="validTo"
-                                    value={formData.validTo}
-                                    onChange={handleChange}
-                                    required
-                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
-                                />
+                    </form>
+                </div>
+
+                {/* List Vouchers */}
+                <div className="lg:col-span-2 bg-[#111] p-6 rounded-xl border border-white/5 flex flex-col h-[700px]">
+                    <h2 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2 shrink-0">
+                        <span className="w-1 h-4 bg-red-600 rounded-full"></span> Danh Sách Voucher
+                    </h2>
+                    
+                    <div className="flex-1 overflow-auto custom-scrollbar pr-2 space-y-4">
+                        {fetching ? (
+                            <div className="flex justify-center items-center h-full">
+                                <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                            Số lượng mã
-                        </label>
-                        <input
-                            type="number"
-                            name="maxUsage"
-                            value={formData.maxUsage}
-                            onChange={handleChange}
-                            required
-                            min="1"
-                            className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-3 px-4 text-sm text-white focus:outline-none focus:border-red-600 transition-colors"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : vouchers.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">
+                                Chưa có mã giảm giá nào
+                            </div>
                         ) : (
-                            <>
-                                <Plus size={20} />
-                                Tạo Voucher
-                            </>
+                            vouchers.map(voucher => (
+                                <div key={voucher.id} className="bg-[#1a1a1a] p-5 rounded-lg border border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-white/10 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-red-600/20 text-red-500 flex items-center justify-center shrink-0">
+                                            <Percent size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-lg text-white mb-1">{voucher.code}</h3>
+                                            <p className="text-xs text-gray-400">
+                                                Giảm {voucher.discountPercentage}% (Tối đa {voucher.maxDiscountAmount.toLocaleString()}đ)
+                                            </p>
+                                            <p className="text-[10px] text-gray-500 mt-1">
+                                                {voucher.startTime.split('T')[0]} → {voucher.endTime.split('T')[0]}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                                        <div className="text-right flex-1 sm:flex-none">
+                                            <p className="text-xs text-gray-400 mb-1">Đã dùng</p>
+                                            <p className="text-sm font-bold text-white">
+                                                {voucher.currentUsage} / {voucher.maxUsage}
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 pl-4 border-l border-white/10">
+                                            <button 
+                                                onClick={() => handleEdit(voucher)}
+                                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                                title="Sửa"
+                                            >
+                                                <Edit size={18} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDelete(voucher.id, voucher.code)}
+                                                className="p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                title="Xóa"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
                         )}
-                    </button>
-                </form>
+                    </div>
+                </div>
             </div>
         </div>
     );

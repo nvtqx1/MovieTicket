@@ -120,6 +120,35 @@ public class VoucherController {
         }
     }
 
+    @GetMapping
+    @Operation(summary = "📋 Lấy danh sách voucher", description = "Admin API để lấy tất cả voucher")
+    public ResponseEntity<java.util.List<VoucherResponse>> getAllVouchers() {
+        return ResponseEntity.ok(voucherService.getAllVouchers());
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "✏️ Cập nhật voucher", description = "Admin API để sửa voucher")
+    public ResponseEntity<VoucherResponse> updateVoucher(
+            @PathVariable Long id,
+            @RequestBody CreateVoucherRequest request) {
+        try {
+            return ResponseEntity.ok(voucherService.updateVoucher(id, request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "🗑️ Xóa voucher", description = "Admin API để xóa voucher")
+    public ResponseEntity<Void> deleteVoucher(@PathVariable Long id) {
+        try {
+            voucherService.deleteVoucher(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     /**
      * Health check endpoint
      */
