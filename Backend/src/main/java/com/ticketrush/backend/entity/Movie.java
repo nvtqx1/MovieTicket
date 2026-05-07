@@ -30,4 +30,7 @@ public class Movie {
     @Column(name = "poster_image_url")
     private String posterImageUrl;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
 }

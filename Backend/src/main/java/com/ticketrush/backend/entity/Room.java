@@ -24,4 +24,10 @@ public class Room {
 
     @Column(name = "capacity", nullable = false)
     private Integer capacity;
+
+    @Column(name = "matrix_rows")
+    private Integer matrixRows;
+
+    @Column(name = "matrix_cols")
+    private Integer matrixCols;
 }

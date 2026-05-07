@@ -190,4 +190,48 @@ public class TheaterServiceImpl implements TheaterService {
             throw new IllegalArgumentException("❌ Không thể xóa rạp (có thể đang chứa phòng chiếu hoặc đơn hàng)");
         }
     }
+
+    // ═══════════════════════════════════════
+    // TASK 1.1: Room Update/Delete
+    // ═══════════════════════════════════════
+
+    @Override
+    @Transactional
+    public RoomResponse updateRoom(Long theaterId, Long roomId, CreateRoomRequest request) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ Phòng không tồn tại"));
+
+        if (!room.getTheater().getId().equals(theaterId)) {
+            throw new IllegalArgumentException("❌ Phòng không thuộc rạp này");
+        }
+
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            room.setName(request.getName());
+        }
+        if (request.getCapacity() != null && request.getCapacity() > 0) {
+            room.setCapacity(request.getCapacity());
+        }
+
+        Room updated = roomRepository.save(room);
+        log.info("✅ Cập nhật phòng {} thành công", roomId);
+        return toRoomResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRoom(Long theaterId, Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ Phòng không tồn tại"));
+
+        if (!room.getTheater().getId().equals(theaterId)) {
+            throw new IllegalArgumentException("❌ Phòng không thuộc rạp này");
+        }
+
+        try {
+            roomRepository.deleteById(roomId);
+            log.info("✅ Xóa phòng {} thành công", roomId);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("❌ Không thể xóa phòng (đang có lịch chiếu hoặc ghế liên kết)");
+        }
+    }
 }

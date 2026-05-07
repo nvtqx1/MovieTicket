@@ -17,6 +17,7 @@ public class UserDetailsImpl implements UserDetails {
     private Long id;
     private String email;
     private String password;
+    private boolean banned;
     private Collection<? extends GrantedAuthority> authorities;
 
     // Hàm tiện ích: Biến Entity User thành UserDetailsImpl
@@ -28,6 +29,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
+                user.getIsBanned() != null && user.getIsBanned(),
                 Collections.singletonList(authority) // TicketRush 1 User có 1 Role
         );
     }
@@ -48,16 +50,16 @@ public class UserDetailsImpl implements UserDetails {
         return email;
     }
 
-    // Các hàm kiểm tra trạng thái tài khoản (Tạm thời luôn trả về true)
+    // Nếu user bị ban → tài khoản bị khóa
     @Override
     public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() { return !banned; }
 
     @Override
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return !banned; }
 }

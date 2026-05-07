@@ -54,3 +54,13 @@ export const cancelReservation = async (reservationId) => {
     const response = await api.post(`/reservations/${reservationId}/cancel`);
     return response.data;
 };
+
+/**
+ * GET /api/v1/reservations/{reservationId}/ticket-detail
+ * Task 2.3: Lấy chi tiết vé đầy đủ (phim, rạp, phòng, dãy, ghế, giờ chiếu, QR)
+ * @returns TicketDetailResponse
+ */
+export const getTicketDetail = async (reservationId) => {
+    const response = await api.get(`/reservations/${reservationId}/ticket-detail`);
+    return response.data;
+};

@@ -50,8 +50,6 @@ export default function Theaters() {
                         <TheaterCard
                             key={t.id}
                             theater={t}
-                            onDetail={() => navigate(`/theaters/${t.id}`)}
-                            onShowtime={() => navigate(`/movies?theaterId=${t.id}`)}
                         />
                     ))}
                 </div>

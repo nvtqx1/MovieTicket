@@ -36,4 +36,39 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("showDate") LocalDate showDate,
             @Param("fromDate") LocalDate fromDate
     );
+
+    // Task 2.2: Lấy lịch chiếu của phim từ hôm nay trở đi, có thể filter theo rạp
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.room r
+            JOIN FETCH r.theater t
+            WHERE m.id = :movieId
+              AND s.showDate >= :fromDate
+              AND (:theaterId IS NULL OR t.id = :theaterId)
+            ORDER BY s.showDate ASC, s.showTime ASC
+            """)
+    List<Showtime> findUpcomingByMovie(
+            @Param("movieId") Long movieId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("theaterId") Long theaterId
+    );
+
+    // Task 2.2: Lấy lịch chiếu của rạp trong khoảng ngày
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.room r
+            JOIN FETCH r.theater t
+            WHERE t.id = :theaterId
+              AND s.showDate BETWEEN :startDate AND :endDate
+            ORDER BY s.showDate ASC, s.showTime ASC
+            """)
+    List<Showtime> findByTheaterAndDateRange(
+            @Param("theaterId") Long theaterId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

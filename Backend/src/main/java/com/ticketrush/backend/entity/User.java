@@ -52,4 +52,7 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
+    @Column(name = "is_banned", nullable = false)
+    private Boolean isBanned = false;
+
 }

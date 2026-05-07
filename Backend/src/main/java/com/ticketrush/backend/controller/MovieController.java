@@ -110,6 +110,16 @@ public class MovieController {
     }
 
     /**
+     * Task 2.1: API Search phim theo tên
+     * GET /api/v1/movies/search?keyword=avatar
+     */
+    @GetMapping("/search")
+    @Operation(summary = "🔍 Tìm kiếm phim theo tên")
+    public ResponseEntity<List<MovieResponse>> searchMovies(@RequestParam String keyword) {
+        return ResponseEntity.ok(movieService.searchMovies(keyword));
+    }
+
+    /**
      * GET /api/v1/movies/{id}
      * Lấy chi tiết một phim theo ID
      * 
@@ -142,6 +152,12 @@ public class MovieController {
         return ResponseEntity.ok(movieService.getMovieById(id));
     }
 
+    @GetMapping("/{id}/details")
+    @Operation(summary = "🎬 Lấy chi tiết phim và lịch chiếu", description = "Lấy dữ liệu chi tiết của phim và các rạp đang chiếu")
+    public ResponseEntity<com.ticketrush.backend.dto.MovieDetailsResponse> getMovieDetailsWithTheaters(@PathVariable Long id) {
+        return ResponseEntity.ok(movieService.getMovieDetailsWithTheaters(id));
+    }
+
     /**
      * VỀ LỖ HỔNG 1: Admin API - Tạo phim mới
      * 
@@ -172,5 +188,23 @@ public class MovieController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "✏️ Admin: Cập nhật phim", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<MovieResponse> updateMovie(@PathVariable Long id, @RequestBody CreateMovieRequest request) {
+        try {
+            MovieResponse response = movieService.updateMovie(id, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "🗑️ Admin: Xóa phim (Soft Delete)", security = @SecurityRequirement(name = "bearer-jwt"))
+    public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
+        movieService.deleteMovie(id);
+        return ResponseEntity.noContent().build();
     }
 }

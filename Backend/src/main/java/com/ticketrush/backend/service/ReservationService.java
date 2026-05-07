@@ -813,5 +813,75 @@ public class ReservationService {
         reservationRepository.saveAll(expiredReservations);
         log.info("✅ Dọn dẹp hoàn tất");
     }
+
+    /**
+     * Task 2.3: Lấy chi tiết vé đầy đủ
+     * Trả về: Tên phim, Rạp, Phòng (Hall), Dãy (Row), Số ghế (Seat), Giờ chiếu
+     * Dùng để render UI vé giấy truyền thống và mã hóa QR Code
+     */
+    @Transactional(readOnly = true)
+    public com.ticketrush.backend.dto.TicketDetailResponse getTicketDetail(Long reservationId, Long userId) {
+        log.info("🎫 Lấy chi tiết vé ID: {} cho user: {}", reservationId, userId);
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Đơn đặt vé không tồn tại"));
+
+        // Kiểm tra quyền
+        if (!reservation.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Bạn không có quyền xem đơn này");
+        }
+
+        Showtime showtime = reservation.getShowtime();
+        Movie movie = showtime.getMovie();
+        Room room = showtime.getRoom();
+        Theater theater = room.getTheater();
+
+        // Lấy danh sách ghế
+        List<Seat> seats = seatRepository.findByReservationId(reservationId);
+
+        List<com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail> seatDetails = seats.stream()
+                .map(seat -> {
+                    String seatNumber = seat.getSeatNumber();
+                    // Tách dãy (Row) và số ghế (Col) từ seatNumber VD "A12" → row="A", col="12"
+                    String row = seatNumber.replaceAll("[0-9]", "");
+                    String col = seatNumber.replaceAll("[^0-9]", "");
+
+                    return com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail.builder()
+                            .seatNumber(seatNumber)
+                            .row(row)
+                            .col(col)
+                            .seatType(seat.getSeatType().getName())
+                            .build();
+                })
+                .toList();
+
+        // Tạo QR Code Data URI nếu đã thanh toán
+        String qrDataUri = null;
+        if (reservation.getQrCodeHash() != null) {
+            try {
+                String base64 = qrCodeUtil.generateQrCodeBase64(reservation.getQrCodeHash());
+                qrDataUri = qrCodeUtil.createDataUri(base64);
+            } catch (Exception e) {
+                log.warn("⚠️ Không thể tạo QR Code: {}", e.getMessage());
+            }
+        }
+
+        return com.ticketrush.backend.dto.TicketDetailResponse.builder()
+                .reservationId(reservation.getId())
+                .movieTitle(movie.getTitle())
+                .moviePosterUrl(movie.getPosterImageUrl())
+                .movieGenre(movie.getGenre())
+                .theaterName(theater.getName())
+                .theaterLocation(theater.getLocation())
+                .roomName(room.getName())
+                .seats(seatDetails)
+                .showDate(showtime.getShowDate())
+                .showTime(showtime.getShowTime())
+                .totalPrice(reservation.getTotalPrice())
+                .status(reservation.getStatus().toString())
+                .qrCodeHash(reservation.getQrCodeHash())
+                .qrCodeDataUri(qrDataUri)
+                .build();
+    }
 }
 

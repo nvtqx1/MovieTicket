@@ -1,39 +1,36 @@
 import React, { useState, useMemo } from "react";
-import { useSeatGenerator } from "../hooks/useSeatGenerator";
-import { useSeats } from "../hooks/useSeats";
-import SeatGrid from "../components/admin/SeatGrid";
-import { deleteSeatsByShowtime } from "../services/api/seatService";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../services/api/api";
 import { Trash2 } from "lucide-react";
 
 export default function AdminSeatCreator() {
+    const { id: roomId } = useParams();
+    const navigate = useNavigate();
 
     const [form, setForm] = useState({
-        showtimeId: 1,
         rows: 10,
         cols: 15
     });
 
-    const { generate, loading, result, error } = useSeatGenerator();
-    const { seats, loading: loadingSeats } = useSeats(form.showtimeId);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState(null);
 
     const handleGenerate = async () => {
-        await generate({
-            showtimeId: Number(form.showtimeId),
-            rows: Number(form.rows),
-            cols: Number(form.cols)
-        });
-        // Reload page to reflect new seats
-        setTimeout(() => window.location.reload(), 500);
-    };
-
-    const handleDeleteSeats = async () => {
-        if (!confirm(`Bạn có chắc chắn muốn xóa toàn bộ ghế của suất chiếu ${form.showtimeId}?`)) return;
         try {
-            await deleteSeatsByShowtime(form.showtimeId);
-            alert("Xóa sơ đồ ghế thành công!");
-            window.location.reload();
+            setLoading(true);
+            setError(null);
+            const res = await api.post(`/admin/rooms/${roomId}/seats`, {
+                rows: Number(form.rows),
+                cols: Number(form.cols)
+            });
+            setResult(res.data);
+            alert("Lưu ma trận ghế cho phòng thành công!");
+            navigate(-1); // Go back after success
         } catch (err) {
-            alert(err.response?.data?.message || "Lỗi khi xóa ghế (có thể đã có vé được đặt).");
+            setError(err.message || "Lỗi lưu cấu hình ghế.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -66,17 +63,7 @@ export default function AdminSeatCreator() {
 
                         <div className="space-y-4">
 
-                            <div>
-                                <label className="text-xs text-gray-400">Showtime ID</label>
-                                <input
-                                    type="number"
-                                    value={form.showtimeId}
-                                    onChange={(e) =>
-                                        setForm({ ...form, showtimeId: e.target.value })
-                                    }
-                                    className="w-full mt-1 bg-black border border-white/10 rounded-lg px-3 py-2"
-                                />
-                            </div>
+
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -109,7 +96,7 @@ export default function AdminSeatCreator() {
                                 disabled={loading}
                                 className="w-full bg-red-500 hover:bg-red-600 py-3 rounded-lg font-bold transition disabled:opacity-50"
                             >
-                                {loading ? "Đang xử lý..." : (seats && seats.length > 0 ? "Thêm ghế (Upsert)" : "Tạo sơ đồ ghế")}
+                                {loading ? "Đang xử lý..." : "Lưu ma trận ghế"}
                             </button>
                         </div>
                     </div>
@@ -170,32 +157,7 @@ export default function AdminSeatCreator() {
                     </div>
                 </div>
 
-                {/* ================= REAL DATA ================= */}
-                <div className="lg:col-span-3 bg-[#111] border border-white/5 rounded-xl p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="font-bold">Ghế thực tế (Database)</h2>
-                        {seats && seats.length > 0 && (
-                            <button
-                                onClick={handleDeleteSeats}
-                                className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
-                            >
-                                <Trash2 size={16} />
-                                Xóa toàn bộ sơ đồ ghế này
-                            </button>
-                        )}
-                    </div>
 
-                    {loadingSeats
-                        ? <div className="text-center p-10"><div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin inline-block"></div></div>
-                        : !seats || seats.length === 0 ? (
-                            <div className="text-center p-10 text-gray-500">
-                                Chưa có ghế nào được tạo cho suất chiếu này.
-                            </div>
-                        ) : (
-                            <SeatGrid seats={seats} />
-                        )
-                    }
-                </div>
             </div>
         </div>
     );

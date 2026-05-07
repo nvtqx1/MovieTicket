@@ -49,4 +49,9 @@ public interface TheaterService {
     TheaterResponse updateTheater(Long id, CreateTheaterRequest request);
 
     void deleteTheater(Long id);
+
+    // Task 1.1: Room CRUD
+    RoomResponse updateRoom(Long theaterId, Long roomId, CreateRoomRequest request);
+
+    void deleteRoom(Long theaterId, Long roomId);
 }

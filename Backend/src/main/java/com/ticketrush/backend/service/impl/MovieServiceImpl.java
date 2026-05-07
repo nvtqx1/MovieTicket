@@ -2,9 +2,14 @@ package com.ticketrush.backend.service.impl;
 
 import com.ticketrush.backend.dto.CreateMovieRequest;
 import com.ticketrush.backend.dto.MovieResponse;
+import com.ticketrush.backend.dto.MovieDetailsResponse;
+import com.ticketrush.backend.dto.ShowtimeResponse;
 import com.ticketrush.backend.entity.Movie;
+import com.ticketrush.backend.entity.Showtime;
+import com.ticketrush.backend.entity.Theater;
 import com.ticketrush.backend.exception.ResourceNotFoundException;
 import com.ticketrush.backend.repository.MovieRepository;
+import com.ticketrush.backend.repository.ShowtimeRepository;
 import com.ticketrush.backend.service.MovieService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +52,7 @@ public class MovieServiceImpl implements MovieService {
      * Được inject tự động bởi Spring thông qua constructor
      */
     private final MovieRepository movieRepository;
+    private final ShowtimeRepository showtimeRepository;
 
     /**
      * Lấy danh sách phim với phân trang
@@ -58,7 +64,7 @@ public class MovieServiceImpl implements MovieService {
         log.info("📋 Lấy danh sách phim - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
         
         // Lấy page các Movie entities, sau đó map sang DTO
-        Page<Movie> moviePage = movieRepository.findAll(pageable);
+        Page<Movie> moviePage = movieRepository.findByIsDeletedFalse(pageable);
         
         // Map Page<Movie> sang Page<MovieResponse>
         List<MovieResponse> responses = moviePage.getContent()
@@ -83,9 +89,43 @@ public class MovieServiceImpl implements MovieService {
      */
     @Override
     public MovieResponse getMovieById(Long id) {
-        return movieRepository.findById(id)
+        return movieRepository.findByIdAndIsDeletedFalse(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found with id: " + id));
+    }
+
+    @Override
+    public MovieDetailsResponse getMovieDetailsWithTheaters(Long id) {
+        Movie movie = movieRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with id: " + id));
+        MovieResponse movieResponse = toResponse(movie);
+
+        List<Showtime> showtimes = showtimeRepository.searchShowtimes(id, null, null, java.time.LocalDate.now());
+
+        // Group by theater
+        java.util.Map<Theater, List<Showtime>> showtimesByTheater = showtimes.stream()
+                .collect(java.util.stream.Collectors.groupingBy(s -> s.getRoom().getTheater()));
+
+        List<MovieDetailsResponse.TheaterShowtimes> theaters = showtimesByTheater.entrySet().stream()
+                .map(entry -> {
+                    Theater theater = entry.getKey();
+                    List<ShowtimeResponse> showtimeResponses = entry.getValue().stream()
+                            .map(this::toShowtimeResponse)
+                            .toList();
+
+                    return MovieDetailsResponse.TheaterShowtimes.builder()
+                            .theaterId(theater.getId())
+                            .theaterName(theater.getName())
+                            .location(theater.getLocation())
+                            .showtimes(showtimeResponses)
+                            .build();
+                })
+                .toList();
+
+        return MovieDetailsResponse.builder()
+                .movie(movieResponse)
+                .theaters(theaters)
+                .build();
     }
 
     /**
@@ -133,6 +173,47 @@ public class MovieServiceImpl implements MovieService {
         }
     }
 
+    @Override
+    @Transactional
+    public MovieResponse updateMovie(Long id, CreateMovieRequest request) {
+        Movie movie = movieRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with id: " + id));
+
+        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("❌ Tên phim không được để trống");
+        }
+
+        movie.setTitle(request.getTitle());
+        movie.setDescription(request.getDescription());
+        movie.setReleaseYear(request.getReleaseYear());
+        movie.setGenre(request.getGenre());
+        movie.setPosterImageUrl(request.getPosterImageUrl());
+
+        Movie updatedMovie = movieRepository.save(movie);
+        log.info("✅ Cập nhật phim thành công: ID = {}", updatedMovie.getId());
+        return toResponse(updatedMovie);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMovie(Long id) {
+        Movie movie = movieRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with id: " + id));
+        
+        movie.setIsDeleted(true);
+        movieRepository.save(movie);
+        log.info("✅ Đã xóa mềm phim: ID = {}", id);
+    }
+
+    @Override
+    public List<MovieResponse> searchMovies(String keyword) {
+        log.info("🔍 Tìm kiếm phim với từ khóa: {}", keyword);
+        return movieRepository.findByTitleContainingIgnoreCaseAndIsDeletedFalse(keyword)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     /**
      * Chuyển đổi Movie Entity sang MovieResponse DTO
      * 
@@ -152,6 +233,30 @@ public class MovieServiceImpl implements MovieService {
                 movie.getReleaseYear(),
                 movie.getGenre(),
                 movie.getPosterImageUrl()
+        );
+    }
+
+    private ShowtimeResponse toShowtimeResponse(Showtime showtime) {
+        return new ShowtimeResponse(
+                showtime.getId(),
+                showtime.getShowDate(),
+                showtime.getShowTime(),
+                showtime.getPrice(),
+                showtime.getTotalSeats(),
+                showtime.getAvailableSeats(),
+                showtime.getIsFlashSale(),
+                showtime.getRoom().getName(),
+                new ShowtimeResponse.MovieSummary(
+                        showtime.getMovie().getId(),
+                        showtime.getMovie().getTitle(),
+                        showtime.getMovie().getPosterImageUrl(),
+                        showtime.getMovie().getGenre()
+                ),
+                new ShowtimeResponse.TheaterSummary(
+                        showtime.getRoom().getTheater().getId(),
+                        showtime.getRoom().getTheater().getName(),
+                        showtime.getRoom().getTheater().getLocation()
+                )
         );
     }
 }

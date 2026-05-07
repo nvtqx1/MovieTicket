@@ -62,3 +62,16 @@ export const deleteShowtime = async (id) => {
     const response = await api.delete(`/admin/showtimes/${id}`);
     return response.data;
 };
+
+/**
+ * GET /api/v1/admin/showtimes?theaterId=&movieId=&date= (Admin only)
+ * Task 1.2: Filtered showtime list
+ */
+export const getAdminShowtimes = async ({ theaterId, movieId, date } = {}) => {
+    const query = new URLSearchParams();
+    if (theaterId) query.set('theaterId', theaterId);
+    if (movieId) query.set('movieId', movieId);
+    if (date) query.set('date', date);
+    const response = await api.get(`/admin/showtimes?${query.toString()}`);
+    return Array.isArray(response.data) ? response.data : [];
+};

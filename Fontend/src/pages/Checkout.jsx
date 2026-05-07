@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { confirmReservation } from "../services/api/reservationService";
+import api from "../services/api/api";
 import { checkVoucher } from "../services/api/voucherService";
 import { useAuthContext } from "../context/AuthContext";
 import { CheckCircle, Clock, CreditCard, Wallet, Smartphone, Ticket } from "lucide-react";
@@ -129,17 +129,16 @@ export default function Checkout() {
         setIsProcessing(true);
         setError(null);
 
-        const payload = {
-            reservationId: Number(currentReservationId),
-            paymentMethodId: paymentMethod,
-            transactionCode: `TMT${Date.now()}`,
-            seatNumbers: selectedSeats,
-            notes: `Thanh toán qua ${PAYMENT_METHODS.find(p => p.id === paymentMethod)?.name || "N/A"}`,
-            voucherCode: voucherResult?.isValid ? voucherCode : null,
-        };
+        const paymentMethodName = PAYMENT_METHODS.find(p => p.id === paymentMethod)?.name || "CASH";
 
         try {
-            const data = await confirmReservation(payload);
+            // Task 3.3: Call new mock checkout API
+            const response = await api.post(`/booking/checkout/${currentReservationId}`, {
+                paymentMethod: paymentMethodName,
+                voucherCode: voucherResult?.isValid ? voucherCode : null,
+            });
+
+            const data = response.data;
 
             if (data.apiStatus === "SUCCESS") {
                 setResult(data);
@@ -147,7 +146,7 @@ export default function Checkout() {
                 setError(data.message || "Thanh toán thất bại!");
             }
         } catch (err) {
-            setError(err.message || "Thanh toán thất bại! Vui lòng thử lại.");
+            setError(err.response?.data?.message || err.message || "Thanh toán thất bại! Vui lòng thử lại.");
         } finally {
             setIsProcessing(false);
         }

@@ -21,5 +21,11 @@ public interface AdminService {
      * @throws Exception nếu phim hoặc phòng không tồn tại
      */
     ShowtimeResponse createShowtime(CreateShowtimeRequest request) throws Exception;
+
+    // Task 1.2: Lấy danh sách showtime có filter
+    java.util.List<ShowtimeResponse> getFilteredShowtimes(Long theaterId, Long movieId, java.time.LocalDate date);
+
+    // Task 1.2: Xóa showtime
+    void deleteShowtime(Long showtimeId);
 }
 

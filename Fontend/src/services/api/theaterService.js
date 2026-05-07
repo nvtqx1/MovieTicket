@@ -71,6 +71,26 @@ export const createRoom = async (theaterId, roomData) => {
     return response.data;
 };
 
+export const updateRoom = async (theaterId, roomId, roomData) => {
+    const response = await api.put(`/theaters/${theaterId}/rooms/${roomId}`, roomData);
+    return response.data;
+};
+
+export const deleteRoom = async (theaterId, roomId) => {
+    const response = await api.delete(`/theaters/${theaterId}/rooms/${roomId}`);
+    return response.data;
+};
+
+/**
+ * GET /api/v1/theaters/{theaterId}/schedule
+ * Task 2.2: Lấy lịch chiếu của rạp trong 6 ngày tới, grouped by date
+ * @returns { theaterId, theaterName, location, schedule: { "2026-05-07": ShowtimeResponse[] } }
+ */
+export const getTheaterSchedule = async (theaterId) => {
+    const response = await api.get(`/theaters/${theaterId}/schedule`);
+    return response.data;
+};
+
 // Named export for backward compatibility
 export const theaterService = {
     getAll: getTheaters,

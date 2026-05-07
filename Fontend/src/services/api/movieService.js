@@ -101,3 +101,14 @@ export const deleteMovie = async (id) => {
     const response = await api.delete(`/movies/${id}`);
     return response.data;
 };
+
+/**
+ * GET /api/v1/movies/search?keyword=abc
+ * Task 2.1: Tìm kiếm phim theo tên
+ * @param {string} keyword
+ * @returns MovieResponse[]
+ */
+export const searchMovies = async (keyword) => {
+    const response = await api.get(`/movies/search?keyword=${encodeURIComponent(keyword)}`);
+    return response.data;
+};

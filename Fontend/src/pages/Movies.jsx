@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import MovieCard from "../components/movies/MovieCard";
 import FilterSidebar from "../components/movies/FilterSidebar";
 import Pagination from "../components/movies/Pagination";
@@ -7,7 +8,8 @@ import { useMovies } from "../hooks/useMovies";
 const ITEMS_PER_PAGE = 8;
 
 export default function Movies() {
-    const [search, setSearch] = useState("");
+    const [searchParams] = useSearchParams();
+    const [search, setSearch] = useState(searchParams.get("search") || "");
     const [selectedGenre, setSelectedGenre] = useState("");
     const [selectedReleaseYear, setSelectedReleaseYear] = useState("");
     const [currentPage, setCurrentPage] = useState(1);

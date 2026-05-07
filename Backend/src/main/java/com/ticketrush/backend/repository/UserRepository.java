@@ -40,7 +40,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT new com.ticketrush.backend.dto.GenderStatDTO(u.gender, COUNT(u)) " +
            "FROM User u " +
-           "WHERE u.gender IS NOT NULL " +
+           "WHERE u.gender IS NOT NULL AND u.isBanned = false " +
            "GROUP BY u.gender " +
            "ORDER BY COUNT(u) DESC")
     List<GenderStatDTO> getGenderStatistics();
@@ -86,6 +86,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT COUNT(u) FROM User u")
     Long getTotalUserCount();
+
+    // Số user hoạt động (không bị ban)
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isBanned = false")
+    Long getActiveUserCount();
 
     /**
      * Lấy tổng số người dùng đã tạo trong ngày chỉ định

@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,6 +38,56 @@ import java.util.Map;
 public class AdminShowtimeController {
 
     private final AdminService adminService;
+
+    // ═══════════════════════════════════════════════
+    // TASK 1.2: GET Showtime List với Filter
+    // ═══════════════════════════════════════════════
+
+    @GetMapping
+    @Operation(
+            summary = "📋 Danh sách lịch chiếu (có filter)",
+            description = "Lấy danh sách lịch chiếu, có thể lọc theo rạp và ngày",
+            security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    public ResponseEntity<List<ShowtimeResponse>> listShowtimes(
+            @RequestParam(required = false) Long theaterId,
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) String date) {
+        try {
+            LocalDate filterDate = null;
+            if (date != null && !date.trim().isEmpty()) {
+                try {
+                    filterDate = LocalDate.parse(date);
+                } catch (Exception ex) {
+                    try {
+                        filterDate = LocalDate.parse(date, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    } catch (Exception innerEx) {
+                        log.warn("❌ Không thể parse ngày: {}. Bỏ qua filter ngày.", date);
+                    }
+                }
+            }
+            List<ShowtimeResponse> showtimes = adminService.getFilteredShowtimes(theaterId, movieId, filterDate);
+            return ResponseEntity.ok(showtimes);
+        } catch (Exception e) {
+            log.error("❌ Lỗi lấy danh sách showtime: {}", e.getMessage());
+            return ResponseEntity.ok(List.of());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(
+            summary = "🗑️ Xóa lịch chiếu",
+            description = "Admin xóa lịch chiếu (chỉ khi chưa có vé nào được đặt)",
+            security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    public ResponseEntity<?> deleteShowtime(@PathVariable Long id) {
+        try {
+            adminService.deleteShowtime(id);
+            return ResponseEntity.ok(Map.of("message", "Xóa lịch chiếu thành công"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 
     /**
      * API Thêm Suất Chiếu (Create Showtime) - VỀ LỖ HỔNG 3

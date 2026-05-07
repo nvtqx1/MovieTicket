@@ -31,6 +31,7 @@ export default function MovieDetail() {
     const [movie, setMovie] = useState(null);
     const [showtimes, setShowtimes] = useState([]);
     const [selectedDate, setSelectedDate] = useState("");
+    const [selectedTheater, setSelectedTheater] = useState(""); // Task 2.2: filter by theater
     const [selectedTimeId, setSelectedTimeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -73,9 +74,25 @@ export default function MovieDetail() {
         return [...new Set(dates)].sort();
     }, [showtimes]);
 
+    // Task 2.2: Extract unique theaters for filter
+    const uniqueTheaters = useMemo(() => {
+        const theaterMap = new Map();
+        showtimes.forEach((st) => {
+            if (st.theater && !theaterMap.has(st.theater.id)) {
+                theaterMap.set(st.theater.id, st.theater);
+            }
+        });
+        return Array.from(theaterMap.values());
+    }, [showtimes]);
+
+    // Filter showtimes by date AND theater
     const filteredShowtimes = useMemo(() => {
-        return showtimes.filter((st) => st.showDate === selectedDate);
-    }, [showtimes, selectedDate]);
+        return showtimes.filter((st) => {
+            const dateMatch = st.showDate === selectedDate;
+            const theaterMatch = !selectedTheater || (st.theater && String(st.theater.id) === String(selectedTheater));
+            return dateMatch && theaterMatch;
+        });
+    }, [showtimes, selectedDate, selectedTheater]);
 
     const selectedShowtime = showtimes.find((st) => st.id === selectedTimeId);
 
@@ -233,6 +250,22 @@ export default function MovieDetail() {
                                 );
                             })}
                         </div>
+
+                        {/* Task 2.2: Theater Filter */}
+                        {uniqueTheaters.length > 1 && (
+                            <div className="mb-4">
+                                <select
+                                    value={selectedTheater}
+                                    onChange={(e) => { setSelectedTheater(e.target.value); setSelectedTimeId(null); }}
+                                    className="w-full px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-white/10 text-sm text-white focus:outline-none focus:border-red-500 appearance-none cursor-pointer"
+                                >
+                                    <option value="">Tất cả rạp</option>
+                                    {uniqueTheaters.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                             {filteredShowtimes.length === 0 ? (

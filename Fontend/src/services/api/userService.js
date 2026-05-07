@@ -9,6 +9,18 @@ export const userService = {
             throw error;
         }
     },
+    /**
+     * PUT /api/v1/admin/users/{id}/ban
+     * Toggle ban/unban user
+     */
+    toggleBanUser: async (id) => {
+        try {
+            const response = await api.put(`/admin/users/${id}/ban`);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
     deleteUser: async (id) => {
         try {
             const response = await api.delete(`/admin/users/${id}`);

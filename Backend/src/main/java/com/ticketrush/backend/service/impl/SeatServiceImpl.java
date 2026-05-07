@@ -119,7 +119,7 @@ public class SeatServiceImpl implements SeatService {
                 .map(Seat::getSeatNumber)
                 .collect(java.util.stream.Collectors.toSet());
 
-        // Step 2: Generate - Tạo danh sách ghế mới (chỉ thêm những ghế chưa tồn tại)
+        // Step 2: Lấy SeatType từ DB
         SeatType normalSeatType = seatTypeRepository.findByName("NORMAL")
                 .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe NORMAL"));
         SeatType vipSeatType = seatTypeRepository.findByName("VIP")
@@ -128,35 +128,43 @@ public class SeatServiceImpl implements SeatService {
                 .orElseThrow(() -> new RuntimeException("Khong tim thay loai ghe COUPLE"));
 
         List<Seat> newSeats = new ArrayList<>();
+        int totalRows = request.getRows();
+        int cols = request.getCols();
 
-        for (int row = 0; row < request.getRows(); row++) {
+        // ===== THUẬT TOÁN PHÂN LOẠI GHẾ MỚI =====
+        // Quy tắc:
+        //   - Hàng cuối cùng (row == totalRows-1) → COUPLE
+        //   - Các hàng còn lại: chia đều 50/50
+        //     + Nửa đầu (0 → normalEnd-1) → NORMAL
+        //     + Nửa sau (normalEnd → totalRows-2) → VIP
+        int dataRows = totalRows - 1; // Trừ hàng cuối (COUPLE)
+        int normalEnd = dataRows / 2;  // Nửa đầu cho NORMAL
+
+        for (int row = 0; row < totalRows; row++) {
             char rowChar = (char) ('A' + row);
 
-            for (int col = 1; col <= request.getCols(); col++) {
-                // Sửa lỗi cảnh báo ghép chuỗi an toàn hơn
+            for (int col = 1; col <= cols; col++) {
                 String seatNumber = String.valueOf(rowChar) + col;
 
-                SeatType currentType = normalSeatType;
-                
-                // Logic phân loại ghế:
-                // - VIP: Hàng từ 'B' đến 'G', cột từ 2 đến cols-1
-                // - COUPLE: Hàng 'H', số lượng ghế chẵn, đối xứng
-                if (rowChar >= 'B' && rowChar <= 'G') {
-                    if (col > 1 && col < request.getCols()) {
-                        currentType = vipSeatType;
-                    }
-                } else if (rowChar == 'H') {
-                    // Nếu tổng số cột là lẻ, ta đổi ghế cuối cùng thành ghế THƯỜNG
-                    // để tất cả các ghế COUPLE còn lại tạo thành một chuỗi liên tục độ dài chẵn,
-                    // đảm bảo các cặp đôi không bị chia cắt.
-                    if (request.getCols() % 2 != 0 && col == request.getCols()) {
+                // Xác định loại ghế theo thuật toán mới
+                SeatType currentType;
+                if (row == totalRows - 1) {
+                    // Hàng cuối cùng = COUPLE
+                    // Nếu số cột lẻ, ghế cuối cùng chuyển thành NORMAL
+                    if (cols % 2 != 0 && col == cols) {
                         currentType = normalSeatType;
                     } else {
                         currentType = coupleSeatType;
                     }
+                } else if (row < normalEnd) {
+                    // Nửa đầu = NORMAL
+                    currentType = normalSeatType;
+                } else {
+                    // Nửa sau = VIP
+                    currentType = vipSeatType;
                 }
 
-                // Nếu ghế chưa tồn tại thì mới tạo mới
+                // Nếu ghế chưa tồn tại thì tạo mới
                 if (!existingSeatNumbers.contains(seatNumber)) {
                     Seat seat = new Seat();
                     seat.setShowtime(showtime);
@@ -166,14 +174,14 @@ public class SeatServiceImpl implements SeatService {
                     seat.setReservation(null);
                     newSeats.add(seat);
                 } else {
-                    // Update existing seat type to match new layout (chỉ update nếu chưa có ai đặt)
+                    // Update loại ghế nếu chưa có ai đặt
                     Seat existingSeat = existingSeats.stream()
                             .filter(s -> s.getSeatNumber().equals(seatNumber))
                             .findFirst().orElse(null);
-                    
+
                     if (existingSeat != null && !existingSeat.getIsReserved() && !existingSeat.getSeatType().getId().equals(currentType.getId())) {
                         existingSeat.setSeatType(currentType);
-                        newSeats.add(existingSeat); // saveAll will update it because it has an ID
+                        newSeats.add(existingSeat);
                     }
                 }
             }

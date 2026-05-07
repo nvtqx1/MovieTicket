@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/api/authService";
-import { getMyTickets, cancelReservation } from "../services/api/reservationService";
+import { getMyTickets, cancelReservation, getTicketDetail } from "../services/api/reservationService";
 import { useAuthContext } from "../context/AuthContext";
-import { Ticket, User as UserIcon, LogOut } from "lucide-react";
+import { Ticket, User as UserIcon, LogOut, Eye, X, QrCode, MapPin, Clock, Armchair } from "lucide-react";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -18,6 +18,11 @@ export default function Profile() {
     const [loading, setLoading] = useState(true);
     const [ticketsLoading, setTicketsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("profile");
+
+    // Ticket Detail Modal
+    const [ticketDetail, setTicketDetail] = useState(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -93,6 +98,22 @@ export default function Profile() {
         } catch (error) {
             console.error("Lỗi khi hủy vé:", error);
             alert("Đã xảy ra lỗi khi hủy vé.");
+        }
+    };
+
+    // Task 2.3: Xem chi tiết vé
+    const handleViewTicketDetail = async (reservationId) => {
+        setDetailLoading(true);
+        setShowDetailModal(true);
+        try {
+            const data = await getTicketDetail(reservationId);
+            setTicketDetail(data);
+        } catch (err) {
+            console.error("Error fetching ticket detail:", err);
+            alert("Lỗi tải chi tiết vé");
+            setShowDetailModal(false);
+        } finally {
+            setDetailLoading(false);
         }
     };
 
@@ -249,22 +270,32 @@ export default function Profile() {
                                             </span>
                                         </div>
                                         
-                                        {(ticket.status === "PENDING" || ticket.status === "LOCKED") && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => navigate(`/checkout?reservationId=${ticket.reservationId}`)}
-                                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded"
-                                                >
-                                                    Thanh toán
-                                                </button>
-                                                <button
-                                                    onClick={() => handleCancelTicket(ticket.reservationId)}
-                                                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded"
-                                                >
-                                                    Hủy vé
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {/* Task 2.3: Nút xem chi tiết vé */}
+                                            <button
+                                                onClick={() => handleViewTicketDetail(ticket.reservationId)}
+                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-1"
+                                            >
+                                                <Eye size={12} /> Chi tiết
+                                            </button>
+
+                                            {(ticket.status === "PENDING" || ticket.status === "LOCKED") && (
+                                                <>
+                                                    <button
+                                                        onClick={() => navigate(`/checkout?reservationId=${ticket.reservationId}`)}
+                                                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded"
+                                                    >
+                                                        Thanh toán
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCancelTicket(ticket.reservationId)}
+                                                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded"
+                                                    >
+                                                        Hủy vé
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))
@@ -272,6 +303,102 @@ export default function Profile() {
                     </div>
                 )}
             </div>
+
+            {/* ===== TICKET DETAIL MODAL (Task 2.3) ===== */}
+            {showDetailModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowDetailModal(false)}>
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        {detailLoading ? (
+                            <div className="p-16 flex justify-center">
+                                <div className="w-10 h-10 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : ticketDetail ? (
+                            <>
+                                {/* Ticket Header - giống vé giấy */}
+                                <div className="bg-gradient-to-br from-red-600 to-red-800 p-6 relative">
+                                    <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 text-white/60 hover:text-white">
+                                        <X size={20} />
+                                    </button>
+                                    <p className="text-red-200 text-[10px] uppercase tracking-[0.2em] font-bold">TMT Cinema</p>
+                                    <h2 className="text-2xl font-black text-white mt-2 leading-tight">{ticketDetail.movieTitle}</h2>
+                                    <p className="text-red-200 text-xs mt-1">{ticketDetail.movieGenre}</p>
+                                </div>
+
+                                {/* Ticket Divider */}
+                                <div className="relative">
+                                    <div className="absolute -left-4 -top-4 w-8 h-8 bg-[#0a0a0a] rounded-full" />
+                                    <div className="absolute -right-4 -top-4 w-8 h-8 bg-[#0a0a0a] rounded-full" />
+                                    <div className="border-t-2 border-dashed border-white/10 mx-8" />
+                                </div>
+
+                                {/* Ticket Body */}
+                                <div className="p-6 space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <InfoBlock icon={<MapPin size={14} />} label="Rạp" value={ticketDetail.theaterName} />
+                                        <InfoBlock icon={<Armchair size={14} />} label="Phòng" value={ticketDetail.roomName} />
+                                        <InfoBlock icon={<Clock size={14} />} label="Ngày chiếu" value={ticketDetail.showDate} />
+                                        <InfoBlock icon={<Clock size={14} />} label="Giờ chiếu" value={ticketDetail.showTime?.substring(0, 5)} />
+                                    </div>
+
+                                    {/* Seats Detail */}
+                                    <div className="bg-white/5 rounded-xl p-4">
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Ghế đã chọn</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {ticketDetail.seats?.map((seat) => (
+                                                <span key={seat.seatNumber} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+                                                    seat.seatType === "VIP"
+                                                        ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                                        : seat.seatType === "COUPLE"
+                                                            ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
+                                                            : "bg-white/10 text-white border border-white/10"
+                                                }`}>
+                                                    {seat.row}{seat.col}
+                                                    <span className="text-[9px] ml-1 opacity-60">{seat.seatType}</span>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Price & Status */}
+                                    <div className="flex justify-between items-center pt-2">
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tổng tiền</p>
+                                            <p className="text-2xl font-black text-red-500">{formatPrice(ticketDetail.totalPrice || 0)}</p>
+                                        </div>
+                                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+                                            ticketDetail.status === "PAID" || ticketDetail.status === "CONFIRMED"
+                                                ? "bg-green-500/20 text-green-400"
+                                                : ticketDetail.status === "PENDING" || ticketDetail.status === "LOCKED"
+                                                    ? "bg-yellow-500/20 text-yellow-400"
+                                                    : ticketDetail.status === "CANCELED"
+                                                        ? "bg-red-500/20 text-red-400"
+                                                        : "bg-gray-500/20 text-gray-400"
+                                        }`}>
+                                            {ticketDetail.status}
+                                        </span>
+                                    </div>
+
+                                    {/* QR Code */}
+                                    {ticketDetail.qrCodeDataUri && (
+                                        <div className="flex flex-col items-center pt-4 border-t border-white/5">
+                                            <div className="bg-white p-3 rounded-xl">
+                                                <img
+                                                    src={ticketDetail.qrCodeDataUri}
+                                                    alt="QR Code"
+                                                    className="w-40 h-40"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 mt-2 flex items-center gap-1">
+                                                <QrCode size={12} /> Quét mã để check-in
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : null}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -287,6 +414,16 @@ function Input({ label, ...props }) {
                     props.disabled ? "opacity-60 cursor-not-allowed" : ""
                 }`}
             />
+        </div>
+    );
+}
+
+/* Info Block for Ticket Detail */
+function InfoBlock({ icon, label, value }) {
+    return (
+        <div>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wider flex items-center gap-1 mb-1">{icon} {label}</p>
+            <p className="text-white font-bold text-sm">{value || "-"}</p>
         </div>
     );
 }

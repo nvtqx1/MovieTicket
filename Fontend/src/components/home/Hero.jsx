@@ -52,7 +52,7 @@ export default function Hero({ movie, loading }) {
                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4">
                         <button
                             type="button"
-                            onClick={() => navigate(`/booking/${movie.id}`)}
+                            onClick={() => navigate(`/movies/${movie.id}`)}
                             className="w-full sm:w-auto px-8 py-3 md:py-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center gap-3 shadow-lg shadow-red-600/20 cursor-pointer"
                         >
                             <Ticket size={18} /> ĐẶT VÉ NGAY

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,47 +90,49 @@ public class AdminServiceImpl implements AdminService {
 
             // Lấy tất cả SeatType có sẵn từ database
             List<SeatType> seatTypes = seatTypeRepository.findAll();
-            if (seatTypes.isEmpty()) {
-                log.warn("⚠️ Không có SeatType nào trong database");
-            }
+            SeatType normalType = seatTypes.stream().filter(t -> "Normal".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
+            SeatType vipType = seatTypes.stream().filter(t -> "VIP".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
+            SeatType coupleType = seatTypes.stream().filter(t -> "Couple".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
 
-            // Tạo ghế với pattern hàng A, B, C, ... và loại ghế xen kẽ
-            int seatIndex = 0;
-            int rowCount = (totalSeats + 9) / 10; // Mỗi hàng 10 ghế
+            // Fallback
+            if (normalType == null) { normalType = new SeatType(); normalType.setId(1); normalType.setName("Normal"); normalType.setPriceMultiplier(java.math.BigDecimal.ONE); }
+            if (vipType == null) { vipType = normalType; }
+            if (coupleType == null) { coupleType = normalType; }
+
+            int rowCount = room.getMatrixRows() != null ? room.getMatrixRows() : (totalSeats + 9) / 10;
+            int colCount = room.getMatrixCols() != null ? room.getMatrixCols() : 10;
+            int actualTotalSeats = rowCount * colCount;
             
+            // Cập nhật lại totalSeats của showtime nếu ma trận khác capacity
+            showtime.setTotalSeats(actualTotalSeats);
+            showtime.setAvailableSeats(actualTotalSeats);
+
             for (int row = 0; row < rowCount; row++) {
                 char rowChar = (char) ('A' + row);
-                for (int col = 0; col < 10 && seatIndex < totalSeats; col++) {
+                boolean isLastRow = (row == rowCount - 1);
+
+                for (int col = 0; col < colCount; col++) {
                     Seat seat = new Seat();
                     seat.setShowtime(savedShowtime);
                     seat.setSeatNumber(String.valueOf(rowChar) + (col + 1));
                     
-                    // Xen kẽ các loại ghế: Normal, VIP, Premium
                     SeatType seatType;
-                    if (seatTypes.isEmpty()) {
-                        // Fallback: Tạo seat type mặc định nếu database trống
-                        log.warn("⚠️ Database không có SeatType, xài mặc định");
-                        seatType = new SeatType();
-                        seatType.setId(1); // Normal seat
-                        seatType.setName("Normal");
-                        seatType.setPriceMultiplier(java.math.BigDecimal.ONE);
+                    if (isLastRow) {
+                        seatType = coupleType;
                     } else {
-                        // Xen kẽ: ghế vị trí lẻ là Normal (type 0), chẵn là VIP (type 1), ...
-                        int typeIndex = col % seatTypes.size();
-                        seatType = seatTypes.get(typeIndex);
+                        // 50/50 Normal and VIP cho các hàng còn lại
+                        seatType = (row < rowCount / 2) ? normalType : vipType;
                     }
                     
                     seat.setSeatType(seatType);
                     seat.setIsReserved(false);
                     seats.add(seat);
-                    seatIndex++;
                 }
             }
 
             seatRepository.saveAll(seats);
             log.info("✅ Tạo {} ghế thành công", seats.size());
 
-            // ========== BƯỚC 5: Trả về thông tin suất chiếu ==========
             return showtimeService.toResponse(savedShowtime);
 
         } catch (IllegalArgumentException e) {
@@ -140,5 +143,56 @@ public class AdminServiceImpl implements AdminService {
             throw new Exception("❌ Lỗi tạo suất chiếu: " + e.getMessage(), e);
         }
     }
-}
 
+    // ═══════════════════════════════════════════════
+    // TASK 1.2: Filtered Showtime List + Delete
+    // ═══════════════════════════════════════════════
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShowtimeResponse> getFilteredShowtimes(Long theaterId, Long movieId, LocalDate date) {
+        log.info("📋 Lấy danh sách showtime: theaterId={}, movieId={}, date={}", theaterId, movieId, date);
+
+        List<Showtime> showtimes;
+
+        if (theaterId != null && date != null) {
+            showtimes = showtimeRepository.findByRoomTheaterIdAndShowDateOrderByShowTimeAsc(theaterId, date);
+        } else if (theaterId != null) {
+            // Lấy 7 ngày tới cho rạp
+            LocalDate start = date != null ? date : LocalDate.now();
+            LocalDate end = start.plusDays(7);
+            showtimes = showtimeRepository.findByTheaterAndDateRange(theaterId, start, end);
+        } else if (movieId != null) {
+            LocalDate fromDate = date != null ? date : LocalDate.now();
+            showtimes = showtimeRepository.findUpcomingByMovie(movieId, fromDate, null);
+        } else {
+            // Lấy tất cả (giới hạn 100)
+            showtimes = showtimeRepository.findAll();
+            if (showtimes.size() > 100) {
+                showtimes = showtimes.subList(0, 100);
+            }
+        }
+
+        return showtimes.stream()
+                .map(showtimeService::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteShowtime(Long showtimeId) {
+        Showtime showtime = showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new IllegalArgumentException("Lịch chiếu không tồn tại"));
+
+        // Kiểm tra có vé nào đã đặt chưa
+        List<Seat> seats = seatRepository.findByShowtimeId(showtimeId);
+        boolean hasReserved = seats.stream().anyMatch(Seat::getIsReserved);
+        if (hasReserved) {
+            throw new IllegalArgumentException("Không thể xóa lịch chiếu đã có vé được đặt");
+        }
+
+        seatRepository.deleteAll(seats);
+        showtimeRepository.delete(showtime);
+        log.info("✅ Xóa lịch chiếu {} thành công", showtimeId);
+    }
+}

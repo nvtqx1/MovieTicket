@@ -21,6 +21,7 @@ import AdminShowtimes from "./pages/AdminShowtimes";
 import AdminVouchers from "./pages/AdminVouchers";
 import AdminUsers from "./pages/AdminUsers";
 import AdminTheaters from "./pages/AdminTheaters";
+import AdminRooms from "./pages/AdminRooms";
 import Checkout from "./pages/Checkout";
 
 function App() {
@@ -122,7 +123,13 @@ function App() {
           </AdminLayout>
         } />
 
-        <Route path="/admin/seat-creator" element={
+        <Route path="/admin/theaters/:id/rooms" element={
+          <AdminLayout>
+            <AdminRooms />
+          </AdminLayout>
+        } />
+
+        <Route path="/admin/rooms/:id/seats" element={
           <AdminLayout>
             <AdminSeatCreator />
           </AdminLayout>

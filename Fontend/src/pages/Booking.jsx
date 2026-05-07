@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Armchair, CreditCard, Star } from "lucide-react";
+import { ArrowLeft, Armchair, CreditCard, Star, Wifi, WifiOff, Timer } from "lucide-react";
 import { getShowtimeById } from "../services/api/showtimeService";
 import { getSeatsByShowtime } from "../services/api/seatService";
-import { createReservation } from "../services/api/reservationService";
 import { useAuthContext } from "../context/AuthContext";
+import SockJS from "sockjs-client/dist/sockjs";
+import { Client } from "@stomp/stompjs";
+import api from "../services/api/api";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -12,7 +14,7 @@ const formatPrice = (price) =>
 export default function Booking() {
     const { id } = useParams(); // showtime ID
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuthContext();
+    const { isAuthenticated, token } = useAuthContext();
 
     const [showtime, setShowtime] = useState(null);
     const [seats, setSeats] = useState([]);
@@ -20,6 +22,11 @@ export default function Booking() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [wsConnected, setWsConnected] = useState(false);
+    const [holdCountdown, setHoldCountdown] = useState(null); // Đếm ngược 10 phút
+
+    const stompClientRef = useRef(null);
+    const countdownRef = useRef(null);
 
     // ===== FETCH SHOWTIME + SEATS =====
     useEffect(() => {
@@ -56,17 +63,121 @@ export default function Booking() {
         return () => { isMounted = false; };
     }, [id]);
 
-    // ===== TOGGLE SEAT =====
+    // ═══════════════════════════════════════════════
+    // TASK 2.2: WEBSOCKET REAL-TIME
+    // Subscribe /topic/showtimes/{id} để nhận seat updates
+    // ═══════════════════════════════════════════════
+    useEffect(() => {
+        if (!id) return;
+
+        const client = new Client({
+            webSocketFactory: () => new SockJS("http://localhost:8080/api/ws"),
+            reconnectDelay: 5000,
+            onConnect: () => {
+                setWsConnected(true);
+                console.log("🟢 WebSocket connected");
+
+                // Subscribe to seat updates for this showtime
+                client.subscribe(`/topic/showtimes/${id}`, (message) => {
+                    try {
+                        const payload = JSON.parse(message.body);
+                        console.log("📨 Seat update:", payload);
+
+                        // Cập nhật trạng thái ghế real-time
+                        setSeats((prevSeats) =>
+                            prevSeats.map((seat) => {
+                                if (payload.seatNumbers?.includes(seat.seatNumber)) {
+                                    return {
+                                        ...seat,
+                                        isReserved: payload.status === "LOCKED" || payload.status === "SOLD",
+                                    };
+                                }
+                                return seat;
+                            })
+                        );
+
+                        // Nếu ghế đang selected bị người khác giữ → bỏ chọn
+                        if (payload.status === "LOCKED" || payload.status === "SOLD") {
+                            setSelectedSeats((prev) =>
+                                prev.filter((s) => !payload.seatNumbers?.includes(s.seatNumber))
+                            );
+                        }
+                    } catch (e) {
+                        console.error("❌ Parse WS message error:", e);
+                    }
+                });
+            },
+            onDisconnect: () => {
+                setWsConnected(false);
+                console.log("🔴 WebSocket disconnected");
+            },
+            onStompError: (frame) => {
+                console.error("❌ STOMP error:", frame);
+                setWsConnected(false);
+            },
+        });
+
+        client.activate();
+        stompClientRef.current = client;
+
+        return () => {
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+            }
+        };
+    }, [id]);
+
+    // ═══════════════════════════════════════════════
+    // TASK 2.1: COUPLE SEAT TOGGLE
+    // Click 1 ghế COUPLE → tự động toggle cả cặp
+    // ═══════════════════════════════════════════════
     const toggleSeat = (seat) => {
         if (seat.isReserved) return;
 
-        setSelectedSeats((prev) => {
-            const exists = prev.find((s) => s.seatNumber === seat.seatNumber);
-            if (exists) {
-                return prev.filter((s) => s.seatNumber !== seat.seatNumber);
+        const seatType = seat.seatType;
+        const row = seat.seatNumber.charAt(0);
+
+        if (seatType === "COUPLE") {
+            // Couple logic: ghế đi theo cặp (1,2), (3,4), (5,6)...
+            const colNum = parseInt(seat.seatNumber.substring(1));
+            const isOdd = colNum % 2 !== 0;
+            const pairCol = isOdd ? colNum + 1 : colNum - 1;
+            const pairNumber = row + pairCol;
+
+            // Tìm ghế đôi
+            const pairSeat = seats.find((s) => s.seatNumber === pairNumber);
+
+            // Nếu ghế đôi đã bị người khác giữ → không cho chọn
+            if (pairSeat && pairSeat.isReserved) {
+                alert(`Ghế đôi ${pairNumber} đã được giữ bởi người khác`);
+                return;
             }
-            return [...prev, seat];
-        });
+
+            setSelectedSeats((prev) => {
+                const exists = prev.find((s) => s.seatNumber === seat.seatNumber);
+                if (exists) {
+                    // Bỏ chọn cả cặp
+                    return prev.filter(
+                        (s) => s.seatNumber !== seat.seatNumber && s.seatNumber !== pairNumber
+                    );
+                }
+                // Chọn cả cặp
+                const newSelection = [...prev, seat];
+                if (pairSeat && !prev.find((s) => s.seatNumber === pairNumber)) {
+                    newSelection.push(pairSeat);
+                }
+                return newSelection;
+            });
+        } else {
+            // Normal / VIP: toggle đơn lẻ
+            setSelectedSeats((prev) => {
+                const exists = prev.find((s) => s.seatNumber === seat.seatNumber);
+                if (exists) {
+                    return prev.filter((s) => s.seatNumber !== seat.seatNumber);
+                }
+                return [...prev, seat];
+            });
+        }
     };
 
     // ===== CALCULATE TOTAL =====
@@ -75,7 +186,10 @@ export default function Booking() {
         return sum + Number(price);
     }, 0);
 
-    // ===== CHECKOUT =====
+    // ═══════════════════════════════════════════════
+    // TASK 3.1: HOLD SEAT (thay cho createReservation cũ)
+    // Gọi POST /v1/booking/hold-seat với Pessimistic Lock
+    // ═══════════════════════════════════════════════
     const handleCheckout = async () => {
         if (selectedSeats.length === 0) {
             alert("Vui lòng chọn ghế!");
@@ -84,32 +198,59 @@ export default function Booking() {
 
         setSubmitting(true);
         try {
-            // Call init reservation API
             const seatNumbers = selectedSeats.map((s) => s.seatNumber);
-            const result = await createReservation({
+            const response = await api.post("/booking/hold-seat", {
                 showtimeId: Number(id),
                 seatNumbers,
             });
 
+            const result = response.data;
+
             if (result.apiStatus === "SUCCESS" && result.reservationId) {
+                // Start countdown
+                startCountdown(result.holdDurationSeconds || 600);
+
                 navigate(`/checkout/${result.reservationId}`, {
                     state: {
                         showtimeId: id,
                         seats: seatNumbers,
-                        total: result.totalPrice || total,
+                        total: total,
                         showtime,
                         reservationId: result.reservationId,
+                        expiresAt: result.expiresAt,
                     },
                 });
             } else {
-                alert(result.message || "Tạo đơn thất bại!");
+                alert(result.message || "Không thể giữ ghế!");
             }
         } catch (err) {
-            alert(err.message || "Lỗi khi tạo đơn đặt vé!");
+            const msg = err.response?.data?.message || err.message || "Lỗi khi giữ ghế!";
+            alert(msg);
         } finally {
             setSubmitting(false);
         }
     };
+
+    // Countdown timer
+    const startCountdown = (seconds) => {
+        setHoldCountdown(seconds);
+        if (countdownRef.current) clearInterval(countdownRef.current);
+        countdownRef.current = setInterval(() => {
+            setHoldCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(countdownRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+        };
+    }, []);
 
     // ===== LOADING =====
     if (loading) {
@@ -148,7 +289,6 @@ export default function Booking() {
     }, {});
 
     const sortedRows = Object.keys(seatsByRow).sort();
-    const maxCols = Math.max(...Object.values(seatsByRow).map((r) => r.length), 1);
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white pt-28 pb-16">
@@ -164,16 +304,23 @@ export default function Booking() {
                 </button>
 
                 {/* HEADER */}
-                <header className="mb-10">
-                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-[0.3em] mb-3">
-                        Booking #{id}
-                    </p>
-                    <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
-                        {showtime.movie?.title || "Phim"}
-                    </h1>
-                    <p className="text-sm text-gray-400 mt-2">
-                        {showtime.theater?.name || "Rạp"} {showtime.roomName ? `• ${showtime.roomName}` : ""} • {showtime.showDate} {showtime.showTime}
-                    </p>
+                <header className="mb-10 flex justify-between items-start">
+                    <div>
+                        <p className="text-[10px] text-red-500 font-bold uppercase tracking-[0.3em] mb-3">
+                            Booking #{id}
+                        </p>
+                        <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
+                            {showtime.movie?.title || "Phim"}
+                        </h1>
+                        <p className="text-sm text-gray-400 mt-2">
+                            {showtime.theater?.name || "Rạp"} {showtime.roomName ? `• ${showtime.roomName}` : ""} • {showtime.showDate} {showtime.showTime}
+                        </p>
+                    </div>
+                    {/* TASK 2.2: WebSocket indicator */}
+                    <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full ${wsConnected ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
+                        {wsConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
+                        {wsConnected ? "Real-time" : "Offline"}
+                    </div>
                 </header>
 
                 <section className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
@@ -198,6 +345,55 @@ export default function Booking() {
                                         return numA - numB;
                                     });
 
+                                    // ═══════════════════════════════
+                                    // TASK 2.1: COUPLE ROW RENDERING
+                                    // Hàng cuối (COUPLE) → gộp 2 ghế thành 1 block
+                                    // ═══════════════════════════════
+                                    const isCouple = rowSeats[0]?.seatType === "COUPLE";
+
+                                    if (isCouple) {
+                                        // Gộp ghế thành cặp: [1,2], [3,4], [5,6]...
+                                        const pairs = [];
+                                        for (let i = 0; i < rowSeats.length; i += 2) {
+                                            const left = rowSeats[i];
+                                            const right = rowSeats[i + 1];
+                                            pairs.push({ left, right });
+                                        }
+
+                                        return (
+                                            <div key={row} className="flex items-center gap-2">
+                                                <span className="w-6 text-xs text-pink-400 font-bold text-center">💑 {row}</span>
+                                                <div className="flex gap-3 flex-1 justify-center">
+                                                    {pairs.map(({ left, right }) => {
+                                                        const leftSelected = selectedSeats.some((s) => s.seatNumber === left.seatNumber);
+                                                        const rightSelected = right && selectedSeats.some((s) => s.seatNumber === right.seatNumber);
+                                                        const isSelected = leftSelected || rightSelected;
+                                                        const isOccupied = left.isReserved || (right && right.isReserved);
+
+                                                        return (
+                                                            <button
+                                                                key={left.seatNumber}
+                                                                onClick={() => toggleSeat(left)}
+                                                                disabled={isOccupied}
+                                                                title={`${left.seatNumber}+${right?.seatNumber || ""} - COUPLE - ${formatPrice((left.finalPrice || 0) + (right?.finalPrice || 0))}`}
+                                                                className={`w-[76px] h-10 rounded-xl border-2 text-[10px] font-bold flex items-center justify-center gap-1 transition-all
+                                                                    ${isOccupied
+                                                                        ? "bg-gray-700 text-gray-500 cursor-not-allowed border-gray-600"
+                                                                        : isSelected
+                                                                            ? "bg-red-600 text-white border-red-500 scale-105 shadow-lg shadow-red-500/20"
+                                                                            : "bg-pink-900/30 text-pink-400 border-pink-600/40 hover:bg-pink-600/30 hover:scale-105"
+                                                                    }`}
+                                                            >
+                                                                ❤️ {left.seatNumber.substring(1)}-{right?.seatNumber?.substring(1) || "?"}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Normal / VIP rows
                                     return (
                                         <div key={row} className="flex items-center gap-2">
                                             <span className="w-6 text-xs text-gray-500 font-bold text-center">{row}</span>
@@ -206,7 +402,6 @@ export default function Booking() {
                                                     const isSelected = selectedSeats.some((s) => s.seatNumber === seat.seatNumber);
                                                     const isOccupied = seat.isReserved;
                                                     const isVip = seat.seatType === "VIP";
-                                                    const isCouple = seat.seatType === "COUPLE";
 
                                                     return (
                                                         <button
@@ -221,11 +416,8 @@ export default function Booking() {
                                                                         ? "bg-red-600 text-white border-red-500 scale-105"
                                                                         : isVip
                                                                             ? "bg-yellow-900/30 text-yellow-400 border-yellow-600/40 hover:bg-yellow-600/30"
-                                                                            : isCouple
-                                                                                ? "bg-pink-900/30 text-pink-400 border-pink-600/40 hover:bg-pink-600/30"
-                                                                                : "bg-[#1f1f1f] text-gray-300 border-white/10 hover:bg-white/10"
-                                                                }
-                                                            `}
+                                                                            : "bg-[#1f1f1f] text-gray-300 border-white/10 hover:bg-white/10"
+                                                                }`}
                                                         >
                                                             {seat.seatNumber.substring(1)}
                                                         </button>
@@ -247,7 +439,7 @@ export default function Booking() {
                                 <span className="w-4 h-4 bg-yellow-900/30 border border-yellow-600/40 rounded-sm"></span> VIP
                             </span>
                             <span className="flex items-center gap-2">
-                                <span className="w-4 h-4 bg-pink-900/30 border border-pink-600/40 rounded-sm"></span> Couple
+                                <span className="w-8 h-4 bg-pink-900/30 border border-pink-600/40 rounded-lg"></span> Couple (chọn 1 = 2 ghế)
                             </span>
                             <span className="flex items-center gap-2">
                                 <span className="w-4 h-4 bg-red-600 rounded-sm"></span> Đang chọn
@@ -306,6 +498,14 @@ export default function Booking() {
                                     {formatPrice(total)}
                                 </span>
                             </div>
+
+                            {/* Countdown timer */}
+                            {holdCountdown != null && holdCountdown > 0 && (
+                                <div className="flex items-center gap-2 text-yellow-400 text-xs bg-yellow-500/10 p-2 rounded-lg">
+                                    <Timer size={14} />
+                                    <span>Giữ ghế còn: {Math.floor(holdCountdown / 60)}:{String(holdCountdown % 60).padStart(2, "0")}</span>
+                                </div>
+                            )}
                         </div>
 
                         <button
@@ -321,7 +521,7 @@ export default function Booking() {
                             ) : (
                                 <>
                                     <CreditCard size={16} />
-                                    Thanh toán
+                                    Giữ ghế & Thanh toán
                                 </>
                             )}
                         </button>

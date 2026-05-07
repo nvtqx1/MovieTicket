@@ -46,6 +46,11 @@ public interface MovieService {
     MovieResponse getMovieById(Long id);
 
     /**
+     * Lấy dữ liệu chi tiết của một bộ phim và các thông tin liên quan đến rạp (theater)
+     */
+    com.ticketrush.backend.dto.MovieDetailsResponse getMovieDetailsWithTheaters(Long id);
+
+    /**
      * Admin API: Tạo phim mới
      * 
      * POST /v1/admin/movies
@@ -55,4 +60,19 @@ public interface MovieService {
      * @throws IllegalArgumentException nếu dữ liệu không hợp lệ
      */
     MovieResponse createMovie(com.ticketrush.backend.dto.CreateMovieRequest request);
+
+    /**
+     * Admin API: Cập nhật phim
+     */
+    MovieResponse updateMovie(Long id, com.ticketrush.backend.dto.CreateMovieRequest request);
+
+    /**
+     * Admin API: Xóa phim (Soft Delete)
+     */
+    void deleteMovie(Long id);
+
+    /**
+     * Task 2.1: Tìm kiếm phim theo tên
+     */
+    List<MovieResponse> searchMovies(String keyword);
 }

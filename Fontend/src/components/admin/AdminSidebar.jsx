@@ -11,7 +11,6 @@ const menuItems = [
     { name: "Phim", path: "/admin/movies", icon: Film },
     { name: "Lịch Chiếu", path: "/admin/showtimes", icon: Calendar },
     { name: "Voucher", path: "/admin/vouchers", icon: Ticket },
-    { name: "Ghế", path: "/admin/seat-creator", icon: Grid2X2 },
 ];
 
 export default function AdminSidebar() {

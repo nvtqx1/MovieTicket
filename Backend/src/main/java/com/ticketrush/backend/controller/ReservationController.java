@@ -441,6 +441,41 @@ public class ReservationController {
     // ========== Private Helper Methods ==========
 
     /**
+     * Task 2.3: Chi tiết vé - trả về đầy đủ thông tin để render UI vé giấy + QR
+     *
+     * API Endpoint: GET /api/v1/reservations/{reservationId}/ticket-detail
+     */
+    @GetMapping("/{reservationId}/ticket-detail")
+    @Operation(
+            summary = "🎫 Chi tiết vé (Ticket Detail)",
+            description = "Lấy thông tin vé đầy đủ: phim, rạp, phòng, dãy, ghế, giờ chiếu. " +
+                    "Dùng để render UI vé giấy truyền thống và mã hóa QR Code.",
+            security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    public ResponseEntity<?> getTicketDetail(
+            @PathVariable Long reservationId,
+            Authentication authentication) {
+        try {
+            Long userId = extractUserId(authentication);
+            com.ticketrush.backend.dto.TicketDetailResponse detail =
+                    reservationService.getTicketDetail(reservationId, userId);
+            return ResponseEntity.ok(detail);
+        } catch (IllegalArgumentException e) {
+            log.warn("⚠️ Lỗi: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "apiStatus", "FAILED",
+                    "message", "❌ " + e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("❌ Lỗi lấy chi tiết vé: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "apiStatus", "FAILED",
+                    "message", "❌ Lỗi hệ thống"
+            ));
+        }
+    }
+
+    /**
      * Hủy đơn đặt vé (Cancel Reservation).
      *
      * API Endpoint: POST /api/v1/reservations/{reservationId}/cancel
