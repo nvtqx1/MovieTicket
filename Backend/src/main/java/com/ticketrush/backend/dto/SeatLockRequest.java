@@ -1,8 +1,10 @@
 package com.ticketrush.backend.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -10,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 public class SeatLockRequest {
 
-    @NotNull(message = "seatId is required")
-    @Positive(message = "seatId must be greater than 0")
-    private Long seatId;
+    @NotEmpty(message = "seatIds is required and cannot be empty")
+    @Size(max = 10, message = "Cannot lock more than 10 seats at once")
+    private List<Long> seatIds;
 }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -39,69 +40,139 @@ public class SeatLockService {
     @Value("${ticketrush.seat-lock.ttl-seconds:600}")
     private long lockTtlSeconds;
 
+    /**
+     * Lock nhiều ghế cùng lúc theo pattern All-or-Nothing:
+     * - Nếu 1 ghế fail → rollback tất cả → không ghế nào bị lock
+     * - Tất cả ghế phải thuộc cùng 1 suất chiếu (showtime)
+     *
+     * Flow: Validate ALL → SET Redis ALL → INSERT MySQL → Broadcast
+     *       Nếu Redis fail giữa chừng → xóa các key đã SET
+     *       Nếu MySQL fail → xóa toàn bộ key Redis
+     */
     @Transactional
-    public SeatLockResponse lockSeat(Long seatId, Long userId) {
-        Seat seat = seatRepository.findByIdForUpdate(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("Seat not found" + seatId));
-
-        LocalDateTime now = LocalDateTime.now();
-        releaseIfExpired(seat, now, false);
-
-        if (Boolean.TRUE.equals(seat.getIsReserved())) {
-            throw new IllegalStateException("Seat is already sold");
+    public SeatLockResponse lockSeats(List<Long> seatIds, Long userId) {
+        if (seatIds == null || seatIds.isEmpty()) {
+            throw new IllegalArgumentException("seatIds cannot be empty");
         }
 
-        if (seat.getReservation() != null) {
-            Reservation reservation = seat.getReservation();
-            if (Boolean.TRUE.equals(reservation.getPaid()) || ReservationStatus.PAID.equals(reservation.getStatus())) {
-                throw new IllegalStateException("Seat is already sold");
+        // === Bước 0: Fetch tất cả ghế với PESSIMISTIC_WRITE lock (1 query) ===
+        List<Seat> seats = seatRepository.findByIdsForUpdate(seatIds);
+
+        if (seats.size() != seatIds.size()) {
+            List<Long> foundIds = seats.stream().map(Seat::getId).toList();
+            List<Long> missingIds = seatIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new IllegalArgumentException("Seats not found: " + missingIds);
+        }
+
+        // === Bước 1: Validate tất cả ghế trước khi lock bất kỳ ghế nào ===
+        LocalDateTime now = LocalDateTime.now();
+        Long showtimeId = null;
+
+        for (Seat seat : seats) {
+            // Auto-release nếu reservation cũ đã hết hạn
+            releaseIfExpired(seat, now, false);
+
+            // Kiểm tra ghế đã bán chưa
+            if (Boolean.TRUE.equals(seat.getIsReserved())) {
+                throw new IllegalStateException("Seat " + seat.getSeatNumber() + " is already sold");
             }
-            throw new IllegalStateException("Seat is already locked");
+
+            // Kiểm tra ghế đã bị lock bởi người khác chưa
+            if (seat.getReservation() != null) {
+                Reservation existingRes = seat.getReservation();
+                if (Boolean.TRUE.equals(existingRes.getPaid()) || ReservationStatus.PAID.equals(existingRes.getStatus())) {
+                    throw new IllegalStateException("Seat " + seat.getSeatNumber() + " is already sold");
+                }
+                throw new IllegalStateException("Seat " + seat.getSeatNumber() + " is already locked");
+            }
+
+            // Đảm bảo tất cả ghế thuộc cùng 1 suất chiếu
+            if (showtimeId == null) {
+                showtimeId = seat.getShowtime().getId();
+            } else if (!showtimeId.equals(seat.getShowtime().getId())) {
+                throw new IllegalArgumentException("All seats must belong to the same showtime");
+            }
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found" + userId));
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        LocalDateTime lockedUntil = now.plusSeconds(lockTtlSeconds);
-        Reservation reservation = createReservation(seat, user, lockedUntil);
-        seat.setReservation(reservation);
-        seatRepository.save(seat);
-
-        String redisKey = buildSeatLockKey(seatId);
+        // === Bước 2: SET Redis cho tất cả ghế (all-or-nothing) ===
         String redisValue = SEAT_LOCK_VALUE_PREFIX + userId;
-        Boolean stored = redisTemplate.opsForValue()
-                .setIfAbsent(redisKey, redisValue, lockTtlSeconds, TimeUnit.SECONDS);
+        List<String> lockedRedisKeys = new ArrayList<>();
 
-        if (!Boolean.TRUE.equals(stored)) {
-            throw new IllegalStateException("Seat is already locked in Redis");
+        try {
+            for (Seat seat : seats) {
+                String redisKey = buildSeatLockKey(seat.getId());
+                Boolean stored = redisTemplate.opsForValue()
+                        .setIfAbsent(redisKey, redisValue, lockTtlSeconds, TimeUnit.SECONDS);
+
+                if (!Boolean.TRUE.equals(stored)) {
+                    throw new IllegalStateException("Seat " + seat.getSeatNumber() + " is already locked in Redis");
+                }
+                lockedRedisKeys.add(redisKey);
+            }
+        } catch (Exception e) {
+            // Rollback: xóa tất cả key Redis đã SET thành công
+            rollbackRedisKeys(lockedRedisKeys);
+            throw e;
         }
 
+        // === Bước 3: INSERT MySQL — 1 Reservation chung cho tất cả ghế ===
+        LocalDateTime lockedUntil = now.plusSeconds(lockTtlSeconds);
+        Reservation reservation;
+        try {
+            reservation = createReservation(seats, user, lockedUntil);
+            for (Seat seat : seats) {
+                seat.setReservation(reservation);
+            }
+            seatRepository.saveAll(seats);
+        } catch (Exception e) {
+            // Compensate: xóa toàn bộ key Redis
+            rollbackRedisKeys(lockedRedisKeys);
+            log.error("MySQL failed after Redis SET for seats {}, compensated by deleting Redis keys", seatIds, e);
+            throw e;
+        }
+
+        // === Bước 4: Broadcast realtime ===
+        List<String> seatNumbers = seats.stream()
+                .map(Seat::getSeatNumber)
+                .toList();
+
         seatRealtimeService.broadcastSeatStatus(
-                seat.getShowtime().getId(),
-                List.of(seat.getSeatNumber()),
+                showtimeId,
+                seatNumbers,
                 "LOCKED",
                 "Reservation #" + reservation.getId(),
                 userId
         );
 
+        // === Bước 5: Build response ===
+        List<SeatLockResponse.LockedSeatInfo> lockedSeatInfos = seats.stream()
+                .map(s -> SeatLockResponse.LockedSeatInfo.builder()
+                        .seatId(s.getId())
+                        .seatNumber(s.getSeatNumber())
+                        .build())
+                .toList();
+
         return SeatLockResponse.builder()
-                .seatId(seat.getId())
-                .showtimeId(seat.getShowtime().getId())
-                .seatNumber(seat.getSeatNumber())
+                .showtimeId(showtimeId)
                 .userId(userId)
                 .reservationId(reservation.getId())
+                .lockedSeats(lockedSeatInfos)
                 .ttlSeconds(lockTtlSeconds)
                 .lockedUntil(lockedUntil)
-                .redisKey(redisKey)
                 .status("LOCKED")
-                .message("Seat locked for 10 minutes")
+                .message("Locked " + seats.size() + " seat(s) for 10 minutes")
                 .build();
     }
 
     @Transactional
     public void releaseExpiredSeatLock(Long seatId) {
         Seat seat = seatRepository.findByIdForUpdate(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("Seat not found" + seatId));
+                .orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
 
         boolean released = releaseIfExpired(seat, LocalDateTime.now(), true);
         if (!released) {
@@ -113,18 +184,37 @@ public class SeatLockService {
         return SEAT_LOCK_KEY_PREFIX + seatId;
     }
 
-    private Reservation createReservation(Seat seat, User user, LocalDateTime lockedUntil) {
+    /**
+     * Tạo 1 Reservation chung cho nhiều ghế, tổng giá = sum(giá từng ghế)
+     */
+    private Reservation createReservation(List<Seat> seats, User user, LocalDateTime lockedUntil) {
         Reservation reservation = new Reservation();
         reservation.setUser(user);
-        reservation.setShowtime(seat.getShowtime());
+        reservation.setShowtime(seats.get(0).getShowtime());
         reservation.setStatus(ReservationStatus.LOCKED);
         reservation.setPaid(false);
         reservation.setExpiresAt(lockedUntil);
 
-        BigDecimal seatPrice = seat.getShowtime().getPrice().multiply(seat.getSeatType().getPriceMultiplier());
-        reservation.setTotalPrice(seatPrice);
+        // Tổng giá = sum(giá suất chiếu × hệ số loại ghế) cho từng ghế
+        BigDecimal totalPrice = seats.stream()
+                .map(seat -> seat.getShowtime().getPrice().multiply(seat.getSeatType().getPriceMultiplier()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        reservation.setTotalPrice(totalPrice);
 
         return reservationRepository.save(reservation);
+    }
+
+    /**
+     * Rollback: xóa tất cả Redis key đã SET thành công
+     */
+    private void rollbackRedisKeys(List<String> keys) {
+        if (keys.isEmpty()) return;
+        try {
+            redisTemplate.delete(keys);
+            log.info("Rolled back {} Redis keys", keys.size());
+        } catch (Exception ex) {
+            log.error("Failed to rollback Redis keys {}: {}", keys, ex.getMessage(), ex);
+        }
     }
 
     private Boolean releaseIfExpired(Seat seat, LocalDateTime now, boolean broadcast) {
