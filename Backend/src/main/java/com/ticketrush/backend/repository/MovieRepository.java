@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
@@ -17,4 +18,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     // Tính năng Lọc: Tìm phim theo thể loại (VD: "Hành động")
     List<Movie> findByGenreContainingIgnoreCase(String genre);
+
+    Optional<Movie> findByTitle(String title);
 }

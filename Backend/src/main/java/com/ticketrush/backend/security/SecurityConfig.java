@@ -24,6 +24,7 @@ public class SecurityConfig {
 
     private final AuthTokenFilter authTokenFilter;
     private final DaoAuthenticationProvider authenticationProvider;
+    private final QueueTokenFilter queueTokenFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -59,6 +60,7 @@ public class SecurityConfig {
         // Nạp bộ cung cấp dữ liệu và bộ lọc JWT (AuthTokenFilter) lên tuyến đầu
         http.authenticationProvider(authenticationProvider);
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(queueTokenFilter, AuthTokenFilter.class);
 
         return http.build();
     }
