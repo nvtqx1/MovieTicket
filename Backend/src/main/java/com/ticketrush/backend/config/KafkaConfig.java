@@ -1,28 +1,52 @@
 package com.ticketrush.backend.config;
 
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.*;
+
+import org.springframework.kafka.annotation.EnableKafka;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@EnableKafka
 @Configuration
 public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    @Value("${spring.kafka.consumer.group-id}")
+    private String groupId;
+
+    // ==========================================
+    // TOPIC
+    // ==========================================
+
     /**
-     * Cấu hình ProducerFactory để tạo các producer Kafka với các thuộc tính cần thiết
-     * như địa chỉ bootstrap server và serializer cho key và value.
-     * @return
+     * Tự động tạo topic "ticket_requests" khi app khởi động (nếu chưa tồn tại).
+     * partitions=1 đảm bảo thứ tự FIFO (ai vào trước được xử lý trước).
      */
+    @Bean
+    public NewTopic ticketRequestsTopic() {
+        return TopicBuilder.name("ticket_requests")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    // ==========================================
+    // PRODUCER
+    // ==========================================
+
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -32,14 +56,35 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
-
-    /**
-     * Cấu hình KafkaTemplate để gửi tin nhắn Kafka.
-     * KafkaTemplate sử dụng ProducerFactory đã cấu hình ở trên để tạo các producer.
-     * @return
-     */
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    // ==========================================
+    // CONSUMER
+    // ==========================================
+
+    @Bean
+    public ConsumerFactory<String, String> consumerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        // Giới hạn mỗi lần poll chỉ lấy 50 record → kiểm soát tốc độ xử lý
+        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);
+        return new DefaultKafkaConsumerFactory<>(configProps);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        // concurrency=1: chỉ 1 consumer thread → đảm bảo thứ tự + giới hạn tốc độ
+        factory.setConcurrency(1);
+        return factory;
     }
 }
