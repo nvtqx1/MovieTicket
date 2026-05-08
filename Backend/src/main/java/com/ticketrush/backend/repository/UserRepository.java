@@ -30,6 +30,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // (Tùy chọn) Tìm user theo username nếu hệ thống của bạn cho phép đăng nhập bằng cả username hoặc email
     Optional<User> findByUserName(String userName);
 
+    long countByUserNameStartingWith(String userNamePrefix);
     // ========== NGÀY 19-21: DASHBOARD QUERIES (JPQL NÂNG CAO) ==========
 
     /**

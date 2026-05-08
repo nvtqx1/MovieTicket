@@ -1,13 +1,16 @@
 package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.entity.Showtime;
+import org.flywaydb.core.internal.sqlscript.ShouldExecuteEvaluator;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
@@ -79,4 +82,5 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+    Optional<Showtime> findFirstByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
 }

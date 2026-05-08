@@ -1,14 +1,17 @@
 package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.entity.Seat;
+import io.lettuce.core.dynamic.annotation.Param;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Long> {
@@ -25,6 +28,48 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
     List<Seat> findByShowtimeIdAndSeatNumberIn(Long showtimeId, List<String> seatNumbers);
 
+    //Phục vụ TUẦN 2 (CHỐNG TRANH CHẤP - ROW LOCKING):
+    // Tìm 1 ghế cụ thể để cập nhật trạng thái (VD: "A1").
+    // Dùng khi user bấm chọn 1 ghế trên FE, hệ thống sẽ gọi API
+    // này để lấy thông tin chi tiết của ghế đó (VD: giá tiền, loại ghế)
+    // và đồng thời khóa dòng dữ liệu của ghế đó lại để tránh trường hợp 2 người cùng bấm chọn 1 ghế.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
+    @Query("""
+            SELECT s
+            FROM Seat s
+            JOIN FETCH s.showtime st
+            JOIN FETCH s.seatType
+            LEFT JOIN FETCH st.movie
+            LEFT JOIN FETCH st.room r
+            LEFT JOIN FETCH r.theater
+            LEFT JOIN FETCH s.reservation res
+            LEFT JOIN FETCH res.user
+            WHERE s.id = :seatId
+            """)
+    Optional<Seat> findByIdForUpdate(@Param("seatId") Long seatId);
+
+    // PHỤC VỤ BATCH LOCK: Tìm nhiều ghế cùng lúc với PESSIMISTIC_WRITE lock
+    // Dùng khi user chọn nhiều ghế (VD: A1, A2, A3) rồi bấm "Tiếp tục"
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
+    @Query("""
+            SELECT s
+            FROM Seat s
+            JOIN FETCH s.showtime st
+            JOIN FETCH s.seatType
+            LEFT JOIN FETCH st.movie
+            LEFT JOIN FETCH st.room r
+            LEFT JOIN FETCH r.theater
+            LEFT JOIN FETCH s.reservation res
+            LEFT JOIN FETCH res.user
+            WHERE s.id IN :seatIds
+            ORDER BY s.id ASC
+            """)
+    List<Seat> findByIdsForUpdate(@Param("seatIds") List<Long> seatIds);
+
     // Tìm các ghế đang bị khóa bởi 1 đơn hàng cụ thể (Dùng khi user hủy đơn, muốn nhả ghế ra)
     List<Seat> findByReservationId(Long reservationId);
+
+    long countByShowtimeId(Long showtimeid);
 }

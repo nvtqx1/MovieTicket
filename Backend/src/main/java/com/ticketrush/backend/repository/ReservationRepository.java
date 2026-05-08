@@ -14,8 +14,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.ticketrush.backend.entity.enums.ReservationStatus;
+
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    // Safety net: Tìm các reservation đang LOCKED nhưng đã hết hạn (expiresAt < now)
+    List<Reservation> findByStatusAndExpiresAtBefore(ReservationStatus status, LocalDateTime expiresAt);
+
     // Lấy lịch sử đặt vé của một người dùng (Sắp xếp mới nhất lên đầu)
     List<Reservation> findByUserIdOrderByReservationTimeDesc(Long userId);
 

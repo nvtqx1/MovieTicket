@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface SeatTypeRepository extends JpaRepository<SeatType, Integer> {
     Optional<SeatType> findByName(String name);
+
+    Boolean existsByName(String name);
 }

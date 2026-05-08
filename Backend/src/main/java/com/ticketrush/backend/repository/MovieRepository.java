@@ -2,9 +2,12 @@ package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.entity.Movie;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
@@ -13,7 +16,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     List<Movie> findAllByIsDeletedFalseOrderByReleaseYearDesc();
 
     // Lấy danh sách phim phân trang (bỏ qua phim đã xóa)
-    org.springframework.data.domain.Page<Movie> findByIsDeletedFalse(org.springframework.data.domain.Pageable pageable);
+    Page<Movie> findByIsDeletedFalse(Pageable pageable);
 
     // Tính năng thanh Tìm kiếm (Search bar) trên Frontend: Tìm phim theo tên, không phân biệt hoa thường
     List<Movie> findByTitleContainingIgnoreCaseAndIsDeletedFalse(String keyword);
@@ -22,5 +25,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     List<Movie> findByGenreContainingIgnoreCaseAndIsDeletedFalse(String genre);
 
     // Lấy phim theo ID không bị xóa
-    java.util.Optional<Movie> findByIdAndIsDeletedFalse(Long id);
+    Optional<Movie> findByIdAndIsDeletedFalse(Long id);
+
+    // Tìm theo đúng title
+    Optional<Movie> findByTitle(String title);
 }

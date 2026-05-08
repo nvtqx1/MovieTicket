@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @Table(name = "seat_types")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SeatType {
