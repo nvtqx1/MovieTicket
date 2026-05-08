@@ -11,6 +11,7 @@ import com.ticketrush.backend.repository.MovieRepository;
 import com.ticketrush.backend.repository.RoomRepository;
 import com.ticketrush.backend.repository.SeatRepository;
 import com.ticketrush.backend.repository.SeatTypeRepository;
+import com.ticketrush.backend.repository.RoomSeatRepository;
 import com.ticketrush.backend.repository.ShowtimeRepository;
 import com.ticketrush.backend.service.AdminService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class AdminServiceImpl implements AdminService {
     private final RoomRepository roomRepository;
     private final SeatRepository seatRepository;
     private final SeatTypeRepository seatTypeRepository;
+    private final RoomSeatRepository roomSeatRepository;
     private final ShowtimeServiceImpl showtimeService;
 
     /**
@@ -84,54 +86,56 @@ public class AdminServiceImpl implements AdminService {
             Showtime savedShowtime = showtimeRepository.save(showtime);
             log.info("✅ Suất chiếu đã tạo: ID = {}", savedShowtime.getId());
 
-            // ========== BƯỚC 4: Tạo tất cả ghế cho suất chiếu ==========
-            log.info("🪑 Tạo {} ghế cho suất chiếu", totalSeats);
+            // ========== BƯỚC 4: Copy ghế từ room_seats (ghế cố định của phòng) ==========
+            List<com.ticketrush.backend.entity.RoomSeat> roomSeats = roomSeatRepository
+                    .findByRoomIdOrderByRowIndexAscColIndexAsc(request.getRoomId());
+
             List<Seat> seats = new ArrayList<>();
 
-            // Lấy tất cả SeatType có sẵn từ database
-            List<SeatType> seatTypes = seatTypeRepository.findAll();
-            SeatType normalType = seatTypes.stream().filter(t -> "Normal".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
-            SeatType vipType = seatTypes.stream().filter(t -> "VIP".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
-            SeatType coupleType = seatTypes.stream().filter(t -> "Couple".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
-
-            // Fallback
-            if (normalType == null) { normalType = new SeatType(); normalType.setId(1); normalType.setName("Normal"); normalType.setPriceMultiplier(java.math.BigDecimal.ONE); }
-            if (vipType == null) { vipType = normalType; }
-            if (coupleType == null) { coupleType = normalType; }
-
-            int rowCount = room.getMatrixRows() != null ? room.getMatrixRows() : (totalSeats + 9) / 10;
-            int colCount = room.getMatrixCols() != null ? room.getMatrixCols() : 10;
-            int actualTotalSeats = rowCount * colCount;
-            
-            // Cập nhật lại totalSeats của showtime nếu ma trận khác capacity
-            showtime.setTotalSeats(actualTotalSeats);
-            showtime.setAvailableSeats(actualTotalSeats);
-
-            for (int row = 0; row < rowCount; row++) {
-                char rowChar = (char) ('A' + row);
-                boolean isLastRow = (row == rowCount - 1);
-
-                for (int col = 0; col < colCount; col++) {
+            if (!roomSeats.isEmpty()) {
+                // Phòng đã được cấu hình ghế → Copy từ room_seats
+                log.info("🪑 Copy {} ghế cố định từ phòng sang suất chiếu", roomSeats.size());
+                for (com.ticketrush.backend.entity.RoomSeat rs : roomSeats) {
                     Seat seat = new Seat();
                     seat.setShowtime(savedShowtime);
-                    seat.setSeatNumber(String.valueOf(rowChar) + (col + 1));
-                    
-                    SeatType seatType;
-                    if (isLastRow) {
-                        seatType = coupleType;
-                    } else {
-                        // 50/50 Normal and VIP cho các hàng còn lại
-                        seatType = (row < rowCount / 2) ? normalType : vipType;
-                    }
-                    
-                    seat.setSeatType(seatType);
+                    seat.setSeatNumber(rs.getSeatNumber());
+                    seat.setSeatType(rs.getSeatType());
                     seat.setIsReserved(false);
                     seats.add(seat);
+                }
+                showtime.setTotalSeats(roomSeats.size());
+                showtime.setAvailableSeats(roomSeats.size());
+            } else {
+                // Phòng chưa cấu hình → Fallback tự sinh
+                log.warn("⚠️ Phòng {} chưa cấu hình ghế, tự sinh từ capacity", room.getName());
+                List<SeatType> seatTypes = seatTypeRepository.findAll();
+                SeatType normalType = seatTypes.stream().filter(t -> "NORMAL".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
+                SeatType vipType = seatTypes.stream().filter(t -> "VIP".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
+                SeatType coupleType = seatTypes.stream().filter(t -> "COUPLE".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
+                if (normalType == null) { normalType = new SeatType(); normalType.setId(1); normalType.setName("NORMAL"); normalType.setPriceMultiplier(java.math.BigDecimal.ONE); }
+                if (vipType == null) { vipType = normalType; }
+                if (coupleType == null) { coupleType = normalType; }
+                int rowCount = room.getMatrixRows() != null ? room.getMatrixRows() : (totalSeats + 9) / 10;
+                int colCount = room.getMatrixCols() != null ? room.getMatrixCols() : 10;
+                showtime.setTotalSeats(rowCount * colCount);
+                showtime.setAvailableSeats(rowCount * colCount);
+                for (int row = 0; row < rowCount; row++) {
+                    char rowChar = (char) ('A' + row);
+                    boolean isLastRow = (row == rowCount - 1);
+                    boolean isVipRow = (row >= rowCount / 2) && !isLastRow;
+                    for (int col = 0; col < colCount; col++) {
+                        Seat seat = new Seat();
+                        seat.setShowtime(savedShowtime);
+                        seat.setSeatNumber(String.valueOf(rowChar) + (col + 1));
+                        seat.setSeatType(isLastRow ? coupleType : (isVipRow ? vipType : normalType));
+                        seat.setIsReserved(false);
+                        seats.add(seat);
+                    }
                 }
             }
 
             seatRepository.saveAll(seats);
-            log.info("✅ Tạo {} ghế thành công", seats.size());
+            log.info("✅ Tạo {} ghế thành công cho suất chiếu {}", seats.size(), savedShowtime.getId());
 
             return showtimeService.toResponse(savedShowtime);
 

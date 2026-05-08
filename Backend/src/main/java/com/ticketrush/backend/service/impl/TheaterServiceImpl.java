@@ -36,6 +36,7 @@ public class TheaterServiceImpl implements TheaterService {
 
     private final TheaterRepository theaterRepository;
     private final RoomRepository roomRepository;
+    private final com.ticketrush.backend.repository.ShowtimeRepository showtimeRepository;
 
     @Override
     public List<TheaterResponse> getAllTheaters() {
@@ -113,15 +114,35 @@ public class TheaterServiceImpl implements TheaterService {
             Theater theater = theaterRepository.findById(theaterId)
                     .orElseThrow(() -> new IllegalArgumentException("❌ Rạp không tồn tại"));
 
-            // Tạo Room entity
-            Room room = new Room();
-            room.setTheater(theater);
-            room.setName(request.getName());
-            room.setCapacity(request.getCapacity());
+            // 1. Kiểm tra xem phòng đang active có trùng tên không
+            //    (findByTheaterId tự động lọc is_deleted=false nhờ @SQLRestriction)
+            boolean activeRoomExists = roomRepository.findByTheaterId(theaterId).stream()
+                    .anyMatch(r -> r.getName().equalsIgnoreCase(request.getName().trim()));
+            if (activeRoomExists) {
+                 throw new IllegalArgumentException("❌ Phòng '" + request.getName() + "' đã tồn tại trong rạp này");
+            }
 
-            // Lưu vào database
-            Room savedRoom = roomRepository.save(room);
-            log.info("✅ Tạo phòng thành công: ID = {}", savedRoom.getId());
+            // 2. Kiểm tra xem có phòng nào bị xoá mềm trùng tên không để khôi phục
+            java.util.Optional<Long> deletedRoomIdOpt = roomRepository.findDeletedRoomId(theaterId, request.getName().trim());
+            Room savedRoom;
+            
+            if (deletedRoomIdOpt.isPresent()) {
+                // Khôi phục phòng đã xóa mềm bằng lệnh native update
+                Long id = deletedRoomIdOpt.get();
+                roomRepository.restoreDeletedRoom(id, request.getCapacity());
+                
+                // Lấy lại entity sau khi đã khôi phục (is_deleted = 0 nên findById sẽ thấy)
+                savedRoom = roomRepository.findById(id).orElseThrow();
+                log.info("✅ Khôi phục phòng đã xóa thành công: ID = {}", savedRoom.getId());
+            } else {
+                // 3. Tạo Room entity mới hoàn toàn
+                Room room = new Room();
+                room.setTheater(theater);
+                room.setName(request.getName().trim());
+                room.setCapacity(request.getCapacity());
+                savedRoom = roomRepository.save(room);
+                log.info("✅ Tạo phòng mới thành công: ID = {}", savedRoom.getId());
+            }
 
             return toRoomResponse(savedRoom);
 
@@ -217,21 +238,46 @@ public class TheaterServiceImpl implements TheaterService {
         return toRoomResponse(updated);
     }
 
+    /**
+     * Soft Delete phòng chiếu.
+     *
+     * Cơ chế hoạt động:
+     * 1. Nhờ @SQLDelete trên Room entity, khi gọi roomRepository.deleteById(id),
+     *    Hibernate sẽ KHÔNG chạy "DELETE FROM rooms WHERE id=?".
+     *    Thay vào đó nó chạy "UPDATE rooms SET is_deleted = true WHERE id=?".
+     *    → Không vi phạm FK constraint vì row vẫn tồn tại trong DB.
+     *
+     * 2. Nhờ @SQLRestriction("is_deleted = false"), mọi câu query SELECT sau đó
+     *    sẽ tự động bỏ qua room này → Admin UI không còn thấy phòng đã xóa.
+     *
+     * Business rule:
+     * - Nếu phòng CÒN lịch chiếu từ hôm nay trở đi → CHẶN (đã bán vé, không được xóa).
+     * - Nếu phòng chỉ có lịch chiếu trong quá khứ → CHO PHÉP soft delete.
+     * - Nếu phòng không có lịch chiếu nào → CHO PHÉP soft delete.
+     */
     @Override
     @Transactional
     public void deleteRoom(Long theaterId, Long roomId) {
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("❌ Phòng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Phòng không tồn tại"));
 
         if (!room.getTheater().getId().equals(theaterId)) {
-            throw new IllegalArgumentException("❌ Phòng không thuộc rạp này");
+            throw new IllegalArgumentException("Phòng không thuộc rạp này");
         }
 
-        try {
-            roomRepository.deleteById(roomId);
-            log.info("✅ Xóa phòng {} thành công", roomId);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("❌ Không thể xóa phòng (đang có lịch chiếu hoặc ghế liên kết)");
+        // Business rule: Chặn xóa nếu CÒN lịch chiếu trong tương lai (có thể đã bán vé)
+        boolean hasFutureShowtimes = showtimeRepository
+                .existsByRoomIdAndShowDateGreaterThanEqual(roomId, java.time.LocalDate.now());
+
+        if (hasFutureShowtimes) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa phòng vì đang có lịch chiếu trong tương lai. " +
+                    "Hãy hủy hoặc chuyển các lịch chiếu sang phòng khác trước."
+            );
         }
+
+        // Soft delete: @SQLDelete sẽ tự chuyển thành UPDATE rooms SET is_deleted=true
+        roomRepository.deleteById(roomId);
+        log.info("✅ Soft-delete phòng {} (rạp {}) thành công", roomId, theaterId);
     }
 }

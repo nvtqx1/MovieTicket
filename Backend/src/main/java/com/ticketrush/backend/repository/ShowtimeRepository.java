@@ -12,6 +12,14 @@ import java.util.List;
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
 
+    boolean existsByRoomId(Long roomId);
+
+    /**
+     * Kiểm tra phòng có lịch chiếu từ ngày chỉ định trở đi không.
+     * Dùng cho logic Soft Delete: chỉ chặn xóa nếu CÒN lịch chiếu tương lai.
+     */
+    boolean existsByRoomIdAndShowDateGreaterThanEqual(Long roomId, LocalDate date);
+
     // PHỤC VỤ NGÀY 5-6 (API GET /showtimes):
     // Lấy các suất chiếu của 1 Phim, trong 1 Ngày cụ thể, Sắp xếp giờ từ sớm đến muộn
     List<Showtime> findByMovieIdAndShowDateOrderByShowTimeAsc(Long movieId, LocalDate showDate);

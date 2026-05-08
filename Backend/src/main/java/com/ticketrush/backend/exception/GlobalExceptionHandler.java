@@ -65,6 +65,8 @@ public class GlobalExceptionHandler {
     // Bắt tất cả các lỗi khác chưa được xử lý
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+        // Log chi tiết lỗi để debug
+        ex.printStackTrace();
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 new Date(),

@@ -228,7 +228,7 @@ public class TheaterController {
     ) {
         try {
             theaterService.deleteRoom(theaterId, roomId);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(Map.of("message", "Xóa phòng chiếu thành công"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
