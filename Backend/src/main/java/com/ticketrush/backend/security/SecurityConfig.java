@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Bật CORS
                 .csrf(csrf -> csrf.disable()) // Tắt CSRF vì hệ thống API dùng JWT không bị lỗi này
                 .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // MỞ CỬA CHO SWAGGER UI
                         .requestMatchers(
                                 "/v2/api-docs",
