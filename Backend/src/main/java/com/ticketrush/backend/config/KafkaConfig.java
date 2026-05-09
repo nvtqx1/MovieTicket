@@ -3,16 +3,16 @@ package com.ticketrush.backend.config;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
-
-import org.springframework.kafka.annotation.EnableKafka;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,14 +27,21 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
 
-    // ==========================================
-    // TOPIC
-    // ==========================================
+    @Value("${spring.kafka.properties.ssl.keystore.location}")
+    private String keystoreLocation;
 
-    /**
-     * Tự động tạo topic "ticket_requests" khi app khởi động (nếu chưa tồn tại).
-     * partitions=1 đảm bảo thứ tự FIFO (ai vào trước được xử lý trước).
-     */
+    @Value("${spring.kafka.properties.ssl.keystore.password}")
+    private String keystorePassword;
+
+    @Value("${spring.kafka.properties.ssl.key.password}")
+    private String keyPassword;
+
+    @Value("${spring.kafka.properties.ssl.truststore.location}")
+    private String truststoreLocation;
+
+    @Value("${spring.kafka.properties.ssl.truststore.password}")
+    private String truststorePassword;
+
     @Bean
     public NewTopic ticketRequestsTopic() {
         return TopicBuilder.name("ticket_requests")
@@ -43,9 +50,18 @@ public class KafkaConfig {
                 .build();
     }
 
-    // ==========================================
-    // PRODUCER
-    // ==========================================
+    private void applySslConfig(Map<String, Object> configProps) {
+        configProps.put("security.protocol", "SSL");
+
+        configProps.put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, "PKCS12");
+        configProps.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, keystoreLocation);
+        configProps.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, keystorePassword);
+        configProps.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, keyPassword);
+
+        configProps.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "JKS");
+        configProps.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, truststoreLocation);
+        configProps.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, truststorePassword);
+    }
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
@@ -53,6 +69,7 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        applySslConfig(configProps);
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
@@ -60,10 +77,6 @@ public class KafkaConfig {
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
-
-    // ==========================================
-    // CONSUMER
-    // ==========================================
 
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
@@ -73,8 +86,8 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        // Giới hạn mỗi lần poll chỉ lấy 50 record → kiểm soát tốc độ xử lý
         configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);
+        applySslConfig(configProps);
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
 
@@ -83,7 +96,6 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        // concurrency=1: chỉ 1 consumer thread → đảm bảo thứ tự + giới hạn tốc độ
         factory.setConcurrency(1);
         return factory;
     }
