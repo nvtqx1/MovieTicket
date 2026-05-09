@@ -16,7 +16,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:5173",
                         "http://127.0.0.1:5174",
                         "https://movie-ticket-admin-sigma.vercel.app",
-                        "https://movie-ticket-mauve.vercel.app"
+                        "https://movie-ticket-mauve.vercel.app",
+                        "https://movieticket.me",
+                        "https://www.movieticket.me"
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "X-Requested-With")
