@@ -10,9 +10,9 @@ const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
 const PAYMENT_METHODS = [
-    { id: 1, name: "Tháº» tÃ­n dá»¥ng", icon: CreditCard },
-    { id: 2, name: "VÃ­ Ä‘iá»‡n tá»­", icon: Wallet },
-    { id: 3, name: "Chuyá»ƒn khoáº£n", icon: Smartphone },
+    { id: 1, name: "Thẻ tín dụng", icon: CreditCard },
+    { id: 2, name: "Ví điện tử", icon: Wallet },
+    { id: 3, name: "Chuyển khoản", icon: Smartphone },
 ];
 
 export default function Checkout() {
@@ -111,9 +111,9 @@ export default function Checkout() {
     // ======================
     const handleCheckVoucher = async () => {
         if (!voucherCode.trim()) {
-            setVoucherError("Vui lÃ²ng nháº­p mÃ£ voucher!");
-            return;
-        }
+        setVoucherError("Vui lòng nhập mã voucher!");
+        return;
+    }
 
         setIsCheckingVoucher(true);
         setVoucherError(null);
@@ -124,10 +124,10 @@ export default function Checkout() {
             if (data.isValid) {
                 setVoucherResult(data);
             } else {
-                setVoucherError(data.message || "MÃ£ voucher khÃ´ng há»£p lá»‡");
+                setVoucherError(data.message || "Mã voucher không hợp lệ hoặc đã hết hạn");
             }
         } catch (err) {
-            setVoucherError("MÃ£ voucher khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n");
+            setVoucherError("Mã voucher không hợp lệ hoặc đã hết hạn");
         } finally {
             setIsCheckingVoucher(false);
         }
@@ -153,12 +153,12 @@ export default function Checkout() {
     // ======================
     const handlePayment = async () => {
         if (selectedSeats.length === 0) {
-            alert("ChÆ°a chá»n gháº¿!");
+            alert("Chưa chọn ghế!");
             return;
         }
 
         if (!currentReservationId) {
-            alert("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n Ä‘áº·t vÃ©!");
+            alert("Không tìm thấy đơn đặt vé!");
             return;
         }
 
@@ -179,10 +179,10 @@ export default function Checkout() {
             if (data.apiStatus === "SUCCESS") {
                 setResult(data);
             } else {
-                setError(data.message || "Thanh toÃ¡n tháº¥t báº¡i!");
+                setError(data.message || "Thanh toán thất bại!");
             }
         } catch (err) {
-            setError(err.response?.data?.message || err.message || "Thanh toÃ¡n tháº¥t báº¡i! Vui lÃ²ng thá»­ láº¡i.");
+            setError(err.response?.data?.message || err.message || "Thanh toán thất bại! Vui lòng thử lại.");
         } finally {
             setIsProcessing(false);
         }
@@ -190,14 +190,14 @@ export default function Checkout() {
 
     const handleCancel = async () => {
         if (!currentReservationId) return;
-        if (!window.confirm("Ban co chac muon huy ve nay?")) return;
+        if (!window.confirm("Bạn có chắc muốn hủy vé này?")) return;
 
         try {
             await cancelTicket(currentReservationId);
-            alert("Da huy ve va giai phong ghe.");
+            alert("Đã hủy vé và giải phóng ghế.");
             navigate("/profile");
         } catch (err) {
-            setError(err.message || "Khong the huy ve.");
+            setError(err.message || "Không thể hủy vé.");
         }
     };
 
@@ -220,8 +220,8 @@ export default function Checkout() {
                         <CheckCircle size={32} className="text-green-500" />
                     </div>
 
-                    <h2 className="text-2xl font-black mb-2">Thanh toÃ¡n thÃ nh cÃ´ng!</h2>
-                    <p className="text-gray-400 text-sm mb-6">VÃ© Ä‘iá»‡n tá»­ Ä‘Ã£ Ä‘Æ°á»£c táº¡o</p>
+                    <h2 className="text-2xl font-black mb-2">Thanh toán thành công!</h2>
+                    <p className="text-gray-400 text-sm mb-6">Vé điện tử đã được tạo</p>
 
                     {result.qrCodeDataUri && (
                         <img
@@ -236,13 +236,13 @@ export default function Checkout() {
                             <p>Phim: <span className="text-white font-bold">{result.movieName}</span></p>
                         )}
                         {result.theaterName && (
-                            <p>Ráº¡p: <span className="text-white font-bold">{result.theaterName}</span></p>
+                            <p>Rạp: <span className="text-white font-bold">{result.theaterName}</span></p>
                         )}
                         {result.seatNumbers && (
-                            <p>Gháº¿: <span className="text-white font-bold">{result.seatNumbers.join(", ")}</span></p>
+                            <p>Ghế: <span className="text-white font-bold">{result.seatNumbers.join(", ")}</span></p>
                         )}
                         {result.totalPrice && (
-                            <p>Tá»•ng tiá»n: <span className="text-green-400 font-bold">{formatPrice(result.totalPrice)}</span></p>
+                            <p>Tổng tiền: <span className="text-green-400 font-bold">{formatPrice(result.totalPrice)}</span></p>
                         )}
                     </div>
 
@@ -251,13 +251,13 @@ export default function Checkout() {
                             onClick={() => navigate("/profile")}
                             className="flex-1 py-3 bg-white/10 border border-white/10 rounded-lg font-bold text-sm hover:bg-white/20 transition-colors"
                         >
-                            VÃ© cá»§a tÃ´i
+                            Vé của tôi
                         </button>
                         <button
                             onClick={() => navigate("/movies")}
                             className="flex-1 py-3 bg-red-600 rounded-lg font-bold text-sm hover:bg-red-700 transition-colors"
                         >
-                            Vá» trang phim
+                            Vé trang phim
                         </button>
                     </div>
                 </div>
@@ -275,14 +275,14 @@ export default function Checkout() {
                 {/* LEFT */}
                 <div className="flex-1 space-y-8">
                     <div>
-                        <h1 className="text-3xl font-black">Thanh toÃ¡n</h1>
-                        <p className="text-sm text-gray-500 mt-1">Chá»n phÆ°Æ¡ng thá»©c vÃ  hoÃ n táº¥t thanh toÃ¡n</p>
+                        <h1 className="text-3xl font-black">Thanh toán</h1>
+                        <p className="text-sm text-gray-500 mt-1">Chọn phương thức và hoàn tất thanh toán</p>
                     </div>
 
                     {/* Payment Methods */}
                     <div>
                         <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">
-                            PhÆ°Æ¡ng thá»©c thanh toÃ¡n
+                            Phương thức thanh toán
                         </h3>
                         <div className="grid grid-cols-3 gap-4">
                             {PAYMENT_METHODS.map((method) => {
@@ -309,7 +309,7 @@ export default function Checkout() {
                     {showtime && (
                         <div className="bg-[#111] border border-white/5 rounded-xl p-5 space-y-3">
                             <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">
-                                ThÃ´ng tin suáº¥t chiáº¿u
+                                Thông tin suất chiếu
                             </h3>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
@@ -317,17 +317,17 @@ export default function Checkout() {
                                     <span className="font-bold">{showtime.movie?.title || "N/A"}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-400">Ráº¡p</span>
+                                    <span className="text-gray-400">Rạp</span>
                                     <span>{showtime.theater?.name || "N/A"}</span>
                                 </div>
                                 {showtime.roomName && (
                                     <div className="flex justify-between">
-                                        <span className="text-gray-400">PhÃ²ng</span>
+                                        <span className="text-gray-400">Phòng</span>
                                         <span>{showtime.roomName}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between">
-                                    <span className="text-gray-400">Giá» chiáº¿u</span>
+                                    <span className="text-gray-400">Giờ chiếu</span>
                                     <span>{showtime.showDate} {showtime.showTime}</span>
                                 </div>
                             </div>
@@ -348,7 +348,7 @@ export default function Checkout() {
                         {/* Countdown */}
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-400 flex items-center gap-1">
-                                <Clock size={14} /> Thá»i gian giá»¯ gháº¿
+                                <Clock size={14} /> Thời gian giữ ghế
                             </span>
                             <span className={`font-mono font-bold text-lg ${timeLeft < 120 ? "text-red-500 animate-pulse" : "text-yellow-500"}`}>
                                 {formatTime(timeLeft)}
@@ -357,7 +357,7 @@ export default function Checkout() {
 
                         {/* Seats */}
                         <div>
-                            <p className="text-gray-400 text-sm mb-2">Gháº¿ Ä‘Ã£ chá»n</p>
+                            <p className="text-gray-400 text-sm mb-2">Ghế đã chọn</p>
                             <div className="flex gap-2 flex-wrap">
                                 {selectedSeats.length > 0 ? (
                                     selectedSeats.map((seat) => (
@@ -369,20 +369,20 @@ export default function Checkout() {
                                         </span>
                                     ))
                                 ) : (
-                                    <span className="text-gray-600 text-sm">KhÃ´ng cÃ³ gháº¿</span>
+                                    <span className="text-gray-600 text-sm">Không có ghế</span>
                                 )}
                             </div>
                         </div>
 
                         {/* Voucher */}
                         <div className="border-t border-white/10 pt-4">
-                            <p className="text-gray-400 text-sm mb-2">MÃ£ giáº£m giÃ¡</p>
+                            <p className="text-gray-400 text-sm mb-2">Mã giảm giá</p>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={voucherCode}
                                     onChange={(e) => setVoucherCode(e.target.value)}
-                                    placeholder="Nháº­p mÃ£ voucher..."
+                                    placeholder="Nhập mã voucher..."
                                     className="flex-1 bg-[#222] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-red-600 focus:outline-none transition-colors uppercase"
                                 />
                                 <button
@@ -390,7 +390,7 @@ export default function Checkout() {
                                     disabled={isCheckingVoucher || !voucherCode.trim()}
                                     className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold disabled:opacity-50 transition-colors"
                                 >
-                                    {isCheckingVoucher ? "..." : "Ãp dá»¥ng"}
+                                    {isCheckingVoucher ? "..." : "Áp dụng"}
                                 </button>
                             </div>
                             {voucherError && (
@@ -406,19 +406,19 @@ export default function Checkout() {
                         {/* Total */}
                         <div className="flex flex-col gap-2 border-t border-white/10 pt-4">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">Táº¡m tÃ­nh</span>
+                                <span className="text-gray-400">Tạm tính</span>
                                 <span className="text-gray-300">
                                     {formatPrice(totalFromState)}
                                 </span>
                             </div>
                             {voucherResult && voucherResult.isValid && (
                                 <div className="flex justify-between text-sm text-green-500">
-                                    <span>Giáº£m giÃ¡</span>
+                                    <span>Giảm giá</span>
                                     <span>-{formatPrice(totalFromState - finalTotal)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-sm mt-2">
-                                <span className="text-gray-400 font-bold">Tá»•ng cá»™ng</span>
+                                <span className="text-gray-400 font-bold">Tổng cộng</span>
                                 <span className="font-bold text-xl text-red-500">
                                     {formatPrice(finalTotal)}
                                 </span>
@@ -434,12 +434,12 @@ export default function Checkout() {
                             {isProcessing ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Äang xá»­ lÃ½...
+                                    Đang xử lý...
                                 </>
                             ) : (
                                 <>
                                     <CreditCard size={16} />
-                                    Thanh toÃ¡n {formatPrice(finalTotal)}
+                                    Thanh toán {formatPrice(finalTotal)}
                                 </>
                             )}
                         </button>
@@ -450,7 +450,7 @@ export default function Checkout() {
                             className="w-full py-3 bg-white/10 border border-white/10 rounded-lg font-bold text-sm text-gray-200 disabled:opacity-50 hover:bg-white/15 transition-colors flex items-center justify-center gap-2"
                         >
                             <XCircle size={16} />
-                            Huy ve
+                            Hủy vé
                         </button>
                     </div>
                 </aside>
