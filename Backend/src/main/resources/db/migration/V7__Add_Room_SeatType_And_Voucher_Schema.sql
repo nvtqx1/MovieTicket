@@ -34,10 +34,23 @@ PREPARE add_showtimes_room_id_stmt FROM @add_showtimes_room_id_sql;
 EXECUTE add_showtimes_room_id_stmt;
 DEALLOCATE PREPARE add_showtimes_room_id_stmt;
 
-UPDATE showtimes s
-JOIN rooms r ON r.theater_id = s.theater_id
-SET s.room_id = r.id
-WHERE s.room_id IS NULL;
+SET @has_showtimes_theater_id := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'showtimes'
+      AND column_name = 'theater_id'
+);
+
+SET @backfill_showtimes_room_id_sql := IF(
+    @has_showtimes_theater_id = 1,
+    'UPDATE showtimes s JOIN rooms r ON r.theater_id = s.theater_id SET s.room_id = r.id WHERE s.room_id IS NULL',
+    'UPDATE showtimes s SET s.room_id = (SELECT MIN(r.id) FROM rooms r) WHERE s.room_id IS NULL'
+);
+
+PREPARE backfill_showtimes_room_id_stmt FROM @backfill_showtimes_room_id_sql;
+EXECUTE backfill_showtimes_room_id_stmt;
+DEALLOCATE PREPARE backfill_showtimes_room_id_stmt;
 
 ALTER TABLE showtimes MODIFY COLUMN room_id BIGINT NOT NULL;
 
