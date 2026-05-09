@@ -35,6 +35,11 @@ export const getReservation = async (reservationId) => {
     return response.data;
 };
 
+export const getTicket = async (ticketId) => {
+    const response = await api.get(`/tickets/${ticketId}`);
+    return response.data;
+};
+
 /**
  * GET /api/v1/reservations/my-tickets
  * Get current user's tickets
@@ -52,6 +57,11 @@ export const getMyTickets = async () => {
  */
 export const cancelReservation = async (reservationId) => {
     const response = await api.post(`/reservations/${reservationId}/cancel`);
+    return response.data;
+};
+
+export const cancelTicket = async (ticketId) => {
+    const response = await api.post(`/tickets/${ticketId}/cancel`);
     return response.data;
 };
 

@@ -27,10 +27,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Service xử lý logic chốt đơn đặt vé (Confirm Reservation).
- * Chịu trách nhiệm cập nhật trạng thái thanh toán, ghế, và tạo mã QR.
- * 
- * ⚠️ QUAN TRỌNG: Sử dụng @Transactional để rollback nếu lỗi giữa chừng!
+ * Service xÃ¡Â»Â­ lÃƒÂ½ logic chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© (Confirm Reservation).
+ * ChÃ¡Â»â€¹u trÃƒÂ¡ch nhiÃ¡Â»â€¡m cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i thanh toÃƒÂ¡n, ghÃ¡ÂºÂ¿, vÃƒÂ  tÃ¡ÂºÂ¡o mÃƒÂ£ QR.
+ *
+ * Ã¢Å¡Â Ã¯Â¸Â QUAN TRÃ¡Â»Å’NG: SÃ¡Â»Â­ dÃ¡Â»Â¥ng @Transactional Ã„â€˜Ã¡Â»Æ’ rollback nÃ¡ÂºÂ¿u lÃ¡Â»â€”i giÃ¡Â»Â¯a chÃ¡Â»Â«ng!
  *
  * @author TicketRush Team
  * @version 1.0
@@ -50,61 +50,61 @@ public class ReservationService {
     private final SeatRealtimeService seatRealtimeService;
 
     /**
-     * Chốt đơn đặt vé (Confirm Reservation).
-     * 
-     * Quy trình:
-     * 1. Tìm đơn đặt vé
-     * 2. Cập nhật status = PAID, paid = true
-     * 3. Cập nhật tất cả ghế gắn với đơn này (isReserved = true)
-     * 4. Tạo mã QR code
-     * 5. Lưu QR hash vào DB
-     * 6. Phát tín hiệu realtime báo ghế ĐÃ BÁN
-     * 
-     * ⚠️ CRITICAL: @Transactional đảm bảo rollback nếu bất kỳ bước nào thất bại!
-     * Nếu lỗi → Tiền hoàn, ghế được nhả, mã QR không tạo.
+     * ChÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© (Confirm Reservation).
      *
-     * @param userId ID của người dùng
-     * @param request Request chứa ID đơn, mã giao dịch, danh sách ghế
-     * @return ReservationResponse chứa thông tin đơn đã chốt + mã QR
-     * @throws Exception nếu xảy ra lỗi trong quá trình xử lý
+     * Quy trÃƒÂ¬nh:
+     * 1. TÃƒÂ¬m Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©
+     * 2. CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t status = PAID, paid = true
+     * 3. CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ ghÃ¡ÂºÂ¿ gÃ¡ÂºÂ¯n vÃ¡Â»â€ºi Ã„â€˜Ã†Â¡n nÃƒÂ y (isReserved = true)
+     * 4. TÃ¡ÂºÂ¡o mÃƒÂ£ QR code
+     * 5. LÃ†Â°u QR hash vÃƒÂ o DB
+     * 6. PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime bÃƒÂ¡o ghÃ¡ÂºÂ¿ Ã„ÂÃƒÆ’ BÃƒÂN
+     *
+     * Ã¢Å¡Â Ã¯Â¸Â CRITICAL: @Transactional Ã„â€˜Ã¡ÂºÂ£m bÃ¡ÂºÂ£o rollback nÃ¡ÂºÂ¿u bÃ¡ÂºÂ¥t kÃ¡Â»Â³ bÃ†Â°Ã¡Â»â€ºc nÃƒÂ o thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i!
+     * NÃ¡ÂºÂ¿u lÃ¡Â»â€”i Ã¢â€ â€™ TiÃ¡Â»Ân hoÃƒÂ n, ghÃ¡ÂºÂ¿ Ã„â€˜Ã†Â°Ã¡Â»Â£c nhÃ¡ÂºÂ£, mÃƒÂ£ QR khÃƒÂ´ng tÃ¡ÂºÂ¡o.
+     *
+     * @param userId ID cÃ¡Â»Â§a ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng
+     * @param request Request chÃ¡Â»Â©a ID Ã„â€˜Ã†Â¡n, mÃƒÂ£ giao dÃ¡Â»â€¹ch, danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿
+     * @return ReservationResponse chÃ¡Â»Â©a thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜ÃƒÂ£ chÃ¡Â»â€˜t + mÃƒÂ£ QR
+     * @throws Exception nÃ¡ÂºÂ¿u xÃ¡ÂºÂ£y ra lÃ¡Â»â€”i trong quÃƒÂ¡ trÃƒÂ¬nh xÃ¡Â»Â­ lÃƒÂ½
      */
     @Transactional
     public ReservationResponse confirmReservation(Long userId, ConfirmReservationRequest request) throws Exception {
         try {
-            log.info("🎫 Bắt đầu xử lý chốt đơn đặt vé ID: {} cho user: {}", 
+            log.info("Ã°Å¸Å½Â« BÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u xÃ¡Â»Â­ lÃƒÂ½ chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ID: {} cho user: {}",
                     request.getReservationId(), userId);
 
-            // ========== BƯỚC 1: Tìm & validate đơn đặt vé ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 1: TÃƒÂ¬m & validate Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ==========
             Reservation reservation = reservationRepository
                     .findById(request.getReservationId())
                     .orElseThrow(() -> {
-                        log.error("❌ Không tìm thấy đơn đặt vé ID: {}", request.getReservationId());
-                        return new IllegalArgumentException("❌ Đơn đặt vé không tồn tại");
+                        log.error("Ã¢ÂÅ’ KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ID: {}", request.getReservationId());
+                        return new IllegalArgumentException("Ã¢ÂÅ’ Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i");
                     });
 
-            // Kiểm tra quyền sở hữu
+            // KiÃ¡Â»Æ’m tra quyÃ¡Â»Ân sÃ¡Â»Å¸ hÃ¡Â»Â¯u
             if (!reservation.getUser().getId().equals(userId)) {
-                log.warn("❌ User {} không có quyền chốt đơn của user {}", userId, reservation.getUser().getId());
-                throw new IllegalArgumentException("❌ Bạn không có quyền chốt đơn này");
+                log.warn("Ã¢ÂÅ’ User {} khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n cÃ¡Â»Â§a user {}", userId, reservation.getUser().getId());
+                throw new IllegalArgumentException("Ã¢ÂÅ’ BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n nÃƒÂ y");
             }
 
-            // Kiểm tra trạng thái hiện tại
+            // KiÃ¡Â»Æ’m tra trÃ¡ÂºÂ¡ng thÃƒÂ¡i hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
             if (reservation.getPaid()) {
-                log.warn("⚠️ Đơn đặt vé {} đã được chốt rồi", request.getReservationId());
-                throw new IllegalArgumentException("⚠️ Đơn đặt vé này đã được chốt rồi");
+                log.warn("Ã¢Å¡Â Ã¯Â¸Â Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© {} Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c chÃ¡Â»â€˜t rÃ¡Â»â€œi", request.getReservationId());
+                throw new IllegalArgumentException("Ã¢Å¡Â Ã¯Â¸Â Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© nÃƒÂ y Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c chÃ¡Â»â€˜t rÃ¡Â»â€œi");
             }
 
-            log.debug("✅ Validate đơn đặt vé thành công");
+            log.debug("Ã¢Å“â€¦ Validate Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 2: Cập nhật status = PAID, paid = true ==========
-            log.info("💳 Cập nhật trạng thái thanh toán: PAID");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 2: CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t status = PAID, paid = true ==========
+            log.info("Ã°Å¸â€™Â³ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i thanh toÃƒÂ¡n: PAID");
             reservation.setStatus(ReservationStatus.PAID);
             reservation.setPaid(true);
             reservationRepository.save(reservation);
-            log.debug("✅ Cập nhật status = PAID thành công");
+            log.debug("Ã¢Å“â€¦ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t status = PAID thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 3: Cập nhật tất cả ghế gắn với đơn này ==========
-            log.info("🪑 Cập nhật {} ghế với reservation_id: {}", 
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 3: CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ ghÃ¡ÂºÂ¿ gÃ¡ÂºÂ¯n vÃ¡Â»â€ºi Ã„â€˜Ã†Â¡n nÃƒÂ y ==========
+            log.info("Ã°Å¸Âªâ€˜ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t {} ghÃ¡ÂºÂ¿ vÃ¡Â»â€ºi reservation_id: {}",
                     request.getSeatNumbers().size(), request.getReservationId());
 
             List<Seat> seats = seatRepository.findByShowtimeIdAndSeatNumberIn(
@@ -116,7 +116,7 @@ public class ReservationService {
                 throw new IllegalArgumentException("Mot hoac nhieu ghe khong ton tai trong suat chieu nay");
             }
 
-            if (seats.stream().anyMatch(seat -> 
+            if (seats.stream().anyMatch(seat ->
                     seat.getReservation() == null || !seat.getReservation().getId().equals(reservation.getId()))) {
                 throw new IllegalArgumentException("Mot hoac nhieu ghe da bi nguoi khac dat hoac khong thuoc don hang nay");
             }
@@ -148,35 +148,35 @@ public class ReservationService {
                 seat.setIsReserved(true);
             }
             seatRepository.saveAll(seats);
-            log.debug("✅ Cập nhật {} ghế thành công", seats.size());
+            log.debug("Ã¢Å“â€¦ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t {} ghÃ¡ÂºÂ¿ thÃƒÂ nh cÃƒÂ´ng", seats.size());
 
-            // ========== BƯỚC 4: Tạo mã QR code ==========
-            log.info("🎟️ Tạo mã QR code cho đơn đặt vé ID: {}", request.getReservationId());
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 4: TÃ¡ÂºÂ¡o mÃƒÂ£ QR code ==========
+            log.info("Ã°Å¸Å½Å¸Ã¯Â¸Â TÃ¡ÂºÂ¡o mÃƒÂ£ QR code cho Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ID: {}", request.getReservationId());
 
-            // Tạo hash bí mật từ: reservationId + transactionCode + timestamp + random
+            // TÃ¡ÂºÂ¡o hash bÃƒÂ­ mÃ¡ÂºÂ­t tÃ¡Â»Â«: reservationId + transactionCode + timestamp + random
             String secretHash = generateSecretHash(
                     request.getReservationId(),
                     request.getTransactionCode()
             );
 
-            // Tạo QR code từ QrCodeUtil
+            // TÃ¡ÂºÂ¡o QR code tÃ¡Â»Â« QrCodeUtil
             String base64String = qrCodeUtil.generateReservationQrCode(
                     request.getReservationId(),
                     secretHash
             );
 
             String dataUri = qrCodeUtil.createDataUri(base64String);
-            
-            log.debug("✅ Tạo mã QR thành công - Size: {} bytes", base64String.length());
 
-            // ========== BƯỚC 5: Lưu QR hash vào DB ==========
-            log.info("💾 Lưu mã QR hash vào DB");
+            log.debug("Ã¢Å“â€¦ TÃ¡ÂºÂ¡o mÃƒÂ£ QR thÃƒÂ nh cÃƒÂ´ng - Size: {} bytes", base64String.length());
+
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 5: LÃ†Â°u QR hash vÃƒÂ o DB ==========
+            log.info("Ã°Å¸â€™Â¾ LÃ†Â°u mÃƒÂ£ QR hash vÃƒÂ o DB");
             reservation.setQrCodeHash(secretHash);
             reservationRepository.save(reservation);
-            log.debug("✅ Lưu QR hash thành công");
+            log.debug("Ã¢Å“â€¦ LÃ†Â°u QR hash thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 6: Phát tín hiệu realtime ==========
-            log.info("📢 Phát tín hiệu realtime báo ghế ĐÃ BÁN trên /topic");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 6: PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime ==========
+            log.info("Ã°Å¸â€œÂ¢ PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime bÃƒÂ¡o ghÃ¡ÂºÂ¿ Ã„ÂÃƒÆ’ BÃƒÂN trÃƒÂªn /topic");
             Payment payment = paymentRepository.findByReservationId(reservation.getId());
             if (payment == null) {
                 payment = new Payment();
@@ -192,13 +192,13 @@ public class ReservationService {
                     reservation.getShowtime().getId(),
                     request.getSeatNumbers(),
                     "SOLD",
-                    "Đơn #" + request.getReservationId(),
+                    "Ã„ÂÃ†Â¡n #" + request.getReservationId(),
                     userId
             );
-            log.debug("✅ Phát tín hiệu realtime thành công");
+            log.debug("Ã¢Å“â€¦ PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 7: Xây dựng Response ==========
-            log.info("✅ Xây dựng response chốt đơn thành công");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 7: XÃƒÂ¢y dÃ¡Â»Â±ng Response ==========
+            log.info("Ã¢Å“â€¦ XÃƒÂ¢y dÃ¡Â»Â±ng response chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n thÃƒÂ nh cÃƒÂ´ng");
 
              return ReservationResponse.builder()
                      .reservationId(reservation.getId())
@@ -216,30 +216,30 @@ public class ReservationService {
                     .qrCodeHash(secretHash)
                     .confirmedAt(LocalDateTime.now())
                     .transactionCode(request.getTransactionCode())
-                    .message("✅ Chốt đơn thành công. Vé đã được tạo.")
+                    .message("Ã¢Å“â€¦ ChÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n thÃƒÂ nh cÃƒÂ´ng. VÃƒÂ© Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ¡o.")
                     .apiStatus("SUCCESS")
                     .build();
 
         } catch (IllegalArgumentException e) {
-            log.warn("⚠️ Lỗi validate: {}", e.getMessage());
+            log.warn("Ã¢Å¡Â Ã¯Â¸Â LÃ¡Â»â€”i validate: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("❌ Lỗi chốt đơn: {}", e.getMessage(), e);
-            // @Transactional sẽ tự động rollback tất cả changes
-            throw new Exception("❌ Lỗi chốt đơn: " + e.getMessage(), e);
+            log.error("Ã¢ÂÅ’ LÃ¡Â»â€”i chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n: {}", e.getMessage(), e);
+            // @Transactional sÃ¡ÂºÂ½ tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng rollback tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ changes
+            throw new Exception("Ã¢ÂÅ’ LÃ¡Â»â€”i chÃ¡Â»â€˜t Ã„â€˜Ã†Â¡n: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Tạo hash bí mật cho QR code từ:
+     * TÃ¡ÂºÂ¡o hash bÃƒÂ­ mÃ¡ÂºÂ­t cho QR code tÃ¡Â»Â«:
      * - reservationId
      * - transactionCode
-     * - timestamp hiện tại
+     * - timestamp hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
      * - UUID random
      *
-     * @param reservationId ID đơn đặt vé
-     * @param transactionCode Mã giao dịch
-     * @return Hash bí mật
+     * @param reservationId ID Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©
+     * @param transactionCode MÃƒÂ£ giao dÃ¡Â»â€¹ch
+     * @return Hash bÃƒÂ­ mÃ¡ÂºÂ­t
      */
     private String generateSecretHash(Long reservationId, String transactionCode) {
         String rawData = String.format(
@@ -250,7 +250,7 @@ public class ReservationService {
                 UUID.randomUUID().toString()
         );
 
-        // Tạo hash từ MD5 hoặc SHA-256
+        // TÃ¡ÂºÂ¡o hash tÃ¡Â»Â« MD5 hoÃ¡ÂºÂ·c SHA-256
         return Base64.getEncoder().encodeToString(rawData.getBytes());
     }
 
@@ -287,114 +287,114 @@ public class ReservationService {
     }
 
     /**
-     * API Tạo Đơn Hàng (Init Reservation) - VỀ LỖ HỔNG 1
-     * 
-     * Logic:
-     * 1. Validate thời gian chiếu (chặn 15 phút trước suất chiếu)
-     * 2. Tính tiền kèm loại ghế (dùng priceMultiplier)
-     * 3. Xử lý voucher nếu có
-     * 4. Lưu database với status_id = 1 (PENDING)
-     * 5. Trả về thông tin đơn vừa tạo
+     * API TÃ¡ÂºÂ¡o Ã„ÂÃ†Â¡n HÃƒÂ ng (Init Reservation) - VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 1
      *
-     * @param userId ID người dùng
-     * @param request Request chứa showtimeId, seatNumbers, voucherCode
-     * @return CreateReservationResponse chứa thông tin đơn vừa tạo
-     * @throws Exception nếu xảy ra lỗi
+     * Logic:
+     * 1. Validate thÃ¡Â»Âi gian chiÃ¡ÂºÂ¿u (chÃ¡ÂºÂ·n 15 phÃƒÂºt trÃ†Â°Ã¡Â»â€ºc suÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u)
+     * 2. TÃƒÂ­nh tiÃ¡Â»Ân kÃƒÂ¨m loÃ¡ÂºÂ¡i ghÃ¡ÂºÂ¿ (dÃƒÂ¹ng priceMultiplier)
+     * 3. XÃ¡Â»Â­ lÃƒÂ½ voucher nÃ¡ÂºÂ¿u cÃƒÂ³
+     * 4. LÃ†Â°u database vÃ¡Â»â€ºi status_id = 1 (PENDING)
+     * 5. TrÃ¡ÂºÂ£ vÃ¡Â»Â thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n vÃ¡Â»Â«a tÃ¡ÂºÂ¡o
+     *
+     * @param userId ID ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng
+     * @param request Request chÃ¡Â»Â©a showtimeId, seatNumbers, voucherCode
+     * @return CreateReservationResponse chÃ¡Â»Â©a thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n vÃ¡Â»Â«a tÃ¡ÂºÂ¡o
+     * @throws Exception nÃ¡ÂºÂ¿u xÃ¡ÂºÂ£y ra lÃ¡Â»â€”i
      */
     @Transactional
     public CreateReservationResponse createReservation(Long userId, CreateReservationRequest request) throws Exception {
         try {
-            log.info("🎫 Bắt đầu tạo đơn đặt vé cho user: {} với suất chiếu: {}", userId, request.getShowtimeId());
+            log.info("Ã°Å¸Å½Â« BÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡ÂºÂ¡o Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© cho user: {} vÃ¡Â»â€ºi suÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u: {}", userId, request.getShowtimeId());
 
-            // ========== BƯỚC 1: Validate input ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 1: Validate input ==========
             if (request.getShowtimeId() == null || request.getShowtimeId() <= 0) {
-                throw new IllegalArgumentException("❌ ID suất chiếu không hợp lệ");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ ID suÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡");
             }
             if (request.getSeatNumbers() == null || request.getSeatNumbers().isEmpty()) {
-                throw new IllegalArgumentException("❌ Danh sách ghế không được để trống");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ Danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿ khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng");
             }
 
-            // ========== BƯỚC 2: Lấy showtime và validate thời gian ==========
-            log.info("🎬 Kiểm tra suất chiếu ID: {}", request.getShowtimeId());
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 2: LÃ¡ÂºÂ¥y showtime vÃƒÂ  validate thÃ¡Â»Âi gian ==========
+            log.info("Ã°Å¸Å½Â¬ KiÃ¡Â»Æ’m tra suÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u ID: {}", request.getShowtimeId());
             Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
-                    .orElseThrow(() -> new IllegalArgumentException("❌ Suất chiếu không tồn tại"));
+                    .orElseThrow(() -> new IllegalArgumentException("Ã¢ÂÅ’ SuÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
-            // VỀ LỖ HỔNG 1: Chặn thời gian chiếu
+            // VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 1: ChÃ¡ÂºÂ·n thÃ¡Â»Âi gian chiÃ¡ÂºÂ¿u
             LocalDateTime startTime = showtime.getStartTime();
             LocalDateTime deadlineTime = startTime.minusMinutes(15);
             LocalDateTime now = LocalDateTime.now();
 
             if (now.isAfter(deadlineTime)) {
-                log.warn("⏰ Đã quá thời gian mở bán: {} (deadline: {})", now, deadlineTime);
-                throw new IllegalArgumentException("❌ Đã đóng quầy bán vé. Suất chiếu bắt đầu lúc: " + startTime);
+                log.warn("Ã¢ÂÂ° Ã„ÂÃƒÂ£ quÃƒÂ¡ thÃ¡Â»Âi gian mÃ¡Â»Å¸ bÃƒÂ¡n: {} (deadline: {})", now, deadlineTime);
+                throw new IllegalArgumentException("Ã¢ÂÅ’ Ã„ÂÃƒÂ£ Ã„â€˜ÃƒÂ³ng quÃ¡ÂºÂ§y bÃƒÂ¡n vÃƒÂ©. SuÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u lÃƒÂºc: " + startTime);
             }
-            log.info("✅ Thời gian hợp lệ. Deadline: {}", deadlineTime);
+            log.info("Ã¢Å“â€¦ ThÃ¡Â»Âi gian hÃ¡Â»Â£p lÃ¡Â»â€¡. Deadline: {}", deadlineTime);
 
-            // ========== BƯỚC 3: Validate ghế và tính tiền kèm Loại Ghế ==========
-            log.info("🪑 Validate {} ghế", request.getSeatNumbers().size());
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 3: Validate ghÃ¡ÂºÂ¿ vÃƒÂ  tÃƒÂ­nh tiÃ¡Â»Ân kÃƒÂ¨m LoÃ¡ÂºÂ¡i GhÃ¡ÂºÂ¿ ==========
+            log.info("Ã°Å¸Âªâ€˜ Validate {} ghÃ¡ÂºÂ¿", request.getSeatNumbers().size());
             List<Seat> seats = seatRepository.findByShowtimeIdAndSeatNumberIn(
                     showtime.getId(),
                     request.getSeatNumbers()
             );
 
             if (seats.size() != request.getSeatNumbers().size()) {
-                throw new IllegalArgumentException("❌ Một hoặc nhiều ghế không tồn tại trong suất chiếu này");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ MÃ¡Â»â„¢t hoÃ¡ÂºÂ·c nhiÃ¡Â»Âu ghÃ¡ÂºÂ¿ khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i trong suÃ¡ÂºÂ¥t chiÃ¡ÂºÂ¿u nÃƒÂ y");
             }
 
-            // Kiểm tra ghế đã có người giữ (isReserved = true hoặc có reservation_id)
+            // KiÃ¡Â»Æ’m tra ghÃ¡ÂºÂ¿ Ã„â€˜ÃƒÂ£ cÃƒÂ³ ngÃ†Â°Ã¡Â»Âi giÃ¡Â»Â¯ (isReserved = true hoÃ¡ÂºÂ·c cÃƒÂ³ reservation_id)
             if (seats.stream().anyMatch(seat -> Boolean.TRUE.equals(seat.getIsReserved()) || seat.getReservation() != null)) {
-                throw new IllegalArgumentException("❌ Một hoặc nhiều ghế đã được đặt hoặc có người đang giữ chỗ");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ MÃ¡Â»â„¢t hoÃ¡ÂºÂ·c nhiÃ¡Â»Âu ghÃ¡ÂºÂ¿ Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡ÂºÂ·t hoÃ¡ÂºÂ·c cÃƒÂ³ ngÃ†Â°Ã¡Â»Âi Ã„â€˜ang giÃ¡Â»Â¯ chÃ¡Â»â€”");
             }
 
-            // VỀ LỖ HỔNG 1: Tính tiền kèm Loại Ghế (dùng priceMultiplier)
+            // VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 1: TÃƒÂ­nh tiÃ¡Â»Ân kÃƒÂ¨m LoÃ¡ÂºÂ¡i GhÃ¡ÂºÂ¿ (dÃƒÂ¹ng priceMultiplier)
             BigDecimal totalPrice = BigDecimal.ZERO;
             BigDecimal basePrice = showtime.getPrice() != null ? showtime.getPrice() : BigDecimal.ZERO;
             for (Seat seat : seats) {
                 BigDecimal seatPrice = basePrice.multiply(seat.getSeatType().getPriceMultiplier());
                 totalPrice = totalPrice.add(seatPrice);
-                log.debug("  - Ghế {}: {} x {} = {}", 
-                        seat.getSeatNumber(), 
-                        basePrice, 
-                        seat.getSeatType().getPriceMultiplier(), 
+                log.debug("  - GhÃ¡ÂºÂ¿ {}: {} x {} = {}",
+                        seat.getSeatNumber(),
+                        basePrice,
+                        seat.getSeatType().getPriceMultiplier(),
                         seatPrice);
             }
-            log.info("💰 Tổng tiền = {}", totalPrice);
+            log.info("Ã°Å¸â€™Â° TÃ¡Â»â€¢ng tiÃ¡Â»Ân = {}", totalPrice);
 
-            // ========== BƯỚC 4: Xử lý Voucher (Mới thêm ở V3) ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 4: XÃ¡Â»Â­ lÃƒÂ½ Voucher (MÃ¡Â»â€ºi thÃƒÂªm Ã¡Â»Å¸ V3) ==========
             BigDecimal discountAmount = BigDecimal.ZERO;
             Voucher appliedVoucher = null;
 
             if (request.getVoucherCode() != null && !request.getVoucherCode().trim().isEmpty()) {
-                log.info("🎁 Validate voucher: {}", request.getVoucherCode());
+                log.info("Ã°Å¸Å½Â Validate voucher: {}", request.getVoucherCode());
                 appliedVoucher = resolveVoucher(request.getVoucherCode(), totalPrice);
                 if (appliedVoucher != null) {
-                    // Tính tiền được giảm
+                    // TÃƒÂ­nh tiÃ¡Â»Ân Ã„â€˜Ã†Â°Ã¡Â»Â£c giÃ¡ÂºÂ£m
                     discountAmount = totalPrice
                             .multiply(appliedVoucher.getDiscountPercentage())
                             .divide(BigDecimal.valueOf(100));
-                    
-                    // Kiểm tra nếu discount > max_discount_amount thì chỉ trừ bằng giá trị max
-                    if (appliedVoucher.getMaxDiscountAmount() != null && 
+
+                    // KiÃ¡Â»Æ’m tra nÃ¡ÂºÂ¿u discount > max_discount_amount thÃƒÂ¬ chÃ¡Â»â€° trÃ¡Â»Â« bÃ¡ÂºÂ±ng giÃƒÂ¡ trÃ¡Â»â€¹ max
+                    if (appliedVoucher.getMaxDiscountAmount() != null &&
                         discountAmount.compareTo(appliedVoucher.getMaxDiscountAmount()) > 0) {
                         discountAmount = appliedVoucher.getMaxDiscountAmount();
-                        log.info("  Giảm tối đa: {}", discountAmount);
+                        log.info("  GiÃ¡ÂºÂ£m tÃ¡Â»â€˜i Ã„â€˜a: {}", discountAmount);
                     } else {
-                        log.info("  Giảm: {} ({} %)", discountAmount, appliedVoucher.getDiscountPercentage());
+                        log.info("  GiÃ¡ÂºÂ£m: {} ({} %)", discountAmount, appliedVoucher.getDiscountPercentage());
                     }
                 }
             }
 
             BigDecimal finalPrice = totalPrice.subtract(discountAmount).max(BigDecimal.ZERO);
-            log.info("💳 Giá cuối: {} - {} = {}", totalPrice, discountAmount, finalPrice);
+            log.info("Ã°Å¸â€™Â³ GiÃƒÂ¡ cuÃ¡Â»â€˜i: {} - {} = {}", totalPrice, discountAmount, finalPrice);
 
-            // ========== BƯỚC 5: Lưu Database ==========
-            log.info("💾 Lưu đơn đặt vé vào database");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 5: LÃ†Â°u Database ==========
+            log.info("Ã°Å¸â€™Â¾ LÃ†Â°u Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© vÃƒÂ o database");
 
-            // Lấy user
+            // LÃ¡ÂºÂ¥y user
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("❌ Người dùng không tồn tại"));
+                    .orElseThrow(() -> new IllegalArgumentException("Ã¢ÂÅ’ NgÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
-            // Tạo reservation mới với status = PENDING (LOCKED in enum = 1)
+            // TÃ¡ÂºÂ¡o reservation mÃ¡Â»â€ºi vÃ¡Â»â€ºi status = PENDING (LOCKED in enum = 1)
             Reservation reservation = new Reservation();
             reservation.setUser(user);
             reservation.setShowtime(showtime);
@@ -402,21 +402,21 @@ public class ReservationService {
             reservation.setTotalPrice(finalPrice);
             reservation.setVoucher(appliedVoucher);
             reservation.setPaid(false);
-            // Đặt thời gian hết hạn = now + 15 phút
+            // Ã„ÂÃ¡ÂºÂ·t thÃ¡Â»Âi gian hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n = now + 15 phÃƒÂºt
             reservation.setExpiresAt(now.plusMinutes(15));
 
             Reservation savedReservation = reservationRepository.save(reservation);
-            log.info("✅ Đơn đặt vé đã tạo: ID = {}", savedReservation.getId());
+            log.info("Ã¢Å“â€¦ Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© Ã„â€˜ÃƒÂ£ tÃ¡ÂºÂ¡o: ID = {}", savedReservation.getId());
 
-            // Cập nhật reservation_id vào các ghế đã chọn và đánh dấu là đang được giữ (isReserved = true)
+            // CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t reservation_id vÃƒÂ o cÃƒÂ¡c ghÃ¡ÂºÂ¿ Ã„â€˜ÃƒÂ£ chÃ¡Â»Ân vÃƒÂ  Ã„â€˜ÃƒÂ¡nh dÃ¡ÂºÂ¥u lÃƒÂ  Ã„â€˜ang Ã„â€˜Ã†Â°Ã¡Â»Â£c giÃ¡Â»Â¯ (isReserved = true)
             for (Seat seat : seats) {
                 seat.setReservation(savedReservation);
                 seat.setIsReserved(true);
             }
             seatRepository.saveAll(seats);
-            log.info("✅ Cập nhật {} ghế thành công", seats.size());
+            log.info("Ã¢Å“â€¦ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t {} ghÃ¡ÂºÂ¿ thÃƒÂ nh cÃƒÂ´ng", seats.size());
 
-            // ========== BƯỚC 6: Xây dựng Response ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 6: XÃƒÂ¢y dÃ¡Â»Â±ng Response ==========
             return CreateReservationResponse.builder()
                     .reservationId(savedReservation.getId())
                     .showtimeId(showtime.getId())
@@ -431,44 +431,44 @@ public class ReservationService {
                     .voucherCode(appliedVoucher != null ? appliedVoucher.getCode() : null)
                     .status(savedReservation.getStatus().toString()) // LOCKED
                     .expiresAt(savedReservation.getExpiresAt())
-                    .message("✅ Tạo đơn đặt vé thành công. Vui lòng thanh toán trong 15 phút.")
+                    .message("Ã¢Å“â€¦ TÃ¡ÂºÂ¡o Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© thÃƒÂ nh cÃƒÂ´ng. Vui lÃƒÂ²ng thanh toÃƒÂ¡n trong 15 phÃƒÂºt.")
                     .apiStatus("SUCCESS")
                     .build();
 
         } catch (IllegalArgumentException e) {
-            log.warn("⚠️ Lỗi validate: {}", e.getMessage());
+            log.warn("Ã¢Å¡Â Ã¯Â¸Â LÃ¡Â»â€”i validate: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("❌ Lỗi tạo đơn đặt vé: {}", e.getMessage(), e);
-            throw new Exception("❌ Lỗi tạo đơn đặt vé: " + e.getMessage(), e);
+            log.error("Ã¢ÂÅ’ LÃ¡Â»â€”i tÃ¡ÂºÂ¡o Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©: {}", e.getMessage(), e);
+            throw new Exception("Ã¢ÂÅ’ LÃ¡Â»â€”i tÃ¡ÂºÂ¡o Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©: " + e.getMessage(), e);
         }
     }
 
     /**
-     * API Vé Của Tôi (My Tickets) - VỀ LỖ HỔNG 2
-     * 
-     * Logic:
-     * 1. Lấy email từ userEmail (gọi từ controller)
-     * 2. Tìm user từ email
-     * 3. Lấy danh sách Reservation của user
-     * 4. Map sang DTO TicketResponse
-     * 5. Bắt buộc phải có roomName - "Rạp: Beta Cinemas - Phòng: IMAX 01"
+     * API VÃƒÂ© CÃ¡Â»Â§a TÃƒÂ´i (My Tickets) - VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 2
      *
-     * @param userEmail Email của người dùng hiện tại (lấy từ Security Context)
-     * @return List<TicketResponse> danh sách vé của người dùng
-     * @throws Exception nếu không tìm thấy user
+     * Logic:
+     * 1. LÃ¡ÂºÂ¥y email tÃ¡Â»Â« userEmail (gÃ¡Â»Âi tÃ¡Â»Â« controller)
+     * 2. TÃƒÂ¬m user tÃ¡Â»Â« email
+     * 3. LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch Reservation cÃ¡Â»Â§a user
+     * 4. Map sang DTO TicketResponse
+     * 5. BÃ¡ÂºÂ¯t buÃ¡Â»â„¢c phÃ¡ÂºÂ£i cÃƒÂ³ roomName - "RÃ¡ÂºÂ¡p: Beta Cinemas - PhÃƒÂ²ng: IMAX 01"
+     *
+     * @param userEmail Email cÃ¡Â»Â§a ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i (lÃ¡ÂºÂ¥y tÃ¡Â»Â« Security Context)
+     * @return List<TicketResponse> danh sÃƒÂ¡ch vÃƒÂ© cÃ¡Â»Â§a ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng
+     * @throws Exception nÃ¡ÂºÂ¿u khÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y user
      */
     public List<TicketResponse> getUserReservations(String userEmail) throws Exception {
         try {
-            log.info("🎫 Lấy danh sách vé của user: {}", userEmail);
+            log.info("Ã°Å¸Å½Â« LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch vÃƒÂ© cÃ¡Â»Â§a user: {}", userEmail);
 
-            // Tìm user từ email
+            // TÃƒÂ¬m user tÃ¡Â»Â« email
             User user = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new IllegalArgumentException("❌ Người dùng không tồn tại"));
+                    .orElseThrow(() -> new IllegalArgumentException("Ã¢ÂÅ’ NgÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
-            // Lấy danh sách reservation của user
+            // LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch reservation cÃ¡Â»Â§a user
             List<Reservation> reservations = reservationRepository.findByUserIdOrderByReservationTimeDesc(user.getId());
-            log.info("📋 Tìm được {} đơn đặt vé", reservations.size());
+            log.info("Ã°Å¸â€œâ€¹ TÃƒÂ¬m Ã„â€˜Ã†Â°Ã¡Â»Â£c {} Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©", reservations.size());
 
             // Map sang DTO TicketResponse
             return reservations.stream()
@@ -476,22 +476,22 @@ public class ReservationService {
                     .toList();
 
         } catch (Exception e) {
-            log.error("❌ Lỗi lấy danh sách vé: {}", e.getMessage());
+            log.error("Ã¢ÂÅ’ LÃ¡Â»â€”i lÃ¡ÂºÂ¥y danh sÃƒÂ¡ch vÃƒÂ©: {}", e.getMessage());
             throw e;
         }
     }
 
     /**
      * Map Reservation entity sang TicketResponse DTO
-     * VỀ LỖ HỔNG 2: Bắt buộc phải có roomName để khách biết đường đi
-     * Format: "Rạp: Beta Cinemas - Phòng: IMAX 01"
+     * VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 2: BÃ¡ÂºÂ¯t buÃ¡Â»â„¢c phÃ¡ÂºÂ£i cÃƒÂ³ roomName Ã„â€˜Ã¡Â»Æ’ khÃƒÂ¡ch biÃ¡ÂºÂ¿t Ã„â€˜Ã†Â°Ã¡Â»Âng Ã„â€˜i
+     * Format: "RÃ¡ÂºÂ¡p: Beta Cinemas - PhÃƒÂ²ng: IMAX 01"
      */
     private TicketResponse mapToTicketResponse(Reservation reservation) {
         String theaterName = reservation.getShowtime().getTheater().getName();
         String roomName = reservation.getShowtime().getRoom().getName();
-        String location = String.format("Rạp: %s - Phòng: %s", theaterName, roomName);
+        String location = String.format("RÃ¡ÂºÂ¡p: %s - PhÃƒÂ²ng: %s", theaterName, roomName);
 
-        // Lấy danh sách ghế
+        // LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿
         List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
         List<String> seatNumbers = seats.stream()
                 .map(Seat::getSeatNumber)
@@ -509,28 +509,29 @@ public class ReservationService {
                 .totalPrice(reservation.getTotalPrice())
                 .status(reservation.getStatus().toString())
                 .reservationTime(reservation.getReservationTime())
+                .expiresAt(reservation.getExpiresAt())
                 .qrCodeHash(reservation.getQrCodeHash())
                 .build();
     }
 
     /**
-     * Lấy thông tin đơn đặt vé (Get Reservation Details).
+     * LÃ¡ÂºÂ¥y thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© (Get Reservation Details).
      *
-     * @param reservationId ID đơn đặt vé
-     * @param userId ID người dùng
-     * @return Thông tin đơn đặt vé
-     * @throws Exception nếu không tìm thấy hoặc không có quyền
+     * @param reservationId ID Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©
+     * @param userId ID ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng
+     * @return ThÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©
+     * @throws Exception nÃ¡ÂºÂ¿u khÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y hoÃ¡ÂºÂ·c khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân
      */
     public ReservationResponse getReservation(Long reservationId, Long userId) throws Exception {
         try {
-            log.info("📋 Lấy thông tin đơn đặt vé ID: {} cho user: {}", reservationId, userId);
+            log.info("Ã°Å¸â€œâ€¹ LÃ¡ÂºÂ¥y thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ID: {} cho user: {}", reservationId, userId);
 
             Reservation reservation = reservationRepository
                     .findById(reservationId)
-                    .orElseThrow(() -> new IllegalArgumentException("❌ Đơn đặt vé không tồn tại"));
+                    .orElseThrow(() -> new IllegalArgumentException("Ã¢ÂÅ’ Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
             if (!reservation.getUser().getId().equals(userId)) {
-                throw new IllegalArgumentException("❌ Bạn không có quyền xem đơn này");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem Ã„â€˜Ã†Â¡n nÃƒÂ y");
             }
 
             List<Seat> seats = seatRepository.findByReservationId(reservationId);
@@ -551,100 +552,101 @@ public class ReservationService {
                     .status(reservation.getStatus().toString())
                     .qrCodeHash(reservation.getQrCodeHash())
                     .confirmedAt(reservation.getReservationTime())
+                    .expiresAt(reservation.getExpiresAt())
                     .apiStatus("SUCCESS")
                     .build();
 
         } catch (Exception e) {
-            log.error("❌ Lỗi lấy thông tin đơn đặt: {}", e.getMessage());
+            log.error("Ã¢ÂÅ’ LÃ¡Â»â€”i lÃ¡ÂºÂ¥y thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t: {}", e.getMessage());
             throw e;
         }
     }
 
     /**
-     * VỀ LỖ HỔNG 3: Payment Callback từ Payment Gateway
-     * 
-     * API: POST /v1/payments/callback (HIDDEN - chỉ payment gateway gọi)
-     * 
-     * Luồng xử lý:
-     * 1. Validate callback từ payment gateway
-     * 2. Verify transactionCode + amount khớp
-     * 3. Cập nhật Reservation status = PAID
-     * 4. Cập nhật Seat status = RESERVED
-     * 5. Tạo QR code và lưu vào DB
-     * 6. Phát tín hiệu realtime báo ghế ĐÃ BÁN
-     * 
-     * ⚠️ CRITICAL: Chỉ payment gateway được gọi API này (check IP/Secret)
+     * VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 3: Payment Callback tÃ¡Â»Â« Payment Gateway
      *
-     * @param request PaymentCallbackRequest từ payment gateway
-     * @return Response xác nhận đã xử lý
-     * @throws Exception nếu validate fail hoặc reservation không tồn tại
+     * API: POST /v1/payments/callback (HIDDEN - chÃ¡Â»â€° payment gateway gÃ¡Â»Âi)
+     *
+     * LuÃ¡Â»â€œng xÃ¡Â»Â­ lÃƒÂ½:
+     * 1. Validate callback tÃ¡Â»Â« payment gateway
+     * 2. Verify transactionCode + amount khÃ¡Â»â€ºp
+     * 3. CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t Reservation status = PAID
+     * 4. CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t Seat status = RESERVED
+     * 5. TÃ¡ÂºÂ¡o QR code vÃƒÂ  lÃ†Â°u vÃƒÂ o DB
+     * 6. PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime bÃƒÂ¡o ghÃ¡ÂºÂ¿ Ã„ÂÃƒÆ’ BÃƒÂN
+     *
+     * Ã¢Å¡Â Ã¯Â¸Â CRITICAL: ChÃ¡Â»â€° payment gateway Ã„â€˜Ã†Â°Ã¡Â»Â£c gÃ¡Â»Âi API nÃƒÂ y (check IP/Secret)
+     *
+     * @param request PaymentCallbackRequest tÃ¡Â»Â« payment gateway
+     * @return Response xÃƒÂ¡c nhÃ¡ÂºÂ­n Ã„â€˜ÃƒÂ£ xÃ¡Â»Â­ lÃƒÂ½
+     * @throws Exception nÃ¡ÂºÂ¿u validate fail hoÃ¡ÂºÂ·c reservation khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
      */
     @Transactional
     public ReservationResponse handlePaymentCallback(com.ticketrush.backend.dto.PaymentCallbackRequest request) throws Exception {
         try {
-            log.info("💳 Payment Callback từ {}: Transaction {} cho Reservation {}", 
+            log.info("Ã°Å¸â€™Â³ Payment Callback tÃ¡Â»Â« {}: Transaction {} cho Reservation {}",
                     request.getProvider(), request.getTransactionCode(), request.getReservationId());
 
-            // ========== BƯỚC 1: Validate request ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 1: Validate request ==========
             if (request.getReservationId() == null || request.getReservationId() <= 0) {
-                throw new IllegalArgumentException("❌ ID đơn đặt vé không hợp lệ");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ ID Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡");
             }
             if (request.getTransactionCode() == null || request.getTransactionCode().trim().isEmpty()) {
-                throw new IllegalArgumentException("❌ Mã giao dịch không hợp lệ");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ MÃƒÂ£ giao dÃ¡Â»â€¹ch khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡");
             }
             if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("❌ Số tiền không hợp lệ");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ SÃ¡Â»â€˜ tiÃ¡Â»Ân khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡");
             }
 
-            // ========== BƯỚC 2: Tìm Reservation và verify amount ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 2: TÃƒÂ¬m Reservation vÃƒÂ  verify amount ==========
             Reservation reservation = reservationRepository.findById(request.getReservationId())
                     .orElseThrow(() -> {
-                        log.error("❌ Không tìm thấy đơn đặt vé ID: {}", request.getReservationId());
-                        return new IllegalArgumentException("❌ Đơn đặt vé không tồn tại");
+                        log.error("Ã¢ÂÅ’ KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ID: {}", request.getReservationId());
+                        return new IllegalArgumentException("Ã¢ÂÅ’ Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i");
                     });
 
-            // Kiểm tra amount khớp
+            // KiÃ¡Â»Æ’m tra amount khÃ¡Â»â€ºp
             if (reservation.getTotalPrice().compareTo(request.getAmount()) != 0) {
-                log.error("❌ Số tiền không khớp. Expected: {}, Received: {}", 
+                log.error("Ã¢ÂÅ’ SÃ¡Â»â€˜ tiÃ¡Â»Ân khÃƒÂ´ng khÃ¡Â»â€ºp. Expected: {}, Received: {}",
                         reservation.getTotalPrice(), request.getAmount());
-                throw new IllegalArgumentException("❌ Số tiền thanh toán không khớp");
+                throw new IllegalArgumentException("Ã¢ÂÅ’ SÃ¡Â»â€˜ tiÃ¡Â»Ân thanh toÃƒÂ¡n khÃƒÂ´ng khÃ¡Â»â€ºp");
             }
 
-            // Kiểm tra xem đã được chốt rồi (idempotency)
+            // KiÃ¡Â»Æ’m tra xem Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c chÃ¡Â»â€˜t rÃ¡Â»â€œi (idempotency)
             if (reservation.getPaid()) {
-                log.warn("⚠️ Đơn đặt vé {} đã được chốt rồi", request.getReservationId());
-                throw new IllegalArgumentException("⚠️ Đơn đặt vé này đã được chốt rồi");
+                log.warn("Ã¢Å¡Â Ã¯Â¸Â Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© {} Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c chÃ¡Â»â€˜t rÃ¡Â»â€œi", request.getReservationId());
+                throw new IllegalArgumentException("Ã¢Å¡Â Ã¯Â¸Â Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© nÃƒÂ y Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c chÃ¡Â»â€˜t rÃ¡Â»â€œi");
             }
 
-            log.debug("✅ Validate callback thành công");
+            log.debug("Ã¢Å“â€¦ Validate callback thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 3: Kiểm tra payment status ==========
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 3: KiÃ¡Â»Æ’m tra payment status ==========
             if (!"SUCCESS".equalsIgnoreCase(request.getPaymentStatus())) {
-                log.warn("❌ Thanh toán thất bại: {}", request.getPaymentStatus());
+                log.warn("Ã¢ÂÅ’ Thanh toÃƒÂ¡n thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i: {}", request.getPaymentStatus());
                 reservation.setStatus(ReservationStatus.CANCELED);
                 reservationRepository.save(reservation);
-                throw new IllegalArgumentException("❌ Thanh toán thất bại: " + request.getPaymentStatus());
+                throw new IllegalArgumentException("Ã¢ÂÅ’ Thanh toÃƒÂ¡n thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i: " + request.getPaymentStatus());
             }
 
-            // ========== BƯỚC 4: Cập nhật status = PAID, paid = true ==========
-            log.info("✅ Payment SUCCESS từ {}. Cập nhật reservation status = PAID", request.getProvider());
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 4: CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t status = PAID, paid = true ==========
+            log.info("Ã¢Å“â€¦ Payment SUCCESS tÃ¡Â»Â« {}. CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t reservation status = PAID", request.getProvider());
             reservation.setStatus(ReservationStatus.PAID);
             reservation.setPaid(true);
             reservationRepository.save(reservation);
-            log.debug("✅ Cập nhật status = PAID thành công");
+            log.debug("Ã¢Å“â€¦ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t status = PAID thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 5: Cập nhật tất cả ghế gắn với đơn này ==========
-            log.info("🪑 Cập nhật ghế với reservation_id: {}", request.getReservationId());
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 5: CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ ghÃ¡ÂºÂ¿ gÃ¡ÂºÂ¯n vÃ¡Â»â€ºi Ã„â€˜Ã†Â¡n nÃƒÂ y ==========
+            log.info("Ã°Å¸Âªâ€˜ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t ghÃ¡ÂºÂ¿ vÃ¡Â»â€ºi reservation_id: {}", request.getReservationId());
             List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
 
             for (Seat seat : seats) {
                 seat.setIsReserved(true);
             }
             seatRepository.saveAll(seats);
-            log.debug("✅ Cập nhật {} ghế thành công", seats.size());
+            log.debug("Ã¢Å“â€¦ CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t {} ghÃ¡ÂºÂ¿ thÃƒÂ nh cÃƒÂ´ng", seats.size());
 
-            // ========== BƯỚC 6: Tạo mã QR code ==========
-            log.info("🎟️ Tạo mã QR code cho đơn đặt vé ID: {}", request.getReservationId());
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 6: TÃ¡ÂºÂ¡o mÃƒÂ£ QR code ==========
+            log.info("Ã°Å¸Å½Å¸Ã¯Â¸Â TÃ¡ÂºÂ¡o mÃƒÂ£ QR code cho Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© ID: {}", request.getReservationId());
 
             String secretHash = generateSecretHash(
                     request.getReservationId(),
@@ -657,14 +659,14 @@ public class ReservationService {
             );
 
             String dataUri = qrCodeUtil.createDataUri(base64String);
-            log.debug("✅ Tạo mã QR thành công - Size: {} bytes", base64String.length());
+            log.debug("Ã¢Å“â€¦ TÃ¡ÂºÂ¡o mÃƒÂ£ QR thÃƒÂ nh cÃƒÂ´ng - Size: {} bytes", base64String.length());
 
-            // ========== BƯỚC 7: Lưu QR hash vào DB ==========
-            log.info("💾 Lưu mã QR hash và payment info vào DB");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 7: LÃ†Â°u QR hash vÃƒÂ o DB ==========
+            log.info("Ã°Å¸â€™Â¾ LÃ†Â°u mÃƒÂ£ QR hash vÃƒÂ  payment info vÃƒÂ o DB");
             reservation.setQrCodeHash(secretHash);
             reservationRepository.save(reservation);
 
-            // Lưu payment info
+            // LÃ†Â°u payment info
             Payment payment = paymentRepository.findByReservationId(reservation.getId());
             if (payment == null) {
                 payment = new Payment();
@@ -676,10 +678,10 @@ public class ReservationService {
             payment.setStatus(PaymentStatus.SUCCESS);
             paymentRepository.save(payment);
 
-            log.debug("✅ Lưu payment info thành công");
+            log.debug("Ã¢Å“â€¦ LÃ†Â°u payment info thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 8: Phát tín hiệu realtime ==========
-            log.info("📢 Phát tín hiệu realtime báo ghế ĐÃ BÁN trên /topic");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 8: PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime ==========
+            log.info("Ã°Å¸â€œÂ¢ PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime bÃƒÂ¡o ghÃ¡ÂºÂ¿ Ã„ÂÃƒÆ’ BÃƒÂN trÃƒÂªn /topic");
             List<String> seatNumbers = seats.stream()
                     .map(Seat::getSeatNumber)
                     .toList();
@@ -688,13 +690,13 @@ public class ReservationService {
                     reservation.getShowtime().getId(),
                     seatNumbers,
                     "SOLD",
-                    "Đơn #" + request.getReservationId(),
+                    "Ã„ÂÃ†Â¡n #" + request.getReservationId(),
                     reservation.getUser().getId()
             );
-            log.debug("✅ Phát tín hiệu realtime thành công");
+            log.debug("Ã¢Å“â€¦ PhÃƒÂ¡t tÃƒÂ­n hiÃ¡Â»â€¡u realtime thÃƒÂ nh cÃƒÂ´ng");
 
-            // ========== BƯỚC 9: Xây dựng Response ==========
-            log.info("✅ Xử lý callback thành công");
+            // ========== BÃ†Â¯Ã¡Â»Å¡C 9: XÃƒÂ¢y dÃ¡Â»Â±ng Response ==========
+            log.info("Ã¢Å“â€¦ XÃ¡Â»Â­ lÃƒÂ½ callback thÃƒÂ nh cÃƒÂ´ng");
 
             return ReservationResponse.builder()
                     .reservationId(reservation.getId())
@@ -712,66 +714,76 @@ public class ReservationService {
                     .qrCodeHash(secretHash)
                     .confirmedAt(LocalDateTime.now())
                     .transactionCode(request.getTransactionCode())
-                    .message("✅ Callback thành công. Vé đã được tạo.")
+                    .message("Ã¢Å“â€¦ Callback thÃƒÂ nh cÃƒÂ´ng. VÃƒÂ© Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ¡o.")
                     .apiStatus("SUCCESS")
                     .build();
 
         } catch (IllegalArgumentException e) {
-            log.warn("⚠️ Lỗi validate callback: {}", e.getMessage());
+            log.warn("Ã¢Å¡Â Ã¯Â¸Â LÃ¡Â»â€”i validate callback: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("❌ Lỗi xử lý callback: {}", e.getMessage(), e);
-            throw new Exception("❌ Lỗi xử lý callback: " + e.getMessage(), e);
+            log.error("Ã¢ÂÅ’ LÃ¡Â»â€”i xÃ¡Â»Â­ lÃƒÂ½ callback: {}", e.getMessage(), e);
+            throw new Exception("Ã¢ÂÅ’ LÃ¡Â»â€”i xÃ¡Â»Â­ lÃƒÂ½ callback: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Hủy đơn đặt vé do người dùng yêu cầu
+     * HÃ¡Â»Â§y Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© do ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng yÃƒÂªu cÃ¡ÂºÂ§u
      */
     @Transactional
     public void cancelReservation(Long reservationId, Long userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Đơn đặt vé không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
-        // Chỉ user tạo đơn (hoặc Admin - tuỳ logic) mới được hủy
+        // ChÃ¡Â»â€° user tÃ¡ÂºÂ¡o Ã„â€˜Ã†Â¡n (hoÃ¡ÂºÂ·c Admin - tuÃ¡Â»Â³ logic) mÃ¡Â»â€ºi Ã„â€˜Ã†Â°Ã¡Â»Â£c hÃ¡Â»Â§y
         if (!reservation.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Không có quyền hủy đơn này");
+            throw new IllegalArgumentException("KhÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân hÃ¡Â»Â§y Ã„â€˜Ã†Â¡n nÃƒÂ y");
         }
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {
-            throw new IllegalArgumentException("Đơn đã bị hủy từ trước");
+            throw new IllegalArgumentException("Ã„ÂÃ†Â¡n Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y tÃ¡Â»Â« trÃ†Â°Ã¡Â»â€ºc");
         }
-        
-        // Cập nhật trạng thái
+
+        List<Seat> seats = releaseReservationSeats(reservation, "Don bi huy boi nguoi dung", userId);
+        reservationRepository.save(reservation);
+        log.info("Ã¢Å“â€¦ Ã„ÂÃƒÂ£ hÃ¡Â»Â§y Ã„â€˜Ã†Â¡n {} vÃƒÂ  giÃ¡ÂºÂ£i phÃƒÂ³ng {} ghÃ¡ÂºÂ¿", reservationId, seats.size());
+    }
+
+    private List<Seat> releaseReservationSeats(Reservation reservation, String realtimeMessage, Long actorUserId) {
         reservation.setStatus(ReservationStatus.CANCELED);
-        
-        // Nhả ghế
-        List<Seat> seats = seatRepository.findByReservationId(reservationId);
+        reservation.setPaid(false);
+        reservation.setExpiresAt(null);
+
+        List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
         for (Seat seat : seats) {
             seat.setIsReserved(false);
             seat.setReservation(null);
         }
         seatRepository.saveAll(seats);
 
-        // Broadcast realtime
-        if (!seats.isEmpty()) {
+        Showtime showtime = reservation.getShowtime();
+        if (showtime != null && !seats.isEmpty()) {
+            int currentAvailable = showtime.getAvailableSeats() != null ? showtime.getAvailableSeats() : 0;
+            int totalSeats = showtime.getTotalSeats() != null ? showtime.getTotalSeats() : currentAvailable + seats.size();
+            showtime.setAvailableSeats(Math.min(totalSeats, currentAvailable + seats.size()));
+            showtimeRepository.save(showtime);
+
             List<String> seatNumbers = seats.stream().map(Seat::getSeatNumber).toList();
             seatRealtimeService.broadcastSeatStatus(
-                    reservation.getShowtime().getId(),
+                    showtime.getId(),
                     seatNumbers,
                     "AVAILABLE",
-                    "Đơn bị hủy bởi người dùng",
-                    null
+                    realtimeMessage,
+                    actorUserId
             );
         }
 
-        reservationRepository.save(reservation);
-        log.info("✅ Đã hủy đơn {} và giải phóng {} ghế", reservationId, seats.size());
+        return seats;
     }
 
     /**
-     * Tự động dọn dẹp các đơn đặt vé đã quá hạn giữ ghế (chạy mỗi phút).
-     * Giải phóng ghế cho người khác mua.
+     * TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng dÃ¡Â»Ân dÃ¡ÂºÂ¹p cÃƒÂ¡c Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© Ã„â€˜ÃƒÂ£ quÃƒÂ¡ hÃ¡ÂºÂ¡n giÃ¡Â»Â¯ ghÃ¡ÂºÂ¿ (chÃ¡ÂºÂ¡y mÃ¡Â»â€”i phÃƒÂºt).
+     * GiÃ¡ÂºÂ£i phÃƒÂ³ng ghÃ¡ÂºÂ¿ cho ngÃ†Â°Ã¡Â»Âi khÃƒÂ¡c mua.
      */
     @Transactional
     @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
@@ -783,52 +795,32 @@ public class ReservationService {
             return;
         }
 
-        log.info("🧹 Đang dọn dẹp {} đơn đặt vé quá hạn giữ ghế", expiredReservations.size());
+        log.info("Ã°Å¸Â§Â¹ Ã„Âang dÃ¡Â»Ân dÃ¡ÂºÂ¹p {} Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© quÃƒÂ¡ hÃ¡ÂºÂ¡n giÃ¡Â»Â¯ ghÃ¡ÂºÂ¿", expiredReservations.size());
 
         for (Reservation reservation : expiredReservations) {
-            log.info("  - Hủy đơn: {}, hết hạn lúc: {}", reservation.getId(), reservation.getExpiresAt());
-            reservation.setStatus(ReservationStatus.CANCELED);
-            
-            // Lấy danh sách ghế đang bị đơn này giữ
-            List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
-            for (Seat seat : seats) {
-                seat.setIsReserved(false);
-                seat.setReservation(null);
-            }
-            seatRepository.saveAll(seats);
-
-            // Gửi realtime báo ghế trống lại
-            if (!seats.isEmpty()) {
-                List<String> seatNumbers = seats.stream().map(Seat::getSeatNumber).toList();
-                seatRealtimeService.broadcastSeatStatus(
-                        reservation.getShowtime().getId(),
-                        seatNumbers,
-                        "AVAILABLE",
-                        "Đơn #" + reservation.getId() + " quá hạn",
-                        null
-                );
-            }
+            log.info("  - HÃ¡Â»Â§y Ã„â€˜Ã†Â¡n: {}, hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n lÃƒÂºc: {}", reservation.getId(), reservation.getExpiresAt());
+            releaseReservationSeats(reservation, "Don #" + reservation.getId() + " qua han", null);
         }
 
         reservationRepository.saveAll(expiredReservations);
-        log.info("✅ Dọn dẹp hoàn tất");
+        log.info("Ã¢Å“â€¦ DÃ¡Â»Ân dÃ¡ÂºÂ¹p hoÃƒÂ n tÃ¡ÂºÂ¥t");
     }
 
     /**
-     * Task 2.3: Lấy chi tiết vé đầy đủ
-     * Trả về: Tên phim, Rạp, Phòng (Hall), Dãy (Row), Số ghế (Seat), Giờ chiếu
-     * Dùng để render UI vé giấy truyền thống và mã hóa QR Code
+     * Task 2.3: LÃ¡ÂºÂ¥y chi tiÃ¡ÂºÂ¿t vÃƒÂ© Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§
+     * TrÃ¡ÂºÂ£ vÃ¡Â»Â: TÃƒÂªn phim, RÃ¡ÂºÂ¡p, PhÃƒÂ²ng (Hall), DÃƒÂ£y (Row), SÃ¡Â»â€˜ ghÃ¡ÂºÂ¿ (Seat), GiÃ¡Â»Â chiÃ¡ÂºÂ¿u
+     * DÃƒÂ¹ng Ã„â€˜Ã¡Â»Æ’ render UI vÃƒÂ© giÃ¡ÂºÂ¥y truyÃ¡Â»Ân thÃ¡Â»â€˜ng vÃƒÂ  mÃƒÂ£ hÃƒÂ³a QR Code
      */
     @Transactional(readOnly = true)
     public com.ticketrush.backend.dto.TicketDetailResponse getTicketDetail(Long reservationId, Long userId) {
-        log.info("🎫 Lấy chi tiết vé ID: {} cho user: {}", reservationId, userId);
+        log.info("Ã°Å¸Å½Â« LÃ¡ÂºÂ¥y chi tiÃ¡ÂºÂ¿t vÃƒÂ© ID: {} cho user: {}", reservationId, userId);
 
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Đơn đặt vé không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Ã„ÂÃ†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
-        // Kiểm tra quyền
+        // KiÃ¡Â»Æ’m tra quyÃ¡Â»Ân
         if (!reservation.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Bạn không có quyền xem đơn này");
+            throw new IllegalArgumentException("BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem Ã„â€˜Ã†Â¡n nÃƒÂ y");
         }
 
         Showtime showtime = reservation.getShowtime();
@@ -836,13 +828,13 @@ public class ReservationService {
         Room room = showtime.getRoom();
         Theater theater = room.getTheater();
 
-        // Lấy danh sách ghế
+        // LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿
         List<Seat> seats = seatRepository.findByReservationId(reservationId);
 
         List<com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail> seatDetails = seats.stream()
                 .map(seat -> {
                     String seatNumber = seat.getSeatNumber();
-                    // Tách dãy (Row) và số ghế (Col) từ seatNumber VD "A12" → row="A", col="12"
+                    // TÃƒÂ¡ch dÃƒÂ£y (Row) vÃƒÂ  sÃ¡Â»â€˜ ghÃ¡ÂºÂ¿ (Col) tÃ¡Â»Â« seatNumber VD "A12" Ã¢â€ â€™ row="A", col="12"
                     String row = seatNumber.replaceAll("[0-9]", "");
                     String col = seatNumber.replaceAll("[^0-9]", "");
 
@@ -855,14 +847,14 @@ public class ReservationService {
                 })
                 .toList();
 
-        // Tạo QR Code Data URI nếu đã thanh toán
+        // TÃ¡ÂºÂ¡o QR Code Data URI nÃ¡ÂºÂ¿u Ã„â€˜ÃƒÂ£ thanh toÃƒÂ¡n
         String qrDataUri = null;
         if (reservation.getQrCodeHash() != null) {
             try {
                 String base64 = qrCodeUtil.generateQrCodeBase64(reservation.getQrCodeHash());
                 qrDataUri = qrCodeUtil.createDataUri(base64);
             } catch (Exception e) {
-                log.warn("⚠️ Không thể tạo QR Code: {}", e.getMessage());
+                log.warn("Ã¢Å¡Â Ã¯Â¸Â KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o QR Code: {}", e.getMessage());
             }
         }
 

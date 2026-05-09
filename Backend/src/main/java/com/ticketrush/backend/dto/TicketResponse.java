@@ -82,6 +82,11 @@ public class TicketResponse {
     private LocalDateTime reservationTime;
 
     /**
+     * Thoi diem het han giu ghe cua ve dang LOCKED/PENDING.
+     */
+    private LocalDateTime expiresAt;
+
+    /**
      * Mã QR Hash (nếu đã thanh toán)
      */
     private String qrCodeHash;

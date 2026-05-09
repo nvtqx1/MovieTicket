@@ -201,6 +201,7 @@ public class BookingService {
 
         // 4. Check hết hạn
         if (reservation.getExpiresAt() != null && reservation.getExpiresAt().isBefore(LocalDateTime.now())) {
+            releaseLockedReservation(reservation, "Don dat ve da het han", userId);
             throw new IllegalArgumentException("Đơn đặt vé đã hết hạn. Vui lòng đặt lại.");
         }
 
@@ -241,5 +242,36 @@ public class BookingService {
                 "seatNumbers", seatNumbers,
                 "totalPrice", reservation.getTotalPrice()
         );
+    }
+
+    private void releaseLockedReservation(Reservation reservation, String realtimeMessage, Long actorUserId) {
+        List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
+        for (Seat seat : seats) {
+            seat.setIsReserved(false);
+            seat.setReservation(null);
+        }
+        seatRepository.saveAll(seats);
+
+        Showtime showtime = reservation.getShowtime();
+        if (showtime != null && !seats.isEmpty()) {
+            int currentAvailable = showtime.getAvailableSeats() != null ? showtime.getAvailableSeats() : 0;
+            int totalSeats = showtime.getTotalSeats() != null ? showtime.getTotalSeats() : currentAvailable + seats.size();
+            showtime.setAvailableSeats(Math.min(totalSeats, currentAvailable + seats.size()));
+            showtimeRepository.save(showtime);
+
+            List<String> seatNumbers = seats.stream().map(Seat::getSeatNumber).toList();
+            seatRealtimeService.broadcastSeatStatus(
+                    showtime.getId(),
+                    seatNumbers,
+                    "AVAILABLE",
+                    realtimeMessage,
+                    actorUserId
+            );
+        }
+
+        reservation.setStatus(ReservationStatus.CANCELED);
+        reservation.setPaid(false);
+        reservation.setExpiresAt(null);
+        reservationRepository.save(reservation);
     }
 }

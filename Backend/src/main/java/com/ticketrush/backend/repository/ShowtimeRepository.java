@@ -1,7 +1,6 @@
 package com.ticketrush.backend.repository;
 
 import com.ticketrush.backend.entity.Showtime;
-import org.flywaydb.core.internal.sqlscript.ShouldExecuteEvaluator;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,7 +37,10 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             JOIN FETCH r.theater t
             WHERE (:movieId IS NULL OR m.id = :movieId)
               AND (:theaterId IS NULL OR t.id = :theaterId)
-              AND (:fromDate IS NULL OR s.showDate = :fromDate)
+              AND (
+                    (:showDate IS NOT NULL AND s.showDate = :showDate)
+                    OR (:showDate IS NULL AND s.showDate >= :fromDate)
+                  )
             ORDER BY s.showDate ASC, s.showTime ASC
             """)
     List<Showtime> searchShowtimes(

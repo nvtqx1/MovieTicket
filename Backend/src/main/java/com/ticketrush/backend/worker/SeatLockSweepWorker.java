@@ -72,6 +72,7 @@ public class SeatLockSweepWorker {
 
         // Giải phóng từng ghế
         for (Seat seat : seats) {
+            seat.setIsReserved(false);
             seat.setReservation(null);
             seatRepository.save(seat);
 
@@ -82,6 +83,17 @@ public class SeatLockSweepWorker {
 
         // Cập nhật trạng thái reservation
         reservation.setStatus(ReservationStatus.CANCELED);
+        reservation.setPaid(false);
+        reservation.setExpiresAt(null);
+        if (reservation.getShowtime() != null && !seats.isEmpty()) {
+            int currentAvailable = reservation.getShowtime().getAvailableSeats() != null
+                    ? reservation.getShowtime().getAvailableSeats()
+                    : 0;
+            int totalSeats = reservation.getShowtime().getTotalSeats() != null
+                    ? reservation.getShowtime().getTotalSeats()
+                    : currentAvailable + seats.size();
+            reservation.getShowtime().setAvailableSeats(Math.min(totalSeats, currentAvailable + seats.size()));
+        }
         reservationRepository.save(reservation);
 
         // Broadcast realtime

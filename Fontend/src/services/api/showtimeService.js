@@ -14,6 +14,7 @@ export const getShowtimes = async (params = {}) => {
     if (params.movieId) query.set('movieId', params.movieId);
     if (params.theaterId) query.set('theaterId', params.theaterId);
     if (params.showDate) query.set('showDate', params.showDate);
+    if (params.date) query.set('date', params.date);
     query.set('page', params.page || 0);
     query.set('size', params.size || 50);
 

@@ -210,7 +210,7 @@ export default function Booking() {
                 // Start countdown
                 startCountdown(result.holdDurationSeconds || 600);
 
-                navigate(`/checkout/${result.reservationId}`, {
+                navigate(`/checkout?ticketId=${result.reservationId}`, {
                     state: {
                         showtimeId: id,
                         seats: seatNumbers,

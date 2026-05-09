@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:admin": "vite --config vite.admin.config.js --mode admin",
+    "dev:user": "vite --config vite.user.config.js --mode user",
     "build": "vite build",
+    "build:admin": "vite build --config vite.admin.config.js --mode admin --outDir dist-admin",
+    "build:user": "vite build --config vite.user.config.js --mode user --outDir dist-user",
     "lint": "eslint .",
     "preview": "vite preview"
   },

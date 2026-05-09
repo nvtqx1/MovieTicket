@@ -59,11 +59,13 @@ public class ShowtimeController {
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) Long theaterId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate showDate,
+            @RequestParam(required = false, name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(showtimeService.searchShowtimes(movieId, theaterId, showDate, pageable));
+        LocalDate filterDate = date != null ? date : showDate;
+        return ResponseEntity.ok(showtimeService.searchShowtimes(movieId, theaterId, filterDate, pageable));
     }
 
     /**

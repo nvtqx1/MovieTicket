@@ -12,7 +12,7 @@ const parseLocalDate = (dateStr) => {
     return new Date(year, month - 1, day);
 };
 
-// Backend trả về LocalTime dạng "19:30:00", cắt bỏ giây
+// Backend tráº£ vá» LocalTime dáº¡ng "19:30:00", cáº¯t bá» giÃ¢y
 const formatTime = (timeStr) => {
     if (!timeStr) return "";
     const parts = timeStr.split(":");
@@ -54,11 +54,13 @@ export default function MovieDetail() {
                 setMovie(movieData);
                 setShowtimes(showtimeData);
                 if (showtimeData.length > 0) {
+                    const firstTheaterId = showtimeData[0].theater?.id;
+                    if (firstTheaterId) setSelectedTheater(String(firstTheaterId));
                     setSelectedDate(showtimeData[0].showDate);
                 }
             } catch (err) {
                 if (!isMounted) return;
-                setError(err.message || "Không thể tải thông tin phim.");
+                setError(err.message || "KhÃ´ng thá»ƒ táº£i thÃ´ng tin phim.");
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -70,9 +72,11 @@ export default function MovieDetail() {
     }, [id]);
 
     const uniqueDates = useMemo(() => {
-        const dates = showtimes.map((st) => st.showDate);
+        const dates = showtimes
+            .filter((st) => !selectedTheater || String(st.theater?.id) === String(selectedTheater))
+            .map((st) => st.showDate);
         return [...new Set(dates)].sort();
-    }, [showtimes]);
+    }, [showtimes, selectedTheater]);
 
     // Task 2.2: Extract unique theaters for filter
     const uniqueTheaters = useMemo(() => {
@@ -96,6 +100,13 @@ export default function MovieDetail() {
 
     const selectedShowtime = showtimes.find((st) => st.id === selectedTimeId);
 
+    useEffect(() => {
+        if (uniqueDates.length > 0 && !uniqueDates.includes(selectedDate)) {
+            setSelectedDate(uniqueDates[0]);
+            setSelectedTimeId(null);
+        }
+    }, [uniqueDates, selectedDate]);
+
     const scrollToBooking = () => {
         bookingPanelRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -104,7 +115,7 @@ export default function MovieDetail() {
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-10 h-10 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-500 text-sm uppercase tracking-widest">Đang tải...</p>
+                <p className="text-gray-500 text-sm uppercase tracking-widest">Äang táº£i...</p>
             </div>
         </div>
     );
@@ -118,7 +129,7 @@ export default function MovieDetail() {
                     onClick={() => navigate(-1)}
                     className="text-sm text-gray-400 hover:text-white underline"
                 >
-                    Quay lại
+                    Quay láº¡i
                 </button>
             </div>
         </div>
@@ -168,10 +179,10 @@ export default function MovieDetail() {
                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
                             <button
                                 type="button"
-                                onClick={scrollToBooking} // ✅ useRef
+                                onClick={scrollToBooking} // âœ… useRef
                                 className="px-8 py-3 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold rounded-md transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
                             >
-                                <Ticket size={16} /> Đặt vé ngay
+                                <Ticket size={16} /> Äáº·t vÃ© ngay
                             </button>
                             <button
                                 type="button"
@@ -187,12 +198,12 @@ export default function MovieDetail() {
             {/* MAIN */}
             <main className="max-w-7xl mx-auto px-6 mt-24 grid grid-cols-1 lg:grid-cols-12 gap-12">
 
-                {/* CỘT TRÁI */}
+                {/* Cá»˜T TRÃI */}
                 <div className="lg:col-span-7 space-y-12">
                     <section>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-3">
                             <span className="w-8 h-[2px] bg-red-600 rounded-full" />
-                            Nội dung phim
+                            Ná»™i dung phim
                         </h2>
                         <p className="text-gray-400 text-sm leading-relaxed text-justify">
                             {movie.description}
@@ -211,7 +222,7 @@ export default function MovieDetail() {
                                 <Play size={20} fill="white" className="text-white ml-1" />
                             </div>
                             <span className="absolute bottom-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">
-                                Trailer chính thức
+                                Trailer chÃ­nh thá»©c
                             </span>
                         </div>
                     </section>
@@ -220,15 +231,30 @@ export default function MovieDetail() {
                     <ReviewSection movieId={id} />
                 </div>
 
-                {/* CỘT PHẢI - BOOKING PANEL */}
+                {/* Cá»˜T PHáº¢I - BOOKING PANEL */}
                 <div className="lg:col-span-5" ref={bookingPanelRef}>
                     <div className="bg-[#111] border border-white/5 rounded-2xl p-6 sticky top-24 shadow-2xl">
-                        <h2 className="text-lg font-bold mb-6">Lịch chiếu</h2>
+                        <h2 className="text-lg font-bold mb-6">Lá»‹ch chiáº¿u</h2>
+
+                        {/* Theater Filter */}
+                        {uniqueTheaters.length > 0 && (
+                            <div className="mb-4">
+                                <select
+                                    value={selectedTheater}
+                                    onChange={(e) => { setSelectedTheater(e.target.value); setSelectedTimeId(null); }}
+                                    className="w-full px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-white/10 text-sm text-white focus:outline-none focus:border-red-500 appearance-none cursor-pointer"
+                                >
+                                    {uniqueTheaters.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         {/* Date Strip */}
                         <div className="flex gap-3 overflow-x-auto pb-3 mb-6">
                             {uniqueDates.map((date) => {
-                                // ✅ Fix timezone
+                                // âœ… Fix timezone
                                 const dateObj = parseLocalDate(date);
                                 const day = dateObj.getDate();
                                 const dayOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][dateObj.getDay()];
@@ -251,26 +277,11 @@ export default function MovieDetail() {
                             })}
                         </div>
 
-                        {/* Task 2.2: Theater Filter */}
-                        {uniqueTheaters.length > 1 && (
-                            <div className="mb-4">
-                                <select
-                                    value={selectedTheater}
-                                    onChange={(e) => { setSelectedTheater(e.target.value); setSelectedTimeId(null); }}
-                                    className="w-full px-4 py-2.5 rounded-xl bg-[#1a1a1a] border border-white/10 text-sm text-white focus:outline-none focus:border-red-500 appearance-none cursor-pointer"
-                                >
-                                    <option value="">Tất cả rạp</option>
-                                    {uniqueTheaters.map((t) => (
-                                        <option key={t.id} value={t.id}>{t.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
 
                         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                             {filteredShowtimes.length === 0 ? (
                                 <p className="text-sm text-gray-500 text-center py-6">
-                                    Không có suất chiếu nào vào ngày này.
+                                    KhÃ´ng cÃ³ suáº¥t chiáº¿u nÃ o vÃ o ngÃ y nÃ y.
                                 </p>
                             ) : (
                                 <div className="flex flex-wrap gap-2">
@@ -306,24 +317,24 @@ export default function MovieDetail() {
                                 <>
                                     {selectedShowtime.theater && (
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-400">Rạp</span>
+                                            <span className="text-gray-400">Ráº¡p</span>
                                             <span className="text-white text-right">{selectedShowtime.theater.name}</span>
                                         </div>
                                     )}
                                     {selectedShowtime.roomName && (
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-400">Phòng</span>
+                                            <span className="text-gray-400">PhÃ²ng</span>
                                             <span className="text-white">{selectedShowtime.roomName}</span>
                                         </div>
                                     )}
                                     {selectedShowtime.availableSeats != null && (
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-400">Ghế trống</span>
+                                            <span className="text-gray-400">Gháº¿ trá»‘ng</span>
                                             <span className="text-white">{selectedShowtime.availableSeats}/{selectedShowtime.totalSeats}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400">Giá vé</span>
+                                        <span className="text-gray-400">GiÃ¡ vÃ©</span>
                                         <span className="font-bold text-white">
                                             {formatPrice(selectedShowtime.price)}
                                         </span>
@@ -340,7 +351,7 @@ export default function MovieDetail() {
                                     : "bg-[#1a1a1a] text-gray-600 cursor-not-allowed"
                                     }`}
                             >
-                                {selectedTimeId ? "Tiếp tục chọn ghế" : "Chọn suất chiếu"}
+                                {selectedTimeId ? "Tiáº¿p tá»¥c chá»n gháº¿" : "Chá»n suáº¥t chiáº¿u"}
                             </button>
                         </div>
                     </div>

@@ -54,8 +54,11 @@ export const getMovieById = async (id) => {
  * GET /api/v1/showtimes?movieId={id}
  * @returns Page<ShowtimeResponse>
  */
-export const getShowtimesByMovieId = async (movieId) => {
-    const response = await api.get(`/showtimes?movieId=${movieId}&size=50`);
+export const getShowtimesByMovieId = async (movieId, params = {}) => {
+    const query = new URLSearchParams({ movieId, size: params.size || 50 });
+    if (params.theaterId) query.set('theaterId', params.theaterId);
+    if (params.date) query.set('date', params.date);
+    const response = await api.get(`/showtimes?${query.toString()}`);
     const data = response.data;
 
     // Backend returns Page<ShowtimeResponse>, extract content

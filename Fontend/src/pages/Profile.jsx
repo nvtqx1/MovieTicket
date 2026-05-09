@@ -282,7 +282,7 @@ export default function Profile() {
                                             {(ticket.status === "PENDING" || ticket.status === "LOCKED") && (
                                                 <>
                                                     <button
-                                                        onClick={() => navigate(`/checkout?reservationId=${ticket.reservationId}`)}
+                                                        onClick={() => navigate(`/checkout?ticketId=${ticket.reservationId}`)}
                                                         className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded"
                                                     >
                                                         Thanh toán

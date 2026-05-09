@@ -109,6 +109,12 @@ public class ReservationResponse {
     private LocalDateTime confirmedAt;
 
     /**
+     * Thoi diem het han giu ghe. Frontend tinh timer tu gia tri nay,
+     * khong reset lai 10 phut khi refresh trang.
+     */
+    private LocalDateTime expiresAt;
+
+    /**
      * Mã giao dịch từ hệ thống thanh toán
      * Ví dụ: "TXN_20260430_ABC123XYZ"
      */

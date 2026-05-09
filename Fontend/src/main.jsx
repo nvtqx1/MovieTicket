@@ -1,8 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
 import './index.css';
+
+const target = import.meta.env.VITE_APP_TARGET === 'admin' ? 'admin' : 'user';
+const { default: App } = target === 'admin'
+  ? await import('./AppAdmin.jsx')
+  : await import('./AppUser.jsx');
 
 // Error Boundary
 class ErrorBoundary extends React.Component {
