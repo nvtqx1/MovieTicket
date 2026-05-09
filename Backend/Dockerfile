@@ -10,3 +10,4 @@ COPY --from=build /app/target/*.jar app.jar
 ENV PORT=10000
 EXPOSE 10000
 CMD ["sh", "-c", "java -jar app.jar"]
+COPY certs ./certs
