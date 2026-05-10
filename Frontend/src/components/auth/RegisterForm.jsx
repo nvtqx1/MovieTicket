@@ -136,7 +136,7 @@ const RegisterForm = ({ onSwitch }) => {
                         id="userName"
                         type="text"
                         icon={User}
-                        placeholder="Nguyễn Văn A"
+                        placeholder="NguyenVanA"
                         value={formData.userName}
                         onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                         error={errors.userName}
