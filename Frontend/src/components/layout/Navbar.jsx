@@ -88,20 +88,6 @@ export default function Navbar() {
                 {/* RIGHT */}
                 <div className="flex items-center gap-2 md:gap-6">
 
-                    {/* Search (desktop only) */}
-                    <div className="hidden lg:flex items-center bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 focus-within:border-red-500/50">
-                        <Search className="text-gray-500 w-4 h-4" />
-                        <input
-                            className="bg-transparent outline-none text-[10px] w-24 xl:w-40 ml-2 text-white"
-                            placeholder="Tìm phim..."
-                        />
-                    </div>
-
-                    {/* Bell */}
-                    <button className="hidden sm:block text-gray-400 hover:text-white p-1 cursor-pointer">
-                        <Bell size={18} />
-                    </button>
-
                     {/* USER */}
                     {isLoggedIn ? (
                         <div className="relative" ref={dropdownRef}>
