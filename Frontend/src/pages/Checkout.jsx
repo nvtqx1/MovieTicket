@@ -195,7 +195,7 @@ export default function Checkout() {
         try {
             await cancelTicket(currentReservationId);
             alert("Đã hủy vé và giải phóng ghế.");
-            navigate("/profile");
+            navigate(-1);
         } catch (err) {
             setError(err.message || "Không thể hủy vé.");
         }
