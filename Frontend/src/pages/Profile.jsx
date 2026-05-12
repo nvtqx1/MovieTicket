@@ -84,7 +84,7 @@ export default function Profile() {
 
     const handleCancelTicket = async (reservationId) => {
         if (!window.confirm("Bạn có chắc chắn muốn hủy đơn đặt vé này?")) return;
-        
+
         try {
             const res = await cancelReservation(reservationId);
             if (res.apiStatus === "SUCCESS") {
@@ -101,7 +101,7 @@ export default function Profile() {
         }
     };
 
-    // Task 2.3: Xem chi tiết vé
+    // Xem chi tiết vé
     const handleViewTicketDetail = async (reservationId) => {
         setDetailLoading(true);
         setShowDetailModal(true);
@@ -163,21 +163,19 @@ export default function Profile() {
                 <div className="flex gap-1 mb-8 border-b border-white/5">
                     <button
                         onClick={() => setActiveTab("profile")}
-                        className={`px-5 py-3 text-sm font-bold uppercase tracking-widest transition-colors ${
-                            activeTab === "profile"
-                                ? "text-white border-b-2 border-red-600"
-                                : "text-gray-500 hover:text-gray-300"
-                        }`}
+                        className={`px-5 py-3 text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === "profile"
+                            ? "text-white border-b-2 border-red-600"
+                            : "text-gray-500 hover:text-gray-300"
+                            }`}
                     >
                         <UserIcon size={14} className="inline mr-2" /> Hồ sơ
                     </button>
                     <button
                         onClick={() => setActiveTab("tickets")}
-                        className={`px-5 py-3 text-sm font-bold uppercase tracking-widest transition-colors ${
-                            activeTab === "tickets"
-                                ? "text-white border-b-2 border-red-600"
-                                : "text-gray-500 hover:text-gray-300"
-                        }`}
+                        className={`px-5 py-3 text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === "tickets"
+                            ? "text-white border-b-2 border-red-600"
+                            : "text-gray-500 hover:text-gray-300"
+                            }`}
                     >
                         <Ticket size={14} className="inline mr-2" /> Vé của tôi
                         {tickets.length > 0 && (
@@ -259,19 +257,18 @@ export default function Profile() {
                                     <div className="text-right space-y-2 flex flex-col justify-between items-end">
                                         <div>
                                             <p className="font-bold text-lg">{formatPrice(ticket.totalPrice || 0)}</p>
-                                            <span className={`text-xs px-2 py-1 rounded font-bold ${
-                                                ticket.status === "PAID" || ticket.status === "CONFIRMED"
-                                                    ? "bg-green-500/20 text-green-400"
-                                                    : ticket.status === "PENDING" || ticket.status === "LOCKED"
-                                                        ? "bg-yellow-500/20 text-yellow-400"
-                                                        : "bg-gray-500/20 text-gray-400"
-                                            }`}>
+                                            <span className={`text-xs px-2 py-1 rounded font-bold ${ticket.status === "PAID" || ticket.status === "CONFIRMED"
+                                                ? "bg-green-500/20 text-green-400"
+                                                : ticket.status === "PENDING" || ticket.status === "LOCKED"
+                                                    ? "bg-yellow-500/20 text-yellow-400"
+                                                    : "bg-gray-500/20 text-gray-400"
+                                                }`}>
                                                 {ticket.status === "LOCKED" ? "PENDING" : ticket.status}
                                             </span>
                                         </div>
-                                        
+
                                         <div className="flex gap-2">
-                                            {/* Task 2.3: Nút xem chi tiết vé */}
+                                            {/* Nút xem chi tiết vé */}
                                             <button
                                                 onClick={() => handleViewTicketDetail(ticket.reservationId)}
                                                 className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-1"
@@ -304,7 +301,7 @@ export default function Profile() {
                 )}
             </div>
 
-            {/* ===== TICKET DETAIL MODAL (Task 2.3) ===== */}
+            {/* Chi tiết vé */}
             {showDetailModal && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowDetailModal(false)}>
                     <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -314,7 +311,7 @@ export default function Profile() {
                             </div>
                         ) : ticketDetail ? (
                             <>
-                                {/* Ticket Header - giống vé giấy */}
+                                {/* Ticket Header */}
                                 <div className="bg-gradient-to-br from-red-600 to-red-800 p-6 relative">
                                     <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 text-white/60 hover:text-white">
                                         <X size={20} />
@@ -345,13 +342,12 @@ export default function Profile() {
                                         <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Ghế đã chọn</p>
                                         <div className="flex flex-wrap gap-2">
                                             {ticketDetail.seats?.map((seat) => (
-                                                <span key={seat.seatNumber} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                                                    seat.seatType === "VIP"
-                                                        ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                                                        : seat.seatType === "COUPLE"
-                                                            ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
-                                                            : "bg-white/10 text-white border border-white/10"
-                                                }`}>
+                                                <span key={seat.seatNumber} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${seat.seatType === "VIP"
+                                                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                                    : seat.seatType === "COUPLE"
+                                                        ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
+                                                        : "bg-white/10 text-white border border-white/10"
+                                                    }`}>
                                                     {seat.row}{seat.col}
                                                     <span className="text-[9px] ml-1 opacity-60">{seat.seatType}</span>
                                                 </span>
@@ -365,15 +361,14 @@ export default function Profile() {
                                             <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tổng tiền</p>
                                             <p className="text-2xl font-black text-red-500">{formatPrice(ticketDetail.totalPrice || 0)}</p>
                                         </div>
-                                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                                            ticketDetail.status === "PAID" || ticketDetail.status === "CONFIRMED"
-                                                ? "bg-green-500/20 text-green-400"
-                                                : ticketDetail.status === "PENDING" || ticketDetail.status === "LOCKED"
-                                                    ? "bg-yellow-500/20 text-yellow-400"
-                                                    : ticketDetail.status === "CANCELED"
-                                                        ? "bg-red-500/20 text-red-400"
-                                                        : "bg-gray-500/20 text-gray-400"
-                                        }`}>
+                                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${ticketDetail.status === "PAID" || ticketDetail.status === "CONFIRMED"
+                                            ? "bg-green-500/20 text-green-400"
+                                            : ticketDetail.status === "PENDING" || ticketDetail.status === "LOCKED"
+                                                ? "bg-yellow-500/20 text-yellow-400"
+                                                : ticketDetail.status === "CANCELED"
+                                                    ? "bg-red-500/20 text-red-400"
+                                                    : "bg-gray-500/20 text-gray-400"
+                                            }`}>
                                             {ticketDetail.status}
                                         </span>
                                     </div>
@@ -410,9 +405,8 @@ function Input({ label, ...props }) {
             <label className="text-xs text-gray-400 uppercase tracking-wider">{label}</label>
             <input
                 {...props}
-                className={`w-full px-4 py-3 rounded-lg bg-[#1a1a1a] border border-white/5 focus:outline-none focus:border-red-500 text-sm transition-colors ${
-                    props.disabled ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+                className={`w-full px-4 py-3 rounded-lg bg-[#1a1a1a] border border-white/5 focus:outline-none focus:border-red-500 text-sm transition-colors ${props.disabled ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
             />
         </div>
     );

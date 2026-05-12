@@ -19,9 +19,6 @@ const formatTime = (timeStr) => {
     return `${parts[0]}:${parts[1]}`;
 };
 
-// ==========================================
-// COMPONENT
-// ==========================================
 export default function MovieDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -31,7 +28,7 @@ export default function MovieDetail() {
     const [movie, setMovie] = useState(null);
     const [showtimes, setShowtimes] = useState([]);
     const [selectedDate, setSelectedDate] = useState("");
-    const [selectedTheater, setSelectedTheater] = useState(""); // Task 2.2: filter by theater
+    const [selectedTheater, setSelectedTheater] = useState("");
     const [selectedTimeId, setSelectedTimeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

@@ -28,7 +28,7 @@ export default function Booking() {
     const stompClientRef = useRef(null);
     const countdownRef = useRef(null);
 
-    // ===== FETCH SHOWTIME + SEATS =====
+    // FETCH SHOWTIME + SEATS
     useEffect(() => {
         if (!isAuthenticated) {
             navigate("/login");
@@ -63,10 +63,9 @@ export default function Booking() {
         return () => { isMounted = false; };
     }, [id]);
 
-    // ═══════════════════════════════════════════════
-    // TASK 2.2: WEBSOCKET REAL-TIME
+    // WEBSOCKET REAL-TIME
     // Subscribe /topic/showtimes/{id} để nhận seat updates
-    // ═══════════════════════════════════════════════
+
     useEffect(() => {
         if (!id) return;
 
@@ -127,10 +126,8 @@ export default function Booking() {
         };
     }, [id]);
 
-    // ═══════════════════════════════════════════════
-    // TASK 2.1: COUPLE SEAT TOGGLE
+    // COUPLE SEAT TOGGLE
     // Click 1 ghế COUPLE → tự động toggle cả cặp
-    // ═══════════════════════════════════════════════
     const toggleSeat = (seat) => {
         if (seat.isReserved) return;
 
@@ -186,10 +183,8 @@ export default function Booking() {
         return sum + Number(price);
     }, 0);
 
-    // ═══════════════════════════════════════════════
-    // TASK 3.1: HOLD SEAT (thay cho createReservation cũ)
+    // HOLD SEAT
     // Gọi POST /v1/booking/hold-seat với Pessimistic Lock
-    // ═══════════════════════════════════════════════
     const handleCheckout = async () => {
         if (selectedSeats.length === 0) {
             alert("Vui lòng chọn ghế!");
@@ -252,7 +247,7 @@ export default function Booking() {
         };
     }, []);
 
-    // ===== LOADING =====
+    // LOADING
     if (loading) {
         return (
             <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
@@ -316,7 +311,7 @@ export default function Booking() {
                             {showtime.theater?.name || "Rạp"} {showtime.roomName ? `• ${showtime.roomName}` : ""} • {showtime.showDate} {showtime.showTime}
                         </p>
                     </div>
-                    {/* TASK 2.2: WebSocket indicator */}
+                    {/* WebSocket indicator */}
                     <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full ${wsConnected ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
                         {wsConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
                         {wsConnected ? "Real-time" : "Offline"}
@@ -345,10 +340,8 @@ export default function Booking() {
                                         return numA - numB;
                                     });
 
-                                    // ═══════════════════════════════
-                                    // TASK 2.1: COUPLE ROW RENDERING
+                                    // COUPLE ROW RENDERING
                                     // Hàng cuối (COUPLE) → gộp 2 ghế thành 1 block
-                                    // ═══════════════════════════════
                                     const isCouple = rowSeats[0]?.seatType === "COUPLE";
 
                                     if (isCouple) {

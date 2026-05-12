@@ -132,11 +132,11 @@ const RegisterForm = ({ onSwitch }) => {
 
                 <div className="text-left">
                     <InputField
-                        label="TÊN NGƯỜI DÙNG"
+                        label="USERNAME"
                         id="userName"
                         type="text"
                         icon={User}
-                        placeholder="Nguyễn Văn A"
+                        placeholder="buiductrong"
                         value={formData.userName}
                         onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                         error={errors.userName}

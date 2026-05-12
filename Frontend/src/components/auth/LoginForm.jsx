@@ -141,7 +141,7 @@ const LoginForm = ({ onSwitch }) => {
                     Chưa có tài khoản?{" "}
                     <button
                         type="button"
-                        onClick={() => navigate('/register')} // Chuyển URL chuyên nghiệp
+                        onClick={() => navigate('/register')} // Chuyển URL
                         className="text-yellow-500 font-bold hover:underline cursor-pointer"
                     >
                         Đăng ký ngay
