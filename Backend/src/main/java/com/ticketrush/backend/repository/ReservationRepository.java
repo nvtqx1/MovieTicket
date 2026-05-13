@@ -1,8 +1,8 @@
 package com.ticketrush.backend.repository;
 
-import com.ticketrush.backend.dto.MovieRevenueDTO;
-import com.ticketrush.backend.dto.TheaterRevenueDTO;
-import com.ticketrush.backend.dto.DailyRevenueDTO;
+import com.ticketrush.backend.dto.stats.MovieRevenueDTO;
+import com.ticketrush.backend.dto.stats.TheaterRevenueDTO;
+import com.ticketrush.backend.dto.stats.DailyRevenueDTO;
 import com.ticketrush.backend.entity.Reservation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -44,7 +44,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      *
      * @return Danh sách MovieRevenueDTO chứa doanh thu theo phim
      */
-    @Query("SELECT new com.ticketrush.backend.dto.MovieRevenueDTO(" +
+    @Query("SELECT new com.ticketrush.backend.dto.stats.MovieRevenueDTO(" +
            "  m.id, " +
            "  m.title, " +
            "  SUM(COALESCE(r.totalPrice, 0)), " +
@@ -64,7 +64,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      *
      * @return Danh sách TheaterRevenueDTO chứa doanh thu theo rạp
      */
-     @Query("SELECT new com.ticketrush.backend.dto.TheaterRevenueDTO(" +
+     @Query("SELECT new com.ticketrush.backend.dto.stats.TheaterRevenueDTO(" +
             "  t.id, " +
             "  t.name, " +
             "  t.location, " +

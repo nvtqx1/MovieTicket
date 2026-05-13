@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.CreateMovieRequest;
-import com.ticketrush.backend.dto.MovieResponse;
+import com.ticketrush.backend.dto.request.CreateMovieRequest;
+import com.ticketrush.backend.dto.response.MovieResponse;
 import com.ticketrush.backend.service.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -154,7 +154,7 @@ public class MovieController {
 
     @GetMapping("/{id}/details")
     @Operation(summary = "🎬 Lấy chi tiết phim và lịch chiếu", description = "Lấy dữ liệu chi tiết của phim và các rạp đang chiếu")
-    public ResponseEntity<com.ticketrush.backend.dto.MovieDetailsResponse> getMovieDetailsWithTheaters(@PathVariable Long id) {
+    public ResponseEntity<com.ticketrush.backend.dto.response.MovieDetailsResponse> getMovieDetailsWithTheaters(@PathVariable Long id) {
         return ResponseEntity.ok(movieService.getMovieDetailsWithTheaters(id));
     }
 

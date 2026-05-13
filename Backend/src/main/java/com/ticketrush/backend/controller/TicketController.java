@@ -1,6 +1,6 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.ReservationResponse;
+import com.ticketrush.backend.dto.response.ReservationResponse;
 import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.ReservationService;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.GenerateSeatRequest;
-import com.ticketrush.backend.dto.GenerateSeatResponse;
+import com.ticketrush.backend.dto.request.GenerateSeatRequest;
+import com.ticketrush.backend.dto.response.GenerateSeatResponse;
 import com.ticketrush.backend.service.SeatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

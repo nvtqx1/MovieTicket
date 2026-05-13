@@ -2,7 +2,7 @@ package com.ticketrush.backend.worker;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticketrush.backend.dto.SeatStatusPayload;
+import com.ticketrush.backend.dto.payload.SeatStatusPayload;
 import com.ticketrush.backend.service.QueueTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

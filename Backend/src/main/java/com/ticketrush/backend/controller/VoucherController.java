@@ -1,8 +1,8 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.CreateVoucherRequest;
-import com.ticketrush.backend.dto.VoucherCheckResponse;
-import com.ticketrush.backend.dto.VoucherResponse;
+import com.ticketrush.backend.dto.request.CreateVoucherRequest;
+import com.ticketrush.backend.dto.response.VoucherCheckResponse;
+import com.ticketrush.backend.dto.response.VoucherResponse;
 import com.ticketrush.backend.service.VoucherService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

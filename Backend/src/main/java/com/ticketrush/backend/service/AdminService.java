@@ -1,7 +1,7 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.CreateShowtimeRequest;
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.request.CreateShowtimeRequest;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 
 /**
  * Admin Service Interface - Quản lý Phim & Suất Chiếu

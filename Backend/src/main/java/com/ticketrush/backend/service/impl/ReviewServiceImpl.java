@@ -1,7 +1,7 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.ReviewRequest;
-import com.ticketrush.backend.dto.ReviewResponse;
+import com.ticketrush.backend.dto.request.ReviewRequest;
+import com.ticketrush.backend.dto.response.ReviewResponse;
 import com.ticketrush.backend.entity.Movie;
 import com.ticketrush.backend.entity.Review;
 import com.ticketrush.backend.entity.User;

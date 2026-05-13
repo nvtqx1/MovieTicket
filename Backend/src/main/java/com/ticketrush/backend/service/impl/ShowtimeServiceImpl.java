@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 import com.ticketrush.backend.entity.Showtime;
 import com.ticketrush.backend.exception.ResourceNotFoundException;
 import com.ticketrush.backend.repository.ShowtimeRepository;

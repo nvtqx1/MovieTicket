@@ -1,6 +1,11 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.*;
+import com.ticketrush.backend.dto.projection.AgeGroupStatProjection;
+import com.ticketrush.backend.dto.stats.DailyRevenueDTO;
+import com.ticketrush.backend.dto.stats.GenderStatDTO;
+import com.ticketrush.backend.dto.stats.GeneralStatsDTO;
+import com.ticketrush.backend.dto.stats.MovieRevenueDTO;
+import com.ticketrush.backend.dto.stats.TheaterRevenueDTO;
 import com.ticketrush.backend.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

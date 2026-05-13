@@ -1,8 +1,8 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.CreateVoucherRequest;
-import com.ticketrush.backend.dto.VoucherCheckResponse;
-import com.ticketrush.backend.dto.VoucherResponse;
+import com.ticketrush.backend.dto.request.CreateVoucherRequest;
+import com.ticketrush.backend.dto.response.VoucherCheckResponse;
+import com.ticketrush.backend.dto.response.VoucherResponse;
 import com.ticketrush.backend.entity.Voucher;
 import com.ticketrush.backend.repository.VoucherRepository;
 import com.ticketrush.backend.service.VoucherService;

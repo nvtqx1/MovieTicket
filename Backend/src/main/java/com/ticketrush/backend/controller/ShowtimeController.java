@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.SeatResponse;
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.response.SeatResponse;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 import com.ticketrush.backend.service.SeatService;
 import com.ticketrush.backend.service.ShowtimeService;
 import io.swagger.v3.oas.annotations.Operation;

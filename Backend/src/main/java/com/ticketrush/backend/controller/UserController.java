@@ -1,6 +1,6 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.UserProfileResponse;
+import com.ticketrush.backend.dto.response.UserProfileResponse;
 import com.ticketrush.backend.entity.User;
 import com.ticketrush.backend.repository.UserRepository;
 import com.ticketrush.backend.security.UserDetailsImpl;

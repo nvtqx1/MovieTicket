@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.PaymentCallbackRequest;
-import com.ticketrush.backend.dto.ReservationResponse;
+import com.ticketrush.backend.dto.request.PaymentCallbackRequest;
+import com.ticketrush.backend.dto.response.ReservationResponse;
 import com.ticketrush.backend.service.ReservationService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;

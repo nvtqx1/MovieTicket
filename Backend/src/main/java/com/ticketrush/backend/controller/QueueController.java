@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.QueueJoinRequest;
-import com.ticketrush.backend.dto.QueueJoinResponse;
+import com.ticketrush.backend.dto.request.QueueJoinRequest;
+import com.ticketrush.backend.dto.response.QueueJoinResponse;
 import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.QueueProducerService;
 import jakarta.validation.Valid;

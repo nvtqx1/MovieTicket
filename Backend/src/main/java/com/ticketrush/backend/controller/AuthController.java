@@ -1,8 +1,8 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.JwtResponse;
-import com.ticketrush.backend.dto.LoginRequest;
-import com.ticketrush.backend.dto.SignupRequest;
+import com.ticketrush.backend.dto.response.JwtResponse;
+import com.ticketrush.backend.dto.request.LoginRequest;
+import com.ticketrush.backend.dto.request.SignupRequest;
 import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.AuthService;
 import jakarta.validation.Valid;

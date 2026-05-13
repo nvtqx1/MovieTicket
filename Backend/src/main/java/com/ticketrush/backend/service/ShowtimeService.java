@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

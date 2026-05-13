@@ -1,9 +1,9 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.CreateRoomRequest;
-import com.ticketrush.backend.dto.CreateTheaterRequest;
-import com.ticketrush.backend.dto.RoomResponse;
-import com.ticketrush.backend.dto.TheaterResponse;
+import com.ticketrush.backend.dto.request.CreateRoomRequest;
+import com.ticketrush.backend.dto.request.CreateTheaterRequest;
+import com.ticketrush.backend.dto.response.RoomResponse;
+import com.ticketrush.backend.dto.response.TheaterResponse;
 
 import java.util.List;
 

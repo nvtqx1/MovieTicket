@@ -1,10 +1,10 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.ConfirmReservationRequest;
-import com.ticketrush.backend.dto.CreateReservationRequest;
-import com.ticketrush.backend.dto.CreateReservationResponse;
-import com.ticketrush.backend.dto.ReservationResponse;
-import com.ticketrush.backend.dto.TicketResponse;
+import com.ticketrush.backend.dto.request.ConfirmReservationRequest;
+import com.ticketrush.backend.dto.request.CreateReservationRequest;
+import com.ticketrush.backend.dto.response.CreateReservationResponse;
+import com.ticketrush.backend.dto.response.ReservationResponse;
+import com.ticketrush.backend.dto.response.TicketResponse;
 import com.ticketrush.backend.entity.*;
 import com.ticketrush.backend.entity.enums.PaymentStatus;
 import com.ticketrush.backend.entity.enums.ReservationStatus;
@@ -582,7 +582,7 @@ public class ReservationService {
      * @throws Exception nÃ¡ÂºÂ¿u validate fail hoÃ¡ÂºÂ·c reservation khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
      */
     @Transactional
-    public ReservationResponse handlePaymentCallback(com.ticketrush.backend.dto.PaymentCallbackRequest request) throws Exception {
+    public ReservationResponse handlePaymentCallback(com.ticketrush.backend.dto.request.PaymentCallbackRequest request) throws Exception {
         try {
             log.info("Ã°Å¸â€™Â³ Payment Callback tÃ¡Â»Â« {}: Transaction {} cho Reservation {}",
                     request.getProvider(), request.getTransactionCode(), request.getReservationId());
@@ -812,7 +812,7 @@ public class ReservationService {
      * DÃƒÂ¹ng Ã„â€˜Ã¡Â»Æ’ render UI vÃƒÂ© giÃ¡ÂºÂ¥y truyÃ¡Â»Ân thÃ¡Â»â€˜ng vÃƒÂ  mÃƒÂ£ hÃƒÂ³a QR Code
      */
     @Transactional(readOnly = true)
-    public com.ticketrush.backend.dto.TicketDetailResponse getTicketDetail(Long reservationId, Long userId) {
+    public com.ticketrush.backend.dto.response.TicketDetailResponse getTicketDetail(Long reservationId, Long userId) {
         log.info("Ã°Å¸Å½Â« LÃ¡ÂºÂ¥y chi tiÃ¡ÂºÂ¿t vÃƒÂ© ID: {} cho user: {}", reservationId, userId);
 
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -831,14 +831,14 @@ public class ReservationService {
         // LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿
         List<Seat> seats = seatRepository.findByReservationId(reservationId);
 
-        List<com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail> seatDetails = seats.stream()
+        List<com.ticketrush.backend.dto.response.TicketDetailResponse.SeatDetail> seatDetails = seats.stream()
                 .map(seat -> {
                     String seatNumber = seat.getSeatNumber();
                     // TÃƒÂ¡ch dÃƒÂ£y (Row) vÃƒÂ  sÃ¡Â»â€˜ ghÃ¡ÂºÂ¿ (Col) tÃ¡Â»Â« seatNumber VD "A12" Ã¢â€ â€™ row="A", col="12"
                     String row = seatNumber.replaceAll("[0-9]", "");
                     String col = seatNumber.replaceAll("[^0-9]", "");
 
-                    return com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail.builder()
+                    return com.ticketrush.backend.dto.response.TicketDetailResponse.SeatDetail.builder()
                             .seatNumber(seatNumber)
                             .row(row)
                             .col(col)
@@ -858,7 +858,7 @@ public class ReservationService {
             }
         }
 
-        return com.ticketrush.backend.dto.TicketDetailResponse.builder()
+        return com.ticketrush.backend.dto.response.TicketDetailResponse.builder()
                 .reservationId(reservation.getId())
                 .movieTitle(movie.getTitle())
                 .moviePosterUrl(movie.getPosterImageUrl())

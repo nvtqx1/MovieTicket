@@ -1,7 +1,7 @@
 package com.ticketrush.backend.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticketrush.backend.dto.SeatLockRequest;
+import com.ticketrush.backend.dto.request.SeatLockRequest;
 import com.ticketrush.backend.service.QueueTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

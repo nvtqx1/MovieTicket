@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.SeatStatusPayload;
+import com.ticketrush.backend.dto.payload.SeatStatusPayload;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

@@ -1,7 +1,7 @@
 package com.ticketrush.backend.repository;
 
-import com.ticketrush.backend.dto.GenderStatDTO;
-import com.ticketrush.backend.dto.AgeGroupStatProjection;
+import com.ticketrush.backend.dto.stats.GenderStatDTO;
+import com.ticketrush.backend.dto.projection.AgeGroupStatProjection;
 import com.ticketrush.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,7 +39,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      *
      * @return Danh sách GenderStatDTO chứa giới tính và số lượng
      */
-    @Query("SELECT new com.ticketrush.backend.dto.GenderStatDTO(u.gender, COUNT(u)) " +
+    @Query("SELECT new com.ticketrush.backend.dto.stats.GenderStatDTO(u.gender, COUNT(u)) " +
            "FROM User u " +
            "WHERE u.gender IS NOT NULL AND u.isBanned = false " +
            "GROUP BY u.gender " +

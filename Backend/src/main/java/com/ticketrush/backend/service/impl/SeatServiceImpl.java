@@ -1,8 +1,8 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.GenerateSeatRequest;
-import com.ticketrush.backend.dto.GenerateSeatResponse;
-import com.ticketrush.backend.dto.SeatResponse;
+import com.ticketrush.backend.dto.request.GenerateSeatRequest;
+import com.ticketrush.backend.dto.response.GenerateSeatResponse;
+import com.ticketrush.backend.dto.response.SeatResponse;
 import com.ticketrush.backend.entity.Seat;
 import com.ticketrush.backend.entity.SeatType;
 import com.ticketrush.backend.entity.Showtime;

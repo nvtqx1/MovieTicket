@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.CreateShowtimeRequest;
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.request.CreateShowtimeRequest;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 import com.ticketrush.backend.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

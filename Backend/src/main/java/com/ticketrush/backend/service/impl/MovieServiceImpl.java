@@ -1,9 +1,9 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.CreateMovieRequest;
-import com.ticketrush.backend.dto.MovieResponse;
-import com.ticketrush.backend.dto.MovieDetailsResponse;
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.request.CreateMovieRequest;
+import com.ticketrush.backend.dto.response.MovieResponse;
+import com.ticketrush.backend.dto.response.MovieDetailsResponse;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 import com.ticketrush.backend.entity.Movie;
 import com.ticketrush.backend.entity.Showtime;
 import com.ticketrush.backend.entity.Theater;

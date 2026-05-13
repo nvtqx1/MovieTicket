@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.SeatLockResponse;
+import com.ticketrush.backend.dto.response.SeatLockResponse;
 import com.ticketrush.backend.entity.Reservation;
 import com.ticketrush.backend.entity.Seat;
 import com.ticketrush.backend.entity.User;

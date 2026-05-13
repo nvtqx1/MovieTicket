@@ -1,7 +1,7 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.HoldSeatRequest;
-import com.ticketrush.backend.dto.HoldSeatResponse;
+import com.ticketrush.backend.dto.request.HoldSeatRequest;
+import com.ticketrush.backend.dto.response.HoldSeatResponse;
 import com.ticketrush.backend.entity.*;
 import com.ticketrush.backend.entity.enums.ReservationStatus;
 import com.ticketrush.backend.repository.*;

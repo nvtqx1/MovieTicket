@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.HoldSeatRequest;
-import com.ticketrush.backend.dto.HoldSeatResponse;
+import com.ticketrush.backend.dto.request.HoldSeatRequest;
+import com.ticketrush.backend.dto.response.HoldSeatResponse;
 import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;

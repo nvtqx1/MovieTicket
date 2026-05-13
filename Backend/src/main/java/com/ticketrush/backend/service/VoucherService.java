@@ -1,8 +1,8 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.CreateVoucherRequest;
-import com.ticketrush.backend.dto.VoucherCheckResponse;
-import com.ticketrush.backend.dto.VoucherResponse;
+import com.ticketrush.backend.dto.request.CreateVoucherRequest;
+import com.ticketrush.backend.dto.response.VoucherCheckResponse;
+import com.ticketrush.backend.dto.response.VoucherResponse;
 
 /**
  * Service interface quản lý mã giảm giá (Vouchers)

@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.QrCodeResponse;
+import com.ticketrush.backend.dto.response.QrCodeResponse;
 import com.ticketrush.backend.util.QrCodeUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

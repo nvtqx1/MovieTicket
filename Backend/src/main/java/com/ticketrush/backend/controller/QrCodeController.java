@@ -1,6 +1,6 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.QrCodeResponse;
+import com.ticketrush.backend.dto.response.QrCodeResponse;
 import com.ticketrush.backend.service.QrCodeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

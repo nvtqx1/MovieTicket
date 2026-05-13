@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.MovieResponse;
+import com.ticketrush.backend.dto.response.MovieResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -48,7 +48,7 @@ public interface MovieService {
     /**
      * Lấy dữ liệu chi tiết của một bộ phim và các thông tin liên quan đến rạp (theater)
      */
-    com.ticketrush.backend.dto.MovieDetailsResponse getMovieDetailsWithTheaters(Long id);
+    com.ticketrush.backend.dto.response.MovieDetailsResponse getMovieDetailsWithTheaters(Long id);
 
     /**
      * Admin API: Tạo phim mới
@@ -59,12 +59,12 @@ public interface MovieService {
      * @return MovieResponse thông tin phim vừa tạo
      * @throws IllegalArgumentException nếu dữ liệu không hợp lệ
      */
-    MovieResponse createMovie(com.ticketrush.backend.dto.CreateMovieRequest request);
+    MovieResponse createMovie(com.ticketrush.backend.dto.request.CreateMovieRequest request);
 
     /**
      * Admin API: Cập nhật phim
      */
-    MovieResponse updateMovie(Long id, com.ticketrush.backend.dto.CreateMovieRequest request);
+    MovieResponse updateMovie(Long id, com.ticketrush.backend.dto.request.CreateMovieRequest request);
 
     /**
      * Admin API: Xóa phim (Soft Delete)

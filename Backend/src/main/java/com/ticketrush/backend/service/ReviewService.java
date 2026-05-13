@@ -1,7 +1,7 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.ReviewRequest;
-import com.ticketrush.backend.dto.ReviewResponse;
+import com.ticketrush.backend.dto.request.ReviewRequest;
+import com.ticketrush.backend.dto.response.ReviewResponse;
 import java.util.List;
 
 public interface ReviewService {

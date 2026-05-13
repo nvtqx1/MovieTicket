@@ -1,10 +1,10 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.ConfirmReservationRequest;
-import com.ticketrush.backend.dto.CreateReservationRequest;
-import com.ticketrush.backend.dto.CreateReservationResponse;
-import com.ticketrush.backend.dto.ReservationResponse;
-import com.ticketrush.backend.dto.TicketResponse;
+import com.ticketrush.backend.dto.request.ConfirmReservationRequest;
+import com.ticketrush.backend.dto.request.CreateReservationRequest;
+import com.ticketrush.backend.dto.response.CreateReservationResponse;
+import com.ticketrush.backend.dto.response.ReservationResponse;
+import com.ticketrush.backend.dto.response.TicketResponse;
 import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -457,7 +457,7 @@ public class ReservationController {
             Authentication authentication) {
         try {
             Long userId = extractUserId(authentication);
-            com.ticketrush.backend.dto.TicketDetailResponse detail =
+            com.ticketrush.backend.dto.response.TicketDetailResponse detail =
                     reservationService.getTicketDetail(reservationId, userId);
             return ResponseEntity.ok(detail);
         } catch (IllegalArgumentException e) {
