@@ -4,6 +4,9 @@ import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+/**
+ * DTO response chứa thông tin đánh giá phim.
+ */
 @Data
 @Builder
 public class ReviewResponse {

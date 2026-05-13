@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO request dùng để tham gia hàng chờ ảo.
+ */
 @Data
 @Builder
 @NoArgsConstructor

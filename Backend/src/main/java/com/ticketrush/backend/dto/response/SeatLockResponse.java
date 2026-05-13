@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * DTO response chứa kết quả khóa ghế.
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -24,7 +27,7 @@ public class SeatLockResponse {
     private String message;
 
     /**
-     * Thông tin chi tiết từng ghế đã lock
+     * DTO con chứa thông tin ghế đã khóa.
      */
     @Data
     @Builder

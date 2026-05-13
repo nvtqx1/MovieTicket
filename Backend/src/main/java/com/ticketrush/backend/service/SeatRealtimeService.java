@@ -21,6 +21,11 @@ public class SeatRealtimeService {
     /** Sử dụng @Autowired với setter injection thay chế constructor injection */
     private SimpMessagingTemplate messagingTemplate;
     
+    /**
+     * Inject template gửi tin nhắn STOMP qua setter.
+     *
+     * @param messagingTemplate template dùng để gửi WebSocket message.
+     */
     @Autowired
     public void setMessagingTemplate(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;

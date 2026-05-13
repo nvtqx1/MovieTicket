@@ -6,23 +6,11 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 /**
- * Entity đại diện cho Phòng chiếu trong Rạp.
+ * Entity biểu diễn phòng chiếu thuộc một rạp.
  *
- * Soft Delete Strategy:
- * - @SQLDelete: Khi gọi roomRepository.deleteById(id), Hibernate sẽ KHÔNG chạy
- *   câu lệnh DELETE FROM rooms WHERE id=?. Thay vào đó, nó sẽ chạy:
- *   UPDATE rooms SET is_deleted = true WHERE id=?
- *   → Dữ liệu vẫn còn trong DB, chỉ bị đánh dấu là "đã xóa".
- *
- * - @SQLRestriction: Tự động thêm điều kiện "is_deleted = false" vào MỌI câu
- *   SELECT mà Hibernate sinh ra cho entity này. Nghĩa là:
- *   roomRepository.findAll()         → SELECT ... WHERE is_deleted = false
- *   roomRepository.findById(id)      → SELECT ... WHERE id=? AND is_deleted = false
- *   roomRepository.findByTheaterId() → SELECT ... WHERE theater_id=? AND is_deleted = false
- *   → Phòng đã xóa mềm sẽ tự động bị ẩn khỏi tất cả query, KHÔNG cần sửa Repository.
- *
- * @author TicketRush Team
- * @version 2.0
+ * Annotation {@link SQLDelete} thực hiện xóa mềm bằng cách cập nhật
+ * {@code is_deleted}; {@link SQLRestriction} tự động ẩn các phòng đã xóa mềm
+ * khỏi truy vấn Hibernate.
  */
 @Entity
 @Table(name = "rooms")

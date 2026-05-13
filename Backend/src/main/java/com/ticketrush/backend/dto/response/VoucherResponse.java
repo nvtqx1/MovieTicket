@@ -4,62 +4,37 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Response DTO khi Admin tạo voucher thành công
- * 
- * API: POST /v1/admin/vouchers
- * 
- * @author TicketRush Team
- * @version 1.0
+ * DTO response chứa thông tin voucher.
+ * @param id giá trị trường id.
+ * @param code giá trị trường code.
+ * @param description giá trị trường description.
+ * @param discountPercentage giá trị trường discountPercentage.
+ * @param maxDiscountAmount giá trị trường maxDiscountAmount.
+ * @param maxUsage giá trị trường maxUsage.
+ * @param currentUsage giá trị trường currentUsage.
+ * @param startTime giá trị trường startTime.
+ * @param endTime giá trị trường endTime.
+ * @param status giá trị trường status.
  */
 public record VoucherResponse(
-    /**
-     * ID của voucher
-     */
     Long id,
     
-    /**
-     * Mã voucher
-     */
     String code,
     
-    /**
-     * Mô tả
-     */
     String description,
     
-    /**
-     * Phần trăm giảm
-     */
     BigDecimal discountPercentage,
     
-    /**
-     * Số tiền giảm tối đa
-     */
     BigDecimal maxDiscountAmount,
     
-    /**
-     * Số lần tối đa dùng
-     */
     Integer maxUsage,
     
-    /**
-     * Số lần đã dùng
-     */
     Integer currentUsage,
     
-    /**
-     * Thời gian bắt đầu
-     */
     LocalDateTime startTime,
     
-    /**
-     * Thời gian kết thúc
-     */
     LocalDateTime endTime,
     
-    /**
-     * Trạng thái (active/expired)
-     */
     String status
 ) {
 }

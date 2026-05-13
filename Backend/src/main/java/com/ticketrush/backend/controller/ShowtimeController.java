@@ -22,39 +22,36 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * REST Controller quản lý Suất chiếu và Ghế
- * 
- * Endpoints:
- * - GET /v1/showtimes: Tìm kiếm suất chiếu
- * - GET /v1/showtimes/{id}: Lấy chi tiết suất chiếu
- * - GET /v1/showtimes/{id}/seats: Lấy danh sách ghế (VỀ LỖ HỔNG 2)
- * 
- * @author TicketRush Team
- * @version 1.0
+ * Controller tra cứu suất chiếu và ghế theo suất chiếu.
+ *
+ * Endpoint tìm kiếm dùng phân trang để giới hạn dữ liệu trả về.
  */
 @RestController
 @RequestMapping("/v1/showtimes")
 @RequiredArgsConstructor
-@Tag(name = "🎬 Showtime Management", description = "API quản lý suất chiếu")
+@Tag(name = "Showtime Management", description = "API quản lý suất chiếu")
 public class ShowtimeController {
 
     private final ShowtimeService showtimeService;
     private final SeatService seatService;
 
     /**
-     * GET /v1/showtimes?movieId=1&theaterId=2&showDate=2026-05-01&page=0&size=10
-     * Tìm kiếm suất chiếu theo phim, rạp, hoặc ngày với phân trang
-     * 
-     * ⚠️ QUAN TRỌNG: Sử dụng pagination để tránh OutOfMemory
-     * khi có hàng ngàn suất chiếu
+     * Tìm kiếm suất chiếu theo phim, rạp và ngày.
+     *
+     * Tham số {@code date} được ưu tiên hơn {@code showDate} để tương thích với
+     * frontend đang gửi tên query khác nhau.
+     *
+     * @param movieId ID phim cần lọc, có thể null.
+     * @param theaterId ID rạp cần lọc, có thể null.
+     * @param showDate ngày chiếu cần lọc, có thể null.
+     * @param date ngày chiếu alias, có thể null.
+     * @param page số trang, bắt đầu từ 0.
+     * @param size số bản ghi mỗi trang.
+     * @return trang danh sách suất chiếu phù hợp.
      */
     @GetMapping
-    @Operation(
-        summary = "🔍 Tìm kiếm suất chiếu (Phân trang)",
-        description = "Tìm kiếm suất chiếu theo phim, rạp, ngày với phân trang. " +
-            "⚠️ Bắt buộc phân trang để tránh OutOfMemory"
-    )
-    @ApiResponse(responseCode = "200", description = "✅ Tìm kiếm thành công")
+    @Operation(summary = "Tìm kiếm suất chiếu phân trang")
+    @ApiResponse(responseCode = "200", description = "Tìm kiếm thành công")
     public ResponseEntity<Page<ShowtimeResponse>> searchShowtimes(
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) Long theaterId,
@@ -69,51 +66,35 @@ public class ShowtimeController {
     }
 
     /**
-     * GET /v1/showtimes/{id}
-     * Lấy chi tiết suất chiếu
+     * Lấy chi tiết một suất chiếu.
+     *
+     * @param id ID suất chiếu cần lấy.
+     * @return thông tin chi tiết suất chiếu.
      */
     @GetMapping("/{id}")
-    @Operation(summary = "🎬 Lấy chi tiết suất chiếu", description = "Lấy thông tin chi tiết của một suất chiếu")
+    @Operation(summary = "Lấy chi tiết suất chiếu")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "✅ Lấy thành công"),
-        @ApiResponse(responseCode = "404", description = "❌ Suất chiếu không tồn tại")
+        @ApiResponse(responseCode = "200", description = "Lấy thành công"),
+        @ApiResponse(responseCode = "404", description = "Suất chiếu không tồn tại")
     })
     public ResponseEntity<ShowtimeResponse> getShowtimeById(@PathVariable Long id) {
         return ResponseEntity.ok(showtimeService.getShowtimeById(id));
     }
 
     /**
-     * VỀ LỖ HỔNG 2: API Lấy danh sách ghế của suất chiếu
-     * 
-     * GET /v1/showtimes/{id}/seats
-     * 
-     * Mục tiêu: Frontend có thể vẽ bản đồ 150 ghế nhanh chóng
-     * Tách riêng danh sách ghế ra khỏi API GET /v1/showtimes/{id}
-     * giúp giảm tải dung lượng trả về, Frontend chạy nhẹ mượt
-     * 
-     * Response: Mảng danh sách ghế gồm:
-     * - ID ghế
-     * - Số ghế (A1, A2, B1, ...)
-     * - Loại ghế (NORMAL, VIP, COUPLE)
-     * - Trạng thái is_reserved (true = đã đặt, false = còn trống)
-     * - Giá bán
-     * 
-     * @param id ID của suất chiếu
-     * @return Danh sách ghế của suất chiếu đó
+     * Lấy danh sách ghế của một suất chiếu.
+     *
+     * @param id ID suất chiếu cần lấy ghế.
+     * @return danh sách ghế kèm loại, trạng thái và giá.
      */
     @GetMapping("/{id}/seats")
-    @Operation(
-        summary = "🪑 Lấy danh sách ghế của suất chiếu",
-        description = "Lấy tất cả ghế của một suất chiếu để Frontend vẽ sơ đồ ghế. " +
-            "Bao gồm ID ghế, số ghế, loại ghế, trạng thái đặt, và giá bán."
-    )
+    @Operation(summary = "Lấy danh sách ghế của suất chiếu")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "✅ Lấy thành công",
+        @ApiResponse(responseCode = "200", description = "Lấy thành công",
             content = @Content(schema = @Schema(implementation = SeatResponse.class))),
-        @ApiResponse(responseCode = "404", description = "❌ Suất chiếu không tồn tại")
+        @ApiResponse(responseCode = "404", description = "Suất chiếu không tồn tại")
     })
     public ResponseEntity<List<SeatResponse>> getSeatsByShowtime(@PathVariable Long id) {
         return ResponseEntity.ok(seatService.getSeatsByShowtime(id));
     }
 }
-

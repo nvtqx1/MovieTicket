@@ -6,6 +6,12 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+/**
+ * Entity biểu diễn tài khoản người dùng.
+ *
+ * Các annotation validation kiểm tra dữ liệu cơ bản trước khi lưu hoặc xử lý
+ * đăng ký tài khoản.
+ */
 @Entity
 @Getter
 @Setter

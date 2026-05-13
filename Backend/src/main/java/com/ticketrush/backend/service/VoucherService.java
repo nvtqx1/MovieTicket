@@ -51,6 +51,11 @@ public interface VoucherService {
      * 
      * GET /v1/vouchers
      */
+    /**
+     * Lấy danh sách toàn bộ voucher.
+     *
+     * @return danh sách voucher hiện có.
+     */
     java.util.List<VoucherResponse> getAllVouchers();
 
     /**
@@ -58,12 +63,26 @@ public interface VoucherService {
      * 
      * PUT /v1/vouchers/{id}
      */
+    /**
+     * Cập nhật thông tin voucher.
+     *
+     * @param id ID voucher cần cập nhật.
+     * @param request dữ liệu cập nhật voucher.
+     * @return voucher sau khi cập nhật.
+     * @throws IllegalArgumentException nếu voucher không tồn tại, dữ liệu không hợp lệ hoặc code bị trùng.
+     */
     VoucherResponse updateVoucher(Long id, CreateVoucherRequest request);
 
     /**
      * Admin API: Xóa mã giảm giá
      * 
      * DELETE /v1/vouchers/{id}
+     */
+    /**
+     * Xóa voucher theo ID.
+     *
+     * @param id ID voucher cần xóa.
+     * @throws IllegalArgumentException nếu voucher không tồn tại.
      */
     void deleteVoucher(Long id);
 }

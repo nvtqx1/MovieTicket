@@ -8,6 +8,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity lưu đánh giá của người dùng cho một phim.
+ */
 @Entity
 @Table(name = "reviews")
 @Setter

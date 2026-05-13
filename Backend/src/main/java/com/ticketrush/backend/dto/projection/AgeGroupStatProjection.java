@@ -1,12 +1,22 @@
 package com.ticketrush.backend.dto.projection;
 
 /**
- * Interface projection cho native query thống kê nhóm tuổi.
- * Spring Data JPA sẽ tự map các column alias (ageGroup, count, percentage)
- * sang getter tương ứng.
+ * Projection nhận kết quả thống kê người dùng theo nhóm tuổi.
  */
 public interface AgeGroupStatProjection {
+    /**
+     * Lấy giá trị getAgeGroup.
+     * @return giá trị getAgeGroup.
+     */
     String getAgeGroup();
+    /**
+     * Lấy giá trị getCount.
+     * @return giá trị getCount.
+     */
     Long getCount();
+    /**
+     * Lấy giá trị getPercentage.
+     * @return giá trị getPercentage.
+     */
     Double getPercentage();
 }

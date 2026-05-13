@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO response trả về khi tham gia hàng chờ.
+ */
 @Data
 @Builder
 @NoArgsConstructor

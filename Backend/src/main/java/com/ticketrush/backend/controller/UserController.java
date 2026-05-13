@@ -14,16 +14,28 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controller trả thông tin hồ sơ người dùng hiện tại.
+ *
+ * Dữ liệu người dùng được lấy từ principal của Spring Security, không nhận userId
+ * từ request để tránh truy cập chéo tài khoản.
+ */
 @RestController
 @RequestMapping("/v1/profile")
 @RequiredArgsConstructor
-@Tag(name = "👤 User Profile", description = "API quản lý hồ sơ người dùng")
+@Tag(name = "User Profile", description = "API quản lý hồ sơ người dùng")
 public class UserController {
 
     private final UserRepository userRepository;
 
+    /**
+     * Lấy hồ sơ cá nhân của người dùng đang đăng nhập.
+     *
+     * @param authentication thông tin xác thực hiện tại.
+     * @return hồ sơ người dùng hoặc 401 nếu chưa đăng nhập.
+     */
     @GetMapping
-    @Operation(summary = "📋 Lấy thông tin cá nhân", security = @SecurityRequirement(name = "bearer-jwt"))
+    @Operation(summary = "Lấy thông tin cá nhân", security = @SecurityRequirement(name = "bearer-jwt"))
     public ResponseEntity<UserProfileResponse> getUserProfile(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).build();

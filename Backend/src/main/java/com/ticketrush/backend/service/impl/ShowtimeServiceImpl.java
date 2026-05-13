@@ -16,6 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Triển khai tra cứu suất chiếu và chuyển đổi dữ liệu sang DTO.
+ * {@code @Transactional(readOnly = true)} tối ưu các truy vấn chỉ đọc.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,14 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     private final ShowtimeRepository showtimeRepository;
 
+    /**
+     * Tìm kiếm suất chiếu không phân trang.
+     *
+     * @param movieId ID phim cần lọc, có thể null.
+     * @param theaterId ID rạp cần lọc, có thể null.
+     * @param showDate ngày chiếu cần lọc, có thể null.
+     * @return danh sách suất chiếu phù hợp.
+     */
     @Override
     public List<ShowtimeResponse> searchShowtimes(Long movieId, Long theaterId, LocalDate showDate) {
         // Nếu không truyền showDate, mặc định lấy từ hôm nay trở đi
@@ -35,6 +47,15 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .toList();
     }
 
+    /**
+     * Tìm kiếm suất chiếu và phân trang thủ công từ kết quả truy vấn.
+     *
+     * @param movieId ID phim cần lọc, có thể null.
+     * @param theaterId ID rạp cần lọc, có thể null.
+     * @param showDate ngày chiếu cần lọc, có thể null.
+     * @param pageable thông tin phân trang.
+     * @return trang dữ liệu suất chiếu.
+     */
     @Override
     public Page<ShowtimeResponse> searchShowtimes(Long movieId, Long theaterId, LocalDate showDate, Pageable pageable) {
         log.info("🎬 Tìm kiếm suất chiếu - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
@@ -56,6 +77,13 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         return new PageImpl<>(responses, pageable, showtimes.size());
     }
 
+    /**
+     * Lấy chi tiết suất chiếu theo ID.
+     *
+     * @param id ID suất chiếu.
+     * @return thông tin suất chiếu.
+     * @throws ResourceNotFoundException nếu suất chiếu không tồn tại.
+     */
     @Override
     public ShowtimeResponse getShowtimeById(Long id) {
         Showtime showtime = showtimeRepository.findById(id)
@@ -65,6 +93,12 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     /**
      * Public method để AdminServiceImpl và ShowtimeServiceImpl có thể gọi được
+     */
+    /**
+     * Chuyển entity Showtime sang DTO dùng chung cho các service khác.
+     *
+     * @param showtime entity suất chiếu cần chuyển đổi.
+     * @return DTO suất chiếu.
      */
     public ShowtimeResponse toResponse(Showtime showtime) {
         return new ShowtimeResponse(
@@ -90,6 +124,12 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         );
     }
 
+    /**
+     * Chuyển entity Showtime sang DTO phản hồi.
+     *
+     * @param showtime entity suất chiếu cần chuyển đổi.
+     * @return DTO suất chiếu.
+     */
     private ShowtimeResponse mapToResponse(Showtime showtime) {
         return toResponse(showtime);
     }

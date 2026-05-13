@@ -6,6 +6,9 @@ import lombok.*;
 
 import java.util.List;
 
+/**
+ * DTO request dùng để khóa nhiều ghế cùng lúc.
+ */
 @Data
 @Builder
 @NoArgsConstructor

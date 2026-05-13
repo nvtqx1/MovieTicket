@@ -9,14 +9,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Response DTO cho API giữ ghế
+ * DTO response trả về sau khi giữ ghế.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class HoldSeatResponse {
-    private String apiStatus; // SUCCESS / FAILED
+    private String apiStatus;
     private String message;
     private Long reservationId;
     private List<String> heldSeats;

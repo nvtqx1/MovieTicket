@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Dịch vụ đưa người dùng vào hàng chờ bằng Redis và Kafka.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,14 @@ public class QueueProducerService {
 
     /**
      * Tham gia hàng chờ cho 1 suất chiếu
+     */
+    /**
+     * Tăng vị trí hàng chờ trong Redis và gửi sự kiện vào Kafka.
+     *
+     * @param userId ID người dùng tham gia hàng chờ.
+     * @param showtimeId ID suất chiếu cần xếp hàng.
+     * @return vị trí hiện tại của người dùng trong hàng chờ.
+     * @throws RuntimeException nếu không serialize được payload Kafka.
      */
     public Long joinQueue(Long userId, Long showtimeId) {
         // 1. Tăng counter trên Redis để lấy số thứ tự (queue position)

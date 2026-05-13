@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * Request DTO cho API giữ ghế
- * POST /v1/booking/hold-seat
+ * DTO request dùng để giữ ghế tạm thời.
  */
 @Data
 @NoArgsConstructor

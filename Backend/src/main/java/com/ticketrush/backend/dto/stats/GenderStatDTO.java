@@ -6,11 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO cho thống kê giới tính (Gender Statistics).
- * Dùng cho Chart.js vẽ biểu đồ phân bố giới tính người dùng.
- *
- * @author TicketRush Team
- * @version 1.0
+ * DTO thống kê người dùng theo giới tính.
  */
 @Data
 @NoArgsConstructor
@@ -18,19 +14,14 @@ import lombok.NoArgsConstructor;
 @Builder
 public class GenderStatDTO {
 
-    /**
-     * Giới tính
-     * Ví dụ: "Male", "Female", "Other"
-     */
     private String gender;
 
-    /**
-     * Số lượng người dùng
-     * Ví dụ: 150
-     */
     private Long count;
-
-    // Constructor for JPQL queries with Number type
+    /**
+     * Tạo đối tượng GenderStatDTO với dữ liệu truyền vào.
+     * @param gender giá trị trường gender.
+     * @param count giá trị trường count.
+     */
     public GenderStatDTO(String gender, Number count) {
         this.gender = gender;
         this.count = count instanceof Long ? (Long) count : ((Number) count).longValue();

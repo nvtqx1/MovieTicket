@@ -8,12 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * DTO cho thống kê doanh thu theo phim (Movie Revenue Statistics).
- * Dùng để hiển thị doanh thu của từng phim trên Admin Dashboard.
- * Tính tổng tất cả reservations → tổng total_price GROUP BY movie_id
- *
- * @author TicketRush Team
- * @version 1.0
+ * DTO thống kê doanh thu theo phim.
  */
 @Data
 @NoArgsConstructor
@@ -21,37 +16,23 @@ import java.math.BigDecimal;
 @Builder
 public class MovieRevenueDTO {
 
-    /**
-     * ID của phim
-     * Ví dụ: 1
-     */
     private Long movieId;
 
-    /**
-     * Tên phim
-     * Ví dụ: "Avengers: Endgame"
-     */
     private String movieTitle;
 
-    /**
-     * Tổng doanh thu từ phim này (VND)
-     * Ví dụ: 450000000
-     */
     private BigDecimal totalRevenue;
 
-    /**
-     * Số lượng suất chiếu
-     * Ví dụ: 12
-     */
     private Long showtimeCount;
 
-    /**
-     * Số lượng vé bán được
-     * Ví dụ: 234
-     */
     private Long ticketsSold;
-
-    // Constructor for JPQL queries
+    /**
+     * Tạo đối tượng MovieRevenueDTO với dữ liệu truyền vào.
+     * @param movieId giá trị trường movieId.
+     * @param movieTitle giá trị trường movieTitle.
+     * @param totalRevenue giá trị trường totalRevenue.
+     * @param showtimeCount giá trị trường showtimeCount.
+     * @param ticketsSold giá trị trường ticketsSold.
+     */
     public MovieRevenueDTO(Long movieId, String movieTitle, Number totalRevenue, Number showtimeCount, Number ticketsSold) {
         this.movieId = movieId;
         this.movieTitle = movieTitle;

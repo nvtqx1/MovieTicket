@@ -11,8 +11,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Task 2.3: DTO chi tiết vé - dùng để render UI vé giấy và mã hóa QR Code
- * Chứa đầy đủ: Tên phim, Rạp, Phòng, Dãy, Số ghế, Giờ chiếu
+ * DTO response chứa chi tiết vé để hiển thị hoặc in vé.
  */
 @Data
 @NoArgsConstructor
@@ -20,47 +19,32 @@ import java.util.List;
 @Builder
 public class TicketDetailResponse {
 
-    /** ID đơn đặt vé */
     private Long reservationId;
-
-    // ===== THÔNG TIN PHIM =====
     private String movieTitle;
     private String moviePosterUrl;
     private String movieGenre;
-
-    // ===== THÔNG TIN RẠP & PHÒNG =====
     private String theaterName;
     private String theaterLocation;
-    private String roomName; // Phòng (Hall)
-
-    // ===== THÔNG TIN GHẾ =====
-    /** Danh sách ghế chi tiết: dãy (row) + số ghế (col) */
+    private String roomName;
     private List<SeatDetail> seats;
-
-    // ===== THÔNG TIN SUẤT CHIẾU =====
     private LocalDate showDate;
     private LocalTime showTime;
-
-    // ===== THÔNG TIN THANH TOÁN =====
     private BigDecimal totalPrice;
     private String status;
-
-    // ===== QR CODE =====
     private String qrCodeHash;
     private String qrCodeDataUri;
 
+    /**
+     * DTO class dùng để truyền dữ liệu trong hệ thống.
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     public static class SeatDetail {
-        /** Mã ghế đầy đủ: VD "A1" */
         private String seatNumber;
-        /** Dãy (Row): VD "A" */
         private String row;
-        /** Số ghế (Column): VD "1" */
         private String col;
-        /** Loại ghế: NORMAL / VIP / COUPLE */
         private String seatType;
     }
 }

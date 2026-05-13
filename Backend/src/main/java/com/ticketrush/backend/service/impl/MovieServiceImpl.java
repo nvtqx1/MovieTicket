@@ -59,6 +59,12 @@ public class MovieServiceImpl implements MovieService {
      * 
      * ⚠️ Bắt buộc phân trang để tránh OutOfMemory khi có hàng ngàn bộ phim
      */
+    /**
+     * Lấy danh sách phim chưa bị xóa với phân trang.
+     *
+     * @param pageable thông tin phân trang và sắp xếp.
+     * @return trang danh sách phim.
+     */
     @Override
     public Page<MovieResponse> getNowShowingMovies(Pageable pageable) {
         log.info("📋 Lấy danh sách phim - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
@@ -94,6 +100,13 @@ public class MovieServiceImpl implements MovieService {
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found with id: " + id));
     }
 
+    /**
+     * Lấy chi tiết phim kèm rạp và suất chiếu sắp tới.
+     *
+     * @param id ID phim cần lấy.
+     * @return chi tiết phim và danh sách rạp có suất chiếu.
+     * @throws ResourceNotFoundException nếu phim không tồn tại.
+     */
     @Override
     public MovieDetailsResponse getMovieDetailsWithTheaters(Long id) {
         Movie movie = movieRepository.findByIdAndIsDeletedFalse(id)
@@ -173,6 +186,16 @@ public class MovieServiceImpl implements MovieService {
         }
     }
 
+    /**
+     * Cập nhật thông tin phim.
+     * {@code @Transactional} ghi đè chế độ read-only của class để cho phép lưu database.
+     *
+     * @param id ID phim cần cập nhật.
+     * @param request dữ liệu cập nhật phim.
+     * @return phim sau khi cập nhật.
+     * @throws ResourceNotFoundException nếu phim không tồn tại.
+     * @throws IllegalArgumentException nếu tên phim rỗng.
+     */
     @Override
     @Transactional
     public MovieResponse updateMovie(Long id, CreateMovieRequest request) {
@@ -194,6 +217,13 @@ public class MovieServiceImpl implements MovieService {
         return toResponse(updatedMovie);
     }
 
+    /**
+     * Xóa mềm phim bằng cách đánh dấu isDeleted.
+     * {@code @Transactional} ghi đè chế độ read-only của class để cập nhật database.
+     *
+     * @param id ID phim cần xóa.
+     * @throws ResourceNotFoundException nếu phim không tồn tại.
+     */
     @Override
     @Transactional
     public void deleteMovie(Long id) {
@@ -205,6 +235,12 @@ public class MovieServiceImpl implements MovieService {
         log.info("✅ Đã xóa mềm phim: ID = {}", id);
     }
 
+    /**
+     * Tìm phim theo từ khóa trong tiêu đề.
+     *
+     * @param keyword từ khóa tìm kiếm.
+     * @return danh sách phim phù hợp.
+     */
     @Override
     public List<MovieResponse> searchMovies(String keyword) {
         log.info("🔍 Tìm kiếm phim với từ khóa: {}", keyword);
@@ -236,6 +272,12 @@ public class MovieServiceImpl implements MovieService {
         );
     }
 
+    /**
+     * Chuyển Showtime sang DTO lồng trong chi tiết phim.
+     *
+     * @param showtime entity suất chiếu.
+     * @return DTO suất chiếu.
+     */
     private ShowtimeResponse toShowtimeResponse(Showtime showtime) {
         return new ShowtimeResponse(
                 showtime.getId(),

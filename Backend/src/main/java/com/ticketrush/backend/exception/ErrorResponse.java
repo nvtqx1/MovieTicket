@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
+/**
+ * DTO trả về thông tin lỗi thống nhất cho các API.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

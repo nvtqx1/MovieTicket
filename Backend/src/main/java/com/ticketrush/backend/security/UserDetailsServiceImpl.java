@@ -9,20 +9,34 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service // Phải có @Service để Spring tự động tiêm vào SecurityConfig
+/**
+ * Service nạp thông tin người dùng cho Spring Security.
+ *
+ * Annotation {@link Service} đăng ký bean cho security config sử dụng khi xác
+ * thực tài khoản.
+ */
+@Service
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Tải người dùng theo email đăng nhập.
+     *
+     * Annotation {@link Transactional} giữ persistence context trong quá trình
+     * đọc user và role lazy để build UserDetails.
+     *
+     * @param email email đăng nhập.
+     * @return thông tin người dùng theo chuẩn Spring Security.
+     * @throws UsernameNotFoundException khi không tìm thấy người dùng theo email.
+     */
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // Dùng UserRepository để tìm User bằng Email
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + email));
 
-        // Ném vào hàm build() để chuyển thành UserDetailsImpl
         return UserDetailsImpl.build(user);
     }
 }

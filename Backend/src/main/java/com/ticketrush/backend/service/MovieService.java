@@ -48,6 +48,13 @@ public interface MovieService {
     /**
      * Lấy dữ liệu chi tiết của một bộ phim và các thông tin liên quan đến rạp (theater)
      */
+    /**
+     * Lấy chi tiết phim kèm danh sách rạp và suất chiếu liên quan.
+     *
+     * @param id ID phim cần lấy chi tiết.
+     * @return chi tiết phim cùng rạp và suất chiếu.
+     * @throws RuntimeException nếu phim không tồn tại.
+     */
     com.ticketrush.backend.dto.response.MovieDetailsResponse getMovieDetailsWithTheaters(Long id);
 
     /**
@@ -64,15 +71,36 @@ public interface MovieService {
     /**
      * Admin API: Cập nhật phim
      */
+    /**
+     * Cập nhật thông tin phim.
+     *
+     * @param id ID phim cần cập nhật.
+     * @param request dữ liệu cập nhật phim.
+     * @return thông tin phim sau khi cập nhật.
+     * @throws IllegalArgumentException nếu dữ liệu không hợp lệ.
+     * @throws RuntimeException nếu phim không tồn tại.
+     */
     MovieResponse updateMovie(Long id, com.ticketrush.backend.dto.request.CreateMovieRequest request);
 
     /**
      * Admin API: Xóa phim (Soft Delete)
      */
+    /**
+     * Xóa mềm phim theo ID.
+     *
+     * @param id ID phim cần xóa.
+     * @throws RuntimeException nếu phim không tồn tại.
+     */
     void deleteMovie(Long id);
 
     /**
      * Task 2.1: Tìm kiếm phim theo tên
+     */
+    /**
+     * Tìm kiếm phim theo từ khóa trong tiêu đề.
+     *
+     * @param keyword từ khóa tìm kiếm.
+     * @return danh sách phim phù hợp.
      */
     List<MovieResponse> searchMovies(String keyword);
 }

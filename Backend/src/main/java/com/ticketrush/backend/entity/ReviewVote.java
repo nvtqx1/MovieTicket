@@ -6,6 +6,11 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity lưu lượt vote hữu ích hoặc không hữu ích cho đánh giá.
+ *
+ * Ràng buộc unique đảm bảo mỗi người dùng chỉ vote một lần cho một review.
+ */
 @Entity
 @Table(
         name = "review_votes",

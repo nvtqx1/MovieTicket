@@ -15,32 +15,33 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * ════════════════════════════════════════
- * BOOKING CONTROLLER
- * ════════════════════════════════════════
- * 
- * Task 3.1: POST /hold-seat — Giữ ghế với Pessimistic Lock
- * Task 3.3: POST /checkout/{id} — Thanh toán Mock
+ * Controller xử lý giữ ghế và thanh toán mô phỏng.
+ *
+ * Annotation {@link AuthenticationPrincipal} lấy người dùng hiện tại từ Spring
+ * Security để tránh truyền userId từ client.
  */
 @RestController
 @RequestMapping("/v1/booking")
 @RequiredArgsConstructor
-@Tag(name = "🎫 Booking", description = "API đặt vé & thanh toán")
+@Tag(name = "Booking", description = "API đặt vé và thanh toán")
 public class BookingController {
 
     private final BookingService bookingService;
 
     /**
-     * TASK 3.1: HOLD SEAT
-     * 
-     * Sử dụng Pessimistic Lock để chặn race condition.
-     * Nếu 2 user giữ cùng ghế cùng lúc → chỉ 1 thành công.
-     * Ghế sẽ bị khóa 10 phút, sau đó CronJob tự nhả.
+     * Giữ ghế cho người dùng hiện tại.
+     *
+     * Service phía dưới dùng cơ chế khóa bi quan để tránh hai người giữ cùng một
+     * ghế trong cùng thời điểm.
+     *
+     * @param currentUser người dùng đang đăng nhập.
+     * @param request danh sách ghế cần giữ.
+     * @return kết quả giữ ghế hoặc lỗi xung đột khi ghế không còn khả dụng.
      */
     @PostMapping("/hold-seat")
     @Operation(
-            summary = "🔒 Giữ ghế (Pessimistic Lock)",
-            description = "Giữ ghế cho user trong 10 phút. Sử dụng SELECT ... FOR UPDATE để chống race condition.",
+            summary = "Giữ ghế",
+            description = "Giữ ghế cho user trong thời gian chờ thanh toán",
             security = @SecurityRequirement(name = "bearer-jwt")
     )
     public ResponseEntity<HoldSeatResponse> holdSeat(
@@ -49,7 +50,7 @@ public class BookingController {
         try {
             HoldSeatResponse response = bookingService.holdSeats(currentUser.getId(), request);
             if ("FAILED".equals(response.getApiStatus())) {
-                return ResponseEntity.status(409).body(response); // 409 Conflict
+                return ResponseEntity.status(409).body(response);
             }
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
@@ -63,16 +64,20 @@ public class BookingController {
     }
 
     /**
-     * TASK 3.3: MOCK CHECKOUT
-     * 
-     * Mô phỏng thanh toán thành công.
-     * Chuyển reservation: LOCKED → PAID
-     * Tạo QR Code hash và broadcast SOLD qua WebSocket.
+     * Thanh toán mô phỏng cho đơn đặt vé.
+     *
+     * Khi thành công, reservation được chuyển sang trạng thái đã thanh toán và
+     * service xử lý các cập nhật ghế, QR hoặc realtime liên quan.
+     *
+     * @param currentUser người dùng đang đăng nhập.
+     * @param reservationId ID đơn đặt vé cần thanh toán.
+     * @param body dữ liệu tùy chọn, có thể chứa paymentMethod.
+     * @return kết quả thanh toán mô phỏng.
      */
     @PostMapping("/checkout/{reservationId}")
     @Operation(
-            summary = "💳 Thanh toán Mock",
-            description = "Mô phỏng thanh toán, chuyển vé từ LOCKED → PAID",
+            summary = "Thanh toán mô phỏng",
+            description = "Mô phỏng thanh toán, chuyển vé từ LOCKED sang PAID",
             security = @SecurityRequirement(name = "bearer-jwt")
     )
     public ResponseEntity<?> checkout(

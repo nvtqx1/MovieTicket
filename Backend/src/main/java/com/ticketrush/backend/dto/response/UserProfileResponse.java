@@ -4,6 +4,9 @@ import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDate;
 
+/**
+ * DTO response chứa hồ sơ người dùng.
+ */
 @Data
 @Builder
 public class UserProfileResponse {

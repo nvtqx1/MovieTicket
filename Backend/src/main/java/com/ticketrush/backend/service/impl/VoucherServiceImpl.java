@@ -148,6 +148,11 @@ public class VoucherServiceImpl implements VoucherService {
         }
     }
 
+    /**
+     * Lấy danh sách tất cả voucher.
+     *
+     * @return danh sách voucher.
+     */
     @Override
     public java.util.List<VoucherResponse> getAllVouchers() {
         return voucherRepository.findAll().stream()
@@ -155,6 +160,15 @@ public class VoucherServiceImpl implements VoucherService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    /**
+     * Cập nhật thông tin voucher.
+     * {@code @Transactional} ghi đè read-only của class để cho phép lưu database.
+     *
+     * @param id ID voucher cần cập nhật.
+     * @param request dữ liệu cập nhật voucher.
+     * @return voucher sau khi cập nhật.
+     * @throws IllegalArgumentException nếu voucher không tồn tại, code rỗng hoặc code bị trùng.
+     */
     @Override
     @Transactional
     public VoucherResponse updateVoucher(Long id, CreateVoucherRequest request) {
@@ -185,6 +199,13 @@ public class VoucherServiceImpl implements VoucherService {
         return toResponse(voucherRepository.save(voucher));
     }
 
+    /**
+     * Xóa voucher theo ID.
+     * {@code @Transactional} ghi đè read-only của class để cho phép xóa database.
+     *
+     * @param id ID voucher cần xóa.
+     * @throws IllegalArgumentException nếu voucher không tồn tại.
+     */
     @Override
     @Transactional
     public void deleteVoucher(Long id) {
@@ -196,6 +217,12 @@ public class VoucherServiceImpl implements VoucherService {
 
     /**
      * Map Voucher entity sang VoucherResponse DTO
+     */
+    /**
+     * Chuyển Voucher sang DTO và tính trạng thái hiệu lực hiện tại.
+     *
+     * @param voucher entity voucher cần chuyển đổi.
+     * @return DTO voucher.
      */
     private VoucherResponse toResponse(Voucher voucher) {
         // Xác định trạng thái

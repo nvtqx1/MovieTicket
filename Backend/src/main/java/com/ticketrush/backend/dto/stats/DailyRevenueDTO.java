@@ -11,11 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * DTO cho thống kê doanh thu theo ngày (Daily Revenue Statistics).
- * Dùng để vẽ biểu đồ doanh thu theo thời gian trên Admin Dashboard.
- *
- * @author TicketRush Team
- * @version 1.0
+ * DTO thống kê doanh thu theo ngày.
  */
 @Data
 @NoArgsConstructor
@@ -23,31 +19,20 @@ import java.time.LocalDateTime;
 @Builder
 public class DailyRevenueDTO {
 
-    /**
-     * Ngày thống kê
-     * Ví dụ: "2026-04-30"
-     */
     private LocalDate date;
 
-    /**
-     * Tổng doanh thu trong ngày (VND)
-     * Ví dụ: 45000000
-     */
     private BigDecimal totalRevenue;
 
-    /**
-     * Số lượng đơn đặt vé trong ngày
-     * Ví dụ: 23
-     */
     private Long orderCount;
 
-    /**
-     * Số lượng vé bán được trong ngày
-     * Ví dụ: 87
-     */
     private Long ticketsSold;
-
-    // Constructor for JPQL queries
+    /**
+     * Tạo đối tượng DailyRevenueDTO với dữ liệu truyền vào.
+     * @param date giá trị trường date.
+     * @param totalRevenue giá trị trường totalRevenue.
+     * @param orderCount giá trị trường orderCount.
+     * @param ticketsSold giá trị trường ticketsSold.
+     */
     public DailyRevenueDTO(
             Object date,
             Number totalRevenue,
@@ -60,6 +45,11 @@ public class DailyRevenueDTO {
         this.ticketsSold = ticketsSold != null ? ticketsSold.longValue() : 0L;
     }
 
+    /**
+     * Xử lý nội bộ cho toLocalDate.
+     * @param date giá trị tham số date.
+     * @return kết quả xử lý của toLocalDate.
+     */
     private LocalDate toLocalDate(Object date) {
         if (date instanceof LocalDate localDate) {
             return localDate;
@@ -77,6 +67,11 @@ public class DailyRevenueDTO {
                 (date != null ? date.getClass().getName() : "null"));
     }
 
+    /**
+     * Xử lý nội bộ cho toBigDecimal.
+     * @param value giá trị tham số value.
+     * @return kết quả xử lý của toBigDecimal.
+     */
     private BigDecimal toBigDecimal(Number value) {
         if (value == null) {
             return BigDecimal.ZERO;

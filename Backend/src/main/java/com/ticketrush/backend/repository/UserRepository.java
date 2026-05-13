@@ -12,32 +12,56 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository thao tác dữ liệu người dùng và thống kê người dùng.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // 1. Phục vụ ĐĂNG NHẬP (Login):
-    // Tìm User dựa trên email. Trả về Optional để tránh lỗi NullPointerException nếu gõ sai email.
+    /**
+     * Tìm người dùng theo email.
+     *
+     * @param email email đăng nhập.
+     * @return người dùng nếu tồn tại.
+     */
     Optional<User> findByEmail(String email);
 
-    // 2. Phục vụ ĐĂNG KÝ (Register):
-    // Kiểm tra xem Email này đã có ai dùng trong hệ thống chưa? (Trả về true/false cực nhanh)
+    /**
+     * Kiểm tra email đã tồn tại hay chưa.
+     *
+     * @param email email cần kiểm tra.
+     * @return true nếu email đã tồn tại.
+     */
     Boolean existsByEmail(String email);
 
-    // 3. Phục vụ ĐĂNG KÝ (Register):
-    // Kiểm tra xem Tên đăng nhập (Username) này đã bị ai xí chỗ chưa?
+    /**
+     * Kiểm tra username đã tồn tại hay chưa.
+     *
+     * @param userName username cần kiểm tra.
+     * @return true nếu username đã tồn tại.
+     */
     Boolean existsByUserName(String userName);
 
-    // (Tùy chọn) Tìm user theo username nếu hệ thống của bạn cho phép đăng nhập bằng cả username hoặc email
+    /**
+     * Tìm người dùng theo username.
+     *
+     * @param userName username cần tìm.
+     * @return người dùng nếu tồn tại.
+     */
     Optional<User> findByUserName(String userName);
 
+    /**
+     * Đếm số username bắt đầu bằng prefix chỉ định.
+     *
+     * @param userNamePrefix tiền tố username.
+     * @return số người dùng có username bắt đầu bằng prefix.
+     */
     long countByUserNameStartingWith(String userNamePrefix);
-    // ========== NGÀY 19-21: DASHBOARD QUERIES (JPQL NÂNG CAO) ==========
 
     /**
-     * Thống kê giới tính: GROUP BY gender
-     * JPQL Query: SELECT new DTO(gender, COUNT(user)) FROM User GROUP BY gender
+     * Thống kê số người dùng theo giới tính.
      *
-     * @return Danh sách GenderStatDTO chứa giới tính và số lượng
+     * @return danh sách thống kê giới tính.
      */
     @Query("SELECT new com.ticketrush.backend.dto.stats.GenderStatDTO(u.gender, COUNT(u)) " +
            "FROM User u " +
@@ -47,12 +71,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<GenderStatDTO> getGenderStatistics();
 
     /**
-     * Thống kê người dùng theo nhóm tuổi
-     * Tính tuổi từ dateOfBirth như: YEAR(CURRENT_DATE()) - YEAR(dateOfBirth)
+     * Thống kê người dùng theo nhóm tuổi.
      *
-     * @return Danh sách AgeGroupStatDTO chứa nhóm tuổi và số lượng
+     * Query native dùng hàm ngày của database để tính tuổi từ date_of_birth và
+     * trả về projection theo alias ageGroup, count, percentage.
+     *
+     * @return danh sách thống kê nhóm tuổi.
      */
-     @Query(value =
+    @Query(value =
              "SELECT age_group AS ageGroup, cnt AS count, " +
              "  ROUND(cnt * 100.0 / (SELECT COUNT(*) FROM users), 2) AS percentage " +
              "FROM ( " +
@@ -81,22 +107,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<AgeGroupStatProjection> getAgeGroupStatistics();
 
     /**
-     * Lấy tổng số người dùng
+     * Đếm tổng số người dùng.
      *
-     * @return Tổng số users
+     * @return tổng số người dùng.
      */
     @Query("SELECT COUNT(u) FROM User u")
     Long getTotalUserCount();
 
-    // Số user hoạt động (không bị ban)
+    /**
+     * Đếm số người dùng đang hoạt động.
+     *
+     * @return số người dùng không bị khóa.
+     */
     @Query("SELECT COUNT(u) FROM User u WHERE u.isBanned = false")
     Long getActiveUserCount();
 
     /**
-     * Lấy tổng số người dùng đã tạo trong ngày chỉ định
+     * Đếm số người dùng tạo trong một ngày.
      *
-     * @param date Ngày cần thống kê
-     * @return Tổng số users tạo trong ngày
+     * @param date ngày cần thống kê.
+     * @return số người dùng tạo trong ngày.
      */
     @Query("SELECT COUNT(u) FROM User u " +
            "WHERE CAST(u.id AS date) = :date")

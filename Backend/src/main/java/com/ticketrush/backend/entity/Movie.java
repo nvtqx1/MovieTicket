@@ -3,6 +3,9 @@ package com.ticketrush.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entity biểu diễn phim trong hệ thống.
+ */
 @Entity
 @Table(name = "movies")
 @Setter

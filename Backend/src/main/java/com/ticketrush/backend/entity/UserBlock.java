@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity lưu thông tin khóa tài khoản người dùng.
+ */
 @Entity
 @Table(name = "user_blocks")
 @Setter

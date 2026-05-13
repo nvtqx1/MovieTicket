@@ -11,21 +11,41 @@ import org.springframework.web.context.request.WebRequest;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+/**
+ * Handler xử lý exception tập trung cho toàn bộ REST API.
+ *
+ * Annotation {@link RestControllerAdvice} cho phép bắt exception từ các
+ * controller và trả response JSON thống nhất.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Bắt lỗi khi đăng nhập sai tài khoản hoặc mật khẩu
+    /**
+     * Xử lý lỗi đăng nhập sai tài khoản hoặc mật khẩu.
+     *
+     * @param ex exception xác thực sai thông tin đăng nhập.
+     * @param request thông tin request hiện tại.
+     * @return response lỗi 401 Unauthorized.
+     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(), // Dùng 401 Unauthorized thay vì 400 Bad Request cho lỗi đăng nhập
+                HttpStatus.UNAUTHORIZED.value(),
                 new Date(),
                 "Tài khoản hoặc mật khẩu không chính xác.",
                 request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    // Bắt lỗi validation của DTO (@NotBlank, @Email, @Size...)
+    /**
+     * Xử lý lỗi validation từ DTO request.
+     *
+     * Method gom toàn bộ lỗi field thành một chuỗi để client hiển thị dễ hơn.
+     *
+     * @param ex exception chứa danh sách lỗi validation.
+     * @param request thông tin request hiện tại.
+     * @return response lỗi 400 Bad Request.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
         String errors = ex.getBindingResult().getFieldErrors().stream()
@@ -41,6 +61,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Xử lý lỗi không tìm thấy tài nguyên.
+     *
+     * @param ex exception chứa thông báo tài nguyên không tồn tại.
+     * @param request thông tin request hiện tại.
+     * @return response lỗi 404 Not Found.
+     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -51,7 +78,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    // Bắt các lỗi RuntimeException chung (ví dụ: email đã tồn tại, ghế đã tồn tại)
+    /**
+     * Xử lý các lỗi runtime nghiệp vụ chung.
+     *
+     * @param ex exception nghiệp vụ phát sinh khi xử lý request.
+     * @param request thông tin request hiện tại.
+     * @return response lỗi 400 Bad Request.
+     */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -62,10 +95,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    // Bắt tất cả các lỗi khác chưa được xử lý
+    /**
+     * Xử lý các lỗi chưa được handler cụ thể bắt.
+     *
+     * @param ex exception không xác định.
+     * @param request thông tin request hiện tại.
+     * @return response lỗi 500 Internal Server Error.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-        // Log chi tiết lỗi để debug
         ex.printStackTrace();
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

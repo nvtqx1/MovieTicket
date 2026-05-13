@@ -9,11 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * DTO cho thống kê doanh thu theo rạp (Theater Revenue Statistics).
- * Dùng để so sánh hiệu suất giữa các rạp chiếu phim.
- *
- * @author TicketRush Team
- * @version 1.0
+ * DTO thống kê doanh thu theo rạp.
  */
 @Data
 @NoArgsConstructor
@@ -21,44 +17,27 @@ import java.math.BigDecimal;
 @Builder
 public class TheaterRevenueDTO {
 
-    /**
-     * ID của rạp
-     * Ví dụ: 1
-     */
     private Long theaterId;
 
-    /**
-     * Tên rạp
-     * Ví dụ: "CGV Hồ Tây"
-     */
     private String theaterName;
 
-    /**
-     * Địa chỉ rạp
-     * Ví dụ: "Tầng 5, Tòa nhà CGV, Hồ Tây, Hà Nội"
-     */
     @JsonProperty("theaterAddress")
     private String theaterLocation;
 
-    /**
-     * Tổng doanh thu từ rạp này (VND)
-     * Ví dụ: 1200000000
-     */
     private BigDecimal totalRevenue;
 
-    /**
-     * Số lượng suất chiếu
-     * Ví dụ: 45
-     */
     private Long showtimeCount;
 
-    /**
-     * Số lượng vé bán được
-     * Ví dụ: 890
-     */
     private Long ticketsSold;
-
-    // Constructor for JPQL queries
+    /**
+     * Tạo đối tượng TheaterRevenueDTO với dữ liệu truyền vào.
+     * @param theaterId giá trị trường theaterId.
+     * @param theaterName giá trị trường theaterName.
+     * @param theaterLocation giá trị trường theaterLocation.
+     * @param totalRevenue giá trị trường totalRevenue.
+     * @param showtimeCount giá trị trường showtimeCount.
+     * @param ticketsSold giá trị trường ticketsSold.
+     */
     public TheaterRevenueDTO(Long theaterId, String theaterName,String theaterLocation, Number totalRevenue, Number showtimeCount, Number ticketsSold) {
         this.theaterId = theaterId;
         this.theaterName = theaterName;

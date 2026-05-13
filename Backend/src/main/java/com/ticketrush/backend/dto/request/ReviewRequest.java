@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * DTO request dùng để tạo đánh giá phim.
+ */
 @Data
 public class ReviewRequest {
     @NotNull(message = "Movie ID is required")

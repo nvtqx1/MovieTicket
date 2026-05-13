@@ -17,16 +17,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller quản lý ghế cố định theo Phòng chiếu.
+ * Controller quản trị sơ đồ ghế cố định theo phòng chiếu.
  *
- * Endpoints:
- * - POST /v1/admin/rooms/{roomId}/seats: Cấu hình & lưu sơ đồ ghế cho phòng
- * - GET  /v1/admin/rooms/{roomId}/seats: Lấy sơ đồ ghế hiện tại của phòng
- *
- * Logic phân loại ghế:
- * - Hàng cuối cùng: COUPLE
- * - Nửa sau (trừ hàng cuối): VIP  
- * - Nửa đầu: NORMAL
+ * Annotation {@link PreAuthorize} giới hạn cho ADMIN; {@link Transactional}
+ * đảm bảo thao tác xóa ghế cũ và tạo ghế mới được commit hoặc rollback cùng nhau.
  */
 @Slf4j
 @RestController
@@ -40,12 +34,14 @@ public class RoomController {
     private final SeatTypeRepository seatTypeRepository;
 
     /**
-     * POST /v1/admin/rooms/{roomId}/seats
-     * Tạo & lưu sơ đồ ghế cố định cho phòng chiếu.
-     * Nếu phòng đã có ghế trước đó, sẽ XOÁ HẾT rồi tạo lại.
+     * Cấu hình lại sơ đồ ghế cố định của phòng chiếu.
      *
-     * Request Body: { "rows": 10, "cols": 15 }
-     * Response: { roomId, rows, cols, totalSeats, seats: [...] }
+     * Method xóa toàn bộ ghế cũ rồi tạo lại theo ma trận mới; hàng cuối là
+     * COUPLE, nửa sau là VIP, nửa đầu là NORMAL.
+     *
+     * @param roomId ID phòng chiếu cần cấu hình.
+     * @param payload dữ liệu gồm rows và cols.
+     * @return thông tin sơ đồ ghế sau khi tạo.
      */
     @PostMapping("/{roomId}/seats")
     @Transactional
@@ -53,7 +49,7 @@ public class RoomController {
             @PathVariable Long roomId,
             @RequestBody Map<String, Integer> payload) {
 
-        log.info("🪑 Cấu hình ghế cho phòng {}", roomId);
+        log.info("Cấu hình ghế cho phòng {}", roomId);
 
         try {
             Room room = roomRepository.findById(roomId)
@@ -66,16 +62,13 @@ public class RoomController {
                 return ResponseEntity.badRequest().body(Map.of("message", "Số hàng và số cột phải > 0"));
             }
 
-            // Cập nhật ma trận phòng
             room.setMatrixRows(rows);
             room.setMatrixCols(cols);
             room.setCapacity(rows * cols);
             roomRepository.save(room);
 
-            // Xoá ghế cũ nếu có
             roomSeatRepository.deleteAllByRoomId(roomId);
 
-            // Lấy SeatTypes
             List<SeatType> seatTypes = seatTypeRepository.findAll();
             SeatType normalType = seatTypes.stream()
                     .filter(t -> "NORMAL".equalsIgnoreCase(t.getName())).findFirst()
@@ -87,7 +80,6 @@ public class RoomController {
                     .filter(t -> "COUPLE".equalsIgnoreCase(t.getName())).findFirst()
                     .orElse(normalType);
 
-            // Tạo ghế mới
             List<RoomSeat> seats = new ArrayList<>();
             for (int row = 0; row < rows; row++) {
                 char rowChar = (char) ('A' + row);
@@ -116,9 +108,8 @@ public class RoomController {
             }
 
             roomSeatRepository.saveAll(seats);
-            log.info("✅ Đã tạo {} ghế cố định cho phòng {} ({}x{})", seats.size(), roomId, rows, cols);
+            log.info("Đã tạo {} ghế cố định cho phòng {} ({}x{})", seats.size(), roomId, rows, cols);
 
-            // Build response
             List<Map<String, Object>> seatList = seats.stream().map(s -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", s.getId());
@@ -142,18 +133,20 @@ public class RoomController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            log.error("❌ Lỗi cấu hình ghế phòng {}: {}", roomId, e.getMessage(), e);
+            log.error("Lỗi cấu hình ghế phòng {}: {}", roomId, e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * GET /v1/admin/rooms/{roomId}/seats
-     * Lấy sơ đồ ghế hiện tại của phòng để render trên frontend.
+     * Lấy sơ đồ ghế hiện tại của phòng chiếu.
+     *
+     * @param roomId ID phòng chiếu cần xem ghế.
+     * @return thông tin phòng và danh sách ghế đã sắp xếp theo hàng, cột.
      */
     @GetMapping("/{roomId}/seats")
     public ResponseEntity<?> getRoomSeats(@PathVariable Long roomId) {
-        log.info("📋 Lấy sơ đồ ghế phòng {}", roomId);
+        log.info("Lấy sơ đồ ghế phòng {}", roomId);
 
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phòng chiếu"));

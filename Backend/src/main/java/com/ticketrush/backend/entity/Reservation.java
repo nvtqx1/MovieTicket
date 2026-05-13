@@ -9,6 +9,12 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entity lưu đơn đặt vé của người dùng.
+ *
+ * Trạng thái đơn được lưu bằng {@link ReservationStatusConverter} để ánh xạ enum
+ * sang mã số trong database.
+ */
 @Entity
 @Table(name = "reservations")
 @Setter
