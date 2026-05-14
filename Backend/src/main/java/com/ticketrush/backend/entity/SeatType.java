@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+/**
+ * Entity lưu loại ghế và hệ số nhân giá vé.
+ */
 @Entity
 @Table(name = "seat_types")
 @Getter

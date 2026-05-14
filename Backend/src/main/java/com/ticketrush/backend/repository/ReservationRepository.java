@@ -1,9 +1,9 @@
 package com.ticketrush.backend.repository;
 
-import com.ticketrush.backend.dto.MovieRevenueDTO;
-import com.ticketrush.backend.dto.TheaterRevenueDTO;
-import com.ticketrush.backend.dto.DailyRevenueDTO;
+import com.ticketrush.backend.dto.stats.MovieRevenueDTO;
+import com.ticketrush.backend.dto.stats.TheaterRevenueDTO;
 import com.ticketrush.backend.entity.Reservation;
+import com.ticketrush.backend.entity.enums.ReservationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,37 +14,49 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.ticketrush.backend.entity.enums.ReservationStatus;
-
+/**
+ * Repository thao tác dữ liệu đơn đặt vé và thống kê doanh thu.
+ */
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    // Safety net: Tìm các reservation đang LOCKED nhưng đã hết hạn (expiresAt < now)
+    /**
+     * Tìm các đơn theo trạng thái và thời điểm hết hạn.
+     *
+     * @param status trạng thái đơn cần lọc.
+     * @param expiresAt thời điểm hết hạn trước mốc này.
+     * @return danh sách đơn phù hợp.
+     */
     List<Reservation> findByStatusAndExpiresAtBefore(ReservationStatus status, LocalDateTime expiresAt);
 
-    // Lấy lịch sử đặt vé của một người dùng (Sắp xếp mới nhất lên đầu)
+    /**
+     * Lấy lịch sử đặt vé của người dùng, mới nhất trước.
+     *
+     * @param userId ID người dùng.
+     * @return danh sách đơn đặt vé của người dùng.
+     */
     List<Reservation> findByUserIdOrderByReservationTimeDesc(Long userId);
 
-    // Tìm các đơn đặt vé đã quá hạn giữ ghế
+    /**
+     * Tìm các đơn đang khóa ghế nhưng đã quá hạn.
+     *
+     * Annotation {@link Query} dùng JPQL để cố định điều kiện trạng thái LOCKED
+     * và so sánh thời điểm hết hạn.
+     *
+     * @param now thời điểm hiện tại dùng để so sánh hết hạn.
+     * @return danh sách đơn khóa ghế đã hết hạn.
+     */
     @Query("SELECT r FROM Reservation r WHERE r.status = com.ticketrush.backend.entity.enums.ReservationStatus.LOCKED AND r.expiresAt < :now")
     List<Reservation> findExpiredLockedReservations(@Param("now") LocalDateTime now);
 
-    // ========== NGÀY 19-21: DASHBOARD QUERIES (JPQL NÂNG CAO) ==========
-
     /**
-     * Thống kê doanh thu theo phim (JOIN Movie -> Showtime -> Reservation).
-     * Tính tổng tất cả reservations -> tổng total_price GROUP BY movie_id
+     * Thống kê doanh thu theo phim.
      *
-     * JPQL Query: SELECT new DTO(movieId, movieTitle, SUM(totalPrice), COUNT(showtime), COUNT(reservation))
-     *             FROM Movie m
-     *             JOIN m.showtimes s
-     *             JOIN s.reservations r
-     *             WHERE r.status = PAID
-     *             GROUP BY m.id
+     * Query gom doanh thu, số suất chiếu và số đơn đã thanh toán theo từng phim.
      *
-     * @return Danh sách MovieRevenueDTO chứa doanh thu theo phim
+     * @return danh sách doanh thu theo phim.
      */
-    @Query("SELECT new com.ticketrush.backend.dto.MovieRevenueDTO(" +
+    @Query("SELECT new com.ticketrush.backend.dto.stats.MovieRevenueDTO(" +
            "  m.id, " +
            "  m.title, " +
            "  SUM(COALESCE(r.totalPrice, 0)), " +
@@ -59,12 +71,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<MovieRevenueDTO> getMovieRevenueStatistics();
 
     /**
-     * Thống kê doanh thu theo rạp (JOIN Theater -> Showtime -> Reservation).
-     * Tính tổng doanh thu của mỗi rạp
+     * Thống kê doanh thu theo rạp.
      *
-     * @return Danh sách TheaterRevenueDTO chứa doanh thu theo rạp
+     * Query gom doanh thu, số suất chiếu và số đơn đã thanh toán theo từng rạp.
+     *
+     * @return danh sách doanh thu theo rạp.
      */
-     @Query("SELECT new com.ticketrush.backend.dto.TheaterRevenueDTO(" +
+    @Query("SELECT new com.ticketrush.backend.dto.stats.TheaterRevenueDTO(" +
             "  t.id, " +
             "  t.name, " +
             "  t.location, " +
@@ -77,15 +90,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             "LEFT JOIN Reservation r ON r.showtime.id = s.id AND r.paid = true " +
             "GROUP BY t.id, t.name, t.location " +
             "ORDER BY SUM(COALESCE(r.totalPrice, 0)) DESC")
-     List<TheaterRevenueDTO> getTheaterRevenueStatistics();
+    List<TheaterRevenueDTO> getTheaterRevenueStatistics();
 
     /**
-     * Thống kê doanh thu theo ngày.
-     * Lấy doanh thu của từng ngày từ ngày startDate đến endDate
+     * Lấy dữ liệu doanh thu thô theo ngày trong khoảng thời gian.
      *
-     * @param startDate Ngày bắt đầu
-     * @param endDate   Ngày kết thúc
-     * @return Danh sách DailyRevenueDTO chứa doanh thu theo ngày
+     * Method trả {@code Object[]} để service tự map sang DTO theo database đang
+     * dùng.
+     *
+     * @param startDate thời điểm bắt đầu.
+     * @param endDate thời điểm kết thúc, không bao gồm mốc này.
+     * @return danh sách dòng thống kê thô theo ngày.
      */
     @Query("""
     SELECT 
@@ -106,18 +121,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     );
 
     /**
-     * Lấy tổng doanh thu toàn hệ thống (chỉ tính reservations đã PAID)
+     * Lấy tổng doanh thu toàn hệ thống từ các đơn đã thanh toán.
      *
-     * @return Tổng doanh thu
+     * @return tổng doanh thu.
      */
     @Query("SELECT SUM(r.totalPrice) FROM Reservation r WHERE r.paid = true")
     BigDecimal getTotalRevenue();
 
     /**
-     * Lấy tổng doanh thu trong ngày chỉ định
+     * Lấy tổng doanh thu trong một ngày.
      *
-     * @param date Ngày cần thống kê
-     * @return Tổng doanh thu trong ngày
+     * @param date ngày cần thống kê.
+     * @return tổng doanh thu trong ngày.
      */
     @Query("SELECT COALESCE(SUM(r.totalPrice), 0) FROM Reservation r " +
            "WHERE CAST(r.reservationTime AS date) = :date " +
@@ -125,17 +140,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     BigDecimal getRevenueByDate(@Param("date") LocalDate date);
 
     /**
-     * Lấy tổng số reservations đã PAID
+     * Đếm tổng số đơn đã thanh toán.
      *
-     * @return Tổng số reservations
+     * @return số đơn đã thanh toán.
      */
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.paid = true")
     Long getTotalPaidReservations();
 
     /**
-     * Lấy tổng số tickets đã bán (join với seats để đếm)
+     * Đếm tổng số vé đã bán.
      *
-     * @return Tổng số tickets
+     * @return số ghế đã bán thuộc các đơn đã thanh toán.
      */
     @Query("SELECT COUNT(s) FROM Seat s WHERE s.isReserved = true AND s.reservation.paid = true")
     Long getTotalTicketsSold();

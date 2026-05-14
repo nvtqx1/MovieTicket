@@ -16,6 +16,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+/**
+ * Cấu hình bảo mật chính của ứng dụng.
+ *
+ * Annotation {@link EnableWebSecurity} bật Spring Security cho web API;
+ * {@link EnableMethodSecurity} cho phép dùng các annotation như
+ * {@code @PreAuthorize} ở method controller/service.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -26,13 +33,23 @@ public class SecurityConfig {
     private final DaoAuthenticationProvider authenticationProvider;
     private final QueueTokenFilter queueTokenFilter;
 
+    /**
+     * Cấu hình security filter chain cho HTTP API.
+     *
+     * CSRF bị tắt vì API dùng JWT stateless; JWT filter chạy trước
+     * {@link UsernamePasswordAuthenticationFilter}, còn queue filter chạy sau
+     * filter JWT để đã có thông tin người dùng trong SecurityContext.
+     *
+     * @param http đối tượng cấu hình HTTP security.
+     * @return filter chain bảo mật của ứng dụng.
+     * @throws Exception khi cấu hình filter chain thất bại.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Bật CORS
-                .csrf(csrf -> csrf.disable()) // Tắt CSRF vì hệ thống API dùng JWT không bị lỗi này
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // MỞ CỬA CHO SWAGGER UI
                         .requestMatchers(
                                 "/v2/api-docs",
                                 "/v3/api-docs",
@@ -44,20 +61,16 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/webjars/**",
                                 "/swagger-ui.html",
-                                "/v1/api-docs/**" // Thêm dòng này để khớp với cái lỗi của bạn
+                                "/v1/api-docs/**"
                         ).permitAll()
-                        // 1. API Xác thực -> Mở cửa tự do
                         .requestMatchers("/v1/auth/**").permitAll()
-                        // 2. Các API công khai khác
                         .requestMatchers(HttpMethod.GET,"/v1/movies/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/v1/theaters/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/v1/showtimes/**").permitAll()
-                        // 3. Đường ống WebSocket
                         .requestMatchers("/ws/**").permitAll()
-                        // 4. TOÀN BỘ CÁC API KHÁC -> Bắt buộc phải có Token
                         .anyRequest().authenticated()
                 );
-        // Nạp bộ cung cấp dữ liệu và bộ lọc JWT (AuthTokenFilter) lên tuyến đầu
+
         http.authenticationProvider(authenticationProvider);
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterAfter(queueTokenFilter, AuthTokenFilter.class);
@@ -65,7 +78,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Cấu hình CORS để Frontend ở Port khác có thể gọi được API
+    /**
+     * Tạo cấu hình CORS cho frontend local.
+     *
+     * @return source chứa cấu hình CORS áp dụng cho toàn bộ endpoint.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

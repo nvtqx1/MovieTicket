@@ -1,6 +1,11 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.*;
+import com.ticketrush.backend.dto.projection.AgeGroupStatProjection;
+import com.ticketrush.backend.dto.stats.DailyRevenueDTO;
+import com.ticketrush.backend.dto.stats.GenderStatDTO;
+import com.ticketrush.backend.dto.stats.GeneralStatsDTO;
+import com.ticketrush.backend.dto.stats.MovieRevenueDTO;
+import com.ticketrush.backend.dto.stats.TheaterRevenueDTO;
 import com.ticketrush.backend.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,9 @@ import java.util.List;
  * @author TicketRush Team
  * @version 1.0
  */
+/**
+ * Dịch vụ tổng hợp dữ liệu thống kê cho dashboard quản trị.
+ */
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -38,6 +46,12 @@ public class DashboardService {
      * Bao gồm: Tổng users, rạp, phim, suất chiếu, doanh thu, đơn đặt vé, vé bán, doanh thu hôm nay
      *
      * @return GeneralStatsDTO chứa các số liệu chính
+     */
+    /**
+     * Lấy các chỉ số tổng quan như người dùng, rạp, phim, suất chiếu và doanh thu.
+     *
+     * @return DTO chứa thống kê tổng quan.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
      */
     public GeneralStatsDTO getGeneralStatistics() {
         try {
@@ -86,6 +100,12 @@ public class DashboardService {
      *
      * @return Danh sách GenderStatDTO chứa giới tính và số lượng
      */
+    /**
+     * Lấy thống kê người dùng theo giới tính.
+     *
+     * @return danh sách thống kê giới tính.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
+     */
     public List<GenderStatDTO> getGenderStatistics() {
         try {
             log.info("📊 Lấy thống kê giới tính");
@@ -103,6 +123,12 @@ public class DashboardService {
      * Dùng để hiểu đặc điểm khách hàng theo độ tuổi.
      *
      * @return Danh sách AgeGroupStatDTO chứa nhóm tuổi, số lượng, và phần trăm
+     */
+    /**
+     * Lấy thống kê người dùng theo nhóm tuổi.
+     *
+     * @return danh sách projection thống kê nhóm tuổi.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
      */
     public List<AgeGroupStatProjection> getAgeGroupStatistics() {
         try {
@@ -123,6 +149,12 @@ public class DashboardService {
      *
      * @return Danh sách MovieRevenueDTO chứa doanh thu từng phim
      */
+    /**
+     * Lấy thống kê doanh thu theo từng phim.
+     *
+     * @return danh sách doanh thu phim.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
+     */
     public List<MovieRevenueDTO> getMovieRevenueStatistics() {
         try {
             log.info("📊 Lấy thống kê doanh thu theo phim");
@@ -141,6 +173,12 @@ public class DashboardService {
      * Tính: tổng doanh thu, số suất chiếu, số vé bán
      *
      * @return Danh sách TheaterRevenueDTO chứa doanh thu từng rạp
+     */
+    /**
+     * Lấy thống kê doanh thu theo từng rạp.
+     *
+     * @return danh sách doanh thu rạp.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
      */
     public List<TheaterRevenueDTO> getTheaterRevenueStatistics() {
         try {
@@ -161,6 +199,14 @@ public class DashboardService {
      * @param startDate Ngày bắt đầu (inclusive)
      * @param endDate   Ngày kết thúc (exclusive)
      * @return Danh sách DailyRevenueDTO chứa doanh thu mỗi ngày
+     */
+    /**
+     * Lấy thống kê doanh thu theo ngày trong khoảng thời gian.
+     *
+     * @param startDate ngày bắt đầu.
+     * @param endDate ngày kết thúc.
+     * @return danh sách doanh thu theo ngày.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
      */
     public List<DailyRevenueDTO> getDailyRevenueStatistics(LocalDate startDate, LocalDate endDate) {
         try {
@@ -190,6 +236,12 @@ public class DashboardService {
      *
      * @return Danh sách DailyRevenueDTO cho tháng hiện tại
      */
+    /**
+     * Lấy doanh thu từng ngày của tháng hiện tại.
+     *
+     * @return danh sách doanh thu theo ngày trong tháng hiện tại.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
+     */
     public List<DailyRevenueDTO> getCurrentMonthDailyRevenue() {
         try {
             LocalDate today = LocalDate.now();
@@ -212,6 +264,12 @@ public class DashboardService {
      *
      * @return Danh sách DailyRevenueDTO cho 7 ngày gần nhất
      */
+    /**
+     * Lấy doanh thu của 7 ngày gần nhất.
+     *
+     * @return danh sách doanh thu 7 ngày gần nhất.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
+     */
     public List<DailyRevenueDTO> getLast7DaysRevenue() {
         try {
             LocalDate today = LocalDate.now();
@@ -231,6 +289,12 @@ public class DashboardService {
      * Lấy thống kê doanh thu của 30 ngày gần nhất.
      *
      * @return Danh sách DailyRevenueDTO cho 30 ngày gần nhất
+     */
+    /**
+     * Lấy doanh thu của 30 ngày gần nhất.
+     *
+     * @return danh sách doanh thu 30 ngày gần nhất.
+     * @throws RuntimeException nếu truy vấn thống kê thất bại.
      */
     public List<DailyRevenueDTO> getLast30DaysRevenue() {
         try {

@@ -1,7 +1,7 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.SeatLockRequest;
-import com.ticketrush.backend.dto.SeatLockResponse;
+import com.ticketrush.backend.dto.request.SeatLockRequest;
+import com.ticketrush.backend.dto.response.SeatLockResponse;
 import com.ticketrush.backend.security.UserDetailsImpl;
 import com.ticketrush.backend.service.SeatLockService;
 import jakarta.validation.Valid;
@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Controller khóa ghế tạm thời cho người dùng.
+ *
+ * Endpoint khóa ghế theo nguyên tắc all-or-nothing: nếu một ghế lỗi thì toàn bộ
+ * yêu cầu khóa bị từ chối.
+ */
 @RestController
 @RequestMapping("/seats")
 @RequiredArgsConstructor
@@ -24,15 +30,13 @@ public class SeatLockController {
     private final SeatLockService seatLockService;
 
     /**
-     * Lock nhiều ghế cùng lúc (all-or-nothing).
+     * Khóa nhiều ghế cùng lúc cho người dùng hiện tại.
      *
-     * Request body:
-     * {
-     *   "seatIds": [1, 2, 3]
-     * }
+     * Annotation {@link Valid} validate danh sách ghế trước khi xử lý.
      *
-     * - Nếu tất cả ghế OK → trả 200 với thông tin reservation
-     * - Nếu bất kỳ ghế nào fail → rollback tất cả, trả 409 CONFLICT
+     * @param authentication thông tin xác thực của người dùng.
+     * @param request danh sách ID ghế cần khóa.
+     * @return kết quả khóa ghế hoặc lỗi 409 khi có xung đột.
      */
     @PostMapping("/lock")
     public ResponseEntity<SeatLockResponse> lockSeats(
@@ -50,12 +54,18 @@ public class SeatLockController {
         }
     }
 
+    /**
+     * Trích xuất ID người dùng từ Authentication.
+     *
+     * @param authentication thông tin xác thực hiện tại.
+     * @return ID người dùng.
+     * @throws IllegalArgumentException khi chưa đăng nhập hoặc principal không hợp lệ.
+     */
     private Long extractUserId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalArgumentException("Unauthenticated request");
         }
 
-        // principal là đối tượng UserDetailsImpl mà chúng ta đã tạo, chứa thông tin user đã đăng nhập
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof UserDetailsImpl userDetails) {
@@ -69,8 +79,14 @@ public class SeatLockController {
         throw new IllegalArgumentException("Cannot extract user ID from authentication principal");
     }
 
+    /**
+     * Tạo response lỗi cho danh sách ghế khóa thất bại.
+     *
+     * @param seatIds danh sách ID ghế trong request.
+     * @param message thông báo lỗi.
+     * @return response lỗi dạng SeatLockResponse.
+     */
     private SeatLockResponse failedResponse(List<Long> seatIds, String message) {
-        // Trả về thông tin ghế trong error response
         List<SeatLockResponse.LockedSeatInfo> seatInfos = seatIds.stream()
                 .map(id -> SeatLockResponse.LockedSeatInfo.builder().seatId(id).build())
                 .toList();

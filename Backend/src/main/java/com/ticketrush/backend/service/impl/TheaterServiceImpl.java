@@ -1,9 +1,9 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.CreateRoomRequest;
-import com.ticketrush.backend.dto.CreateTheaterRequest;
-import com.ticketrush.backend.dto.RoomResponse;
-import com.ticketrush.backend.dto.TheaterResponse;
+import com.ticketrush.backend.dto.request.CreateRoomRequest;
+import com.ticketrush.backend.dto.request.CreateTheaterRequest;
+import com.ticketrush.backend.dto.response.RoomResponse;
+import com.ticketrush.backend.dto.response.TheaterResponse;
 import com.ticketrush.backend.entity.Room;
 import com.ticketrush.backend.entity.Theater;
 import com.ticketrush.backend.repository.RoomRepository;
@@ -38,6 +38,11 @@ public class TheaterServiceImpl implements TheaterService {
     private final RoomRepository roomRepository;
     private final com.ticketrush.backend.repository.ShowtimeRepository showtimeRepository;
 
+    /**
+     * Lấy toàn bộ rạp hiện có.
+     *
+     * @return danh sách rạp.
+     */
     @Override
     public List<TheaterResponse> getAllTheaters() {
         return theaterRepository.findAll()
@@ -152,6 +157,13 @@ public class TheaterServiceImpl implements TheaterService {
         }
     }
 
+    /**
+     * Lấy danh sách phòng của một rạp.
+     *
+     * @param theaterId ID rạp cần lấy phòng.
+     * @return danh sách phòng thuộc rạp.
+     * @throws IllegalArgumentException nếu rạp không tồn tại.
+     */
     @Override
     public List<RoomResponse> getRoomsByTheater(Long theaterId) {
         log.info("🎬 Lấy danh sách phòng của rạp: {}", theaterId);
@@ -166,6 +178,12 @@ public class TheaterServiceImpl implements TheaterService {
                 .toList();
     }
 
+    /**
+     * Chuyển entity Theater sang DTO phản hồi.
+     *
+     * @param theater entity rạp cần chuyển đổi.
+     * @return DTO rạp.
+     */
     private TheaterResponse toResponse(Theater theater) {
         return new TheaterResponse(
                 theater.getId(),
@@ -175,6 +193,12 @@ public class TheaterServiceImpl implements TheaterService {
         );
     }
 
+    /**
+     * Chuyển entity Room sang DTO phản hồi.
+     *
+     * @param room entity phòng cần chuyển đổi.
+     * @return DTO phòng.
+     */
     private RoomResponse toRoomResponse(Room room) {
         return new RoomResponse(
                 room.getId(),
@@ -185,6 +209,15 @@ public class TheaterServiceImpl implements TheaterService {
         );
     }
 
+    /**
+     * Cập nhật thông tin rạp.
+     * {@code @Transactional} ghi đè read-only của class để cho phép lưu database.
+     *
+     * @param id ID rạp cần cập nhật.
+     * @param request dữ liệu cập nhật rạp.
+     * @return rạp sau khi cập nhật.
+     * @throws IllegalArgumentException nếu rạp không tồn tại.
+     */
     @Override
     @Transactional
     public TheaterResponse updateTheater(Long id, CreateTheaterRequest request) {
@@ -199,6 +232,13 @@ public class TheaterServiceImpl implements TheaterService {
         return toResponse(updated);
     }
 
+    /**
+     * Xóa rạp theo ID.
+     * {@code @Transactional} đảm bảo thao tác xóa chạy trong một giao dịch.
+     *
+     * @param id ID rạp cần xóa.
+     * @throws IllegalArgumentException nếu rạp không tồn tại hoặc không thể xóa do ràng buộc dữ liệu.
+     */
     @Override
     @Transactional
     public void deleteTheater(Long id) {
@@ -216,6 +256,16 @@ public class TheaterServiceImpl implements TheaterService {
     // TASK 1.1: Room Update/Delete
     // ═══════════════════════════════════════
 
+    /**
+     * Cập nhật thông tin phòng chiếu thuộc một rạp.
+     * {@code @Transactional} đảm bảo thay đổi phòng được lưu nguyên khối.
+     *
+     * @param theaterId ID rạp sở hữu phòng.
+     * @param roomId ID phòng cần cập nhật.
+     * @param request dữ liệu cập nhật phòng.
+     * @return phòng sau khi cập nhật.
+     * @throws IllegalArgumentException nếu phòng không tồn tại hoặc không thuộc rạp.
+     */
     @Override
     @Transactional
     public RoomResponse updateRoom(Long theaterId, Long roomId, CreateRoomRequest request) {
@@ -254,6 +304,14 @@ public class TheaterServiceImpl implements TheaterService {
      * - Nếu phòng CÒN lịch chiếu từ hôm nay trở đi → CHẶN (đã bán vé, không được xóa).
      * - Nếu phòng chỉ có lịch chiếu trong quá khứ → CHO PHÉP soft delete.
      * - Nếu phòng không có lịch chiếu nào → CHO PHÉP soft delete.
+     */
+    /**
+     * Xóa mềm phòng chiếu nếu không còn lịch chiếu trong tương lai.
+     * Dựa vào {@code @SQLDelete} và {@code @SQLRestriction} trên entity Room để giữ dữ liệu nhưng ẩn khỏi truy vấn.
+     *
+     * @param theaterId ID rạp sở hữu phòng.
+     * @param roomId ID phòng cần xóa.
+     * @throws IllegalArgumentException nếu phòng không tồn tại, không thuộc rạp hoặc còn lịch chiếu tương lai.
      */
     @Override
     @Transactional

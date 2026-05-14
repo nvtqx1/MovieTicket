@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.QrCodeResponse;
+import com.ticketrush.backend.dto.response.QrCodeResponse;
 import com.ticketrush.backend.util.QrCodeUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +16,9 @@ import java.time.format.DateTimeFormatter;
  *
  * @author TicketRush Team
  * @version 1.0
+ */
+/**
+ * Dịch vụ tạo QR code cho reservation, vé và dữ liệu tùy chỉnh.
  */
 @Slf4j
 @Service
@@ -33,6 +36,13 @@ public class QrCodeService {
      * @param reservationId ID đơn đặt vé
      * @param secretHash Hash bí mật
      * @return QrCodeResponse chứa Base64 và Data URI
+     */
+    /**
+     * Tạo QR code cho đơn đặt vé từ reservationId và secret hash.
+     *
+     * @param reservationId ID đơn đặt vé.
+     * @param secretHash hash bí mật để xác thực QR.
+     * @return phản hồi chứa QR dạng Base64, Data URI và metadata.
      */
     public QrCodeResponse generateReservationQrCode(Long reservationId, String secretHash) {
         try {
@@ -60,6 +70,13 @@ public class QrCodeService {
      * @param verificationHash Hash xác minh
      * @return QrCodeResponse chứa Base64 và Data URI
      */
+    /**
+     * Tạo QR code cho vé điện tử.
+     *
+     * @param ticketId ID vé.
+     * @param verificationHash hash xác minh vé.
+     * @return phản hồi chứa QR dạng Base64, Data URI và metadata.
+     */
     public QrCodeResponse generateTicketQrCode(Long ticketId, String verificationHash) {
         try {
             log.info("🎫 Tạo mã QR cho vé ID: {}", ticketId);
@@ -85,6 +102,12 @@ public class QrCodeService {
      * @param customData Dữ liệu tùy chỉnh
      * @return QrCodeResponse chứa Base64 và Data URI
      */
+    /**
+     * Tạo QR code từ dữ liệu tùy chỉnh.
+     *
+     * @param customData dữ liệu cần mã hóa vào QR.
+     * @return phản hồi chứa QR dạng Base64, Data URI và metadata.
+     */
     public QrCodeResponse generateCustomQrCode(String customData) {
         try {
             log.info("🎫 Tạo mã QR tùy chỉnh từ dữ liệu: {}", customData);
@@ -107,6 +130,11 @@ public class QrCodeService {
      *
      * @return Chuỗi mô tả cấu hình
      */
+    /**
+     * Lấy thông tin cấu hình QR code đang sử dụng.
+     *
+     * @return chuỗi mô tả cấu hình QR code.
+     */
     public String getQrCodeInfo() {
         return qrCodeUtil.getQrCodeInfo();
     }
@@ -115,6 +143,11 @@ public class QrCodeService {
      * Lấy thông tin dung lượng tối đa QR code.
      *
      * @return Chuỗi mô tả dung lượng
+     */
+    /**
+     * Lấy thông tin dung lượng tối đa của QR code.
+     *
+     * @return chuỗi mô tả dung lượng QR code.
      */
     public String getQrCodeCapacity() {
         return qrCodeUtil.getQrCodeCapacity();
@@ -131,6 +164,16 @@ public class QrCodeService {
      * @param entityId ID entity (nếu có)
      * @param entityType Loại entity
      * @return QrCodeResponse hoàn chỉnh
+     */
+    /**
+     * Tạo response thành công cho QR code.
+     *
+     * @param base64String ảnh QR dạng Base64.
+     * @param dataUri ảnh QR dạng Data URI.
+     * @param encodedData dữ liệu đã mã hóa trong QR.
+     * @param entityId ID entity liên quan, có thể null.
+     * @param entityType loại entity liên quan.
+     * @return DTO phản hồi tạo QR thành công.
      */
     private QrCodeResponse buildSuccessResponse(String base64String, String dataUri, String encodedData,
                                                Long entityId, String entityType) {
@@ -154,6 +197,12 @@ public class QrCodeService {
      *
      * @param errorMessage Thông báo lỗi
      * @return QrCodeResponse với status lỗi
+     */
+    /**
+     * Tạo response lỗi khi tạo QR thất bại.
+     *
+     * @param errorMessage thông báo lỗi.
+     * @return DTO phản hồi lỗi.
      */
     private QrCodeResponse buildErrorResponse(String errorMessage) {
         return QrCodeResponse.builder()

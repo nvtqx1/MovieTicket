@@ -13,26 +13,50 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository thao tác dữ liệu ghế theo suất chiếu.
+ */
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
-    // PHỤC VỤ NGÀY 5-6: Trả về toàn bộ ghế của 1 suất chiếu để FE vẽ sơ đồ (150 ghế)
+    /**
+     * Lấy toàn bộ ghế của một suất chiếu.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @return danh sách ghế của suất chiếu.
+     */
     List<Seat> findByShowtimeId(Long showtimeId);
 
-    // Xóa tất cả các ghế của một suất chiếu
+    /**
+     * Xóa toàn bộ ghế của một suất chiếu.
+     *
+     * @param showtimeId ID suất chiếu cần xóa ghế.
+     */
     void deleteByShowtimeId(Long showtimeId);
 
-    // PHỤC VỤ TUẦN 2 (CHỐNG TRANH CHẤP - ROW LOCKING):
-    // Tìm các ghế cụ thể mà user đang bấm chọn (VD: ["A1", "A2"]).
+    /**
+     * Tìm và khóa nhiều ghế theo mã ghế trong một suất chiếu.
+     *
+     * Annotation {@link Lock} dùng khóa ghi bi quan để chống tranh chấp giữ ghế;
+     * {@link QueryHints} giới hạn thời gian chờ lock ở mức 3000ms.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @param seatNumbers danh sách mã ghế cần khóa.
+     * @return danh sách ghế được tìm thấy.
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
     List<Seat> findByShowtimeIdAndSeatNumberIn(Long showtimeId, List<String> seatNumbers);
 
-    //Phục vụ TUẦN 2 (CHỐNG TRANH CHẤP - ROW LOCKING):
-    // Tìm 1 ghế cụ thể để cập nhật trạng thái (VD: "A1").
-    // Dùng khi user bấm chọn 1 ghế trên FE, hệ thống sẽ gọi API
-    // này để lấy thông tin chi tiết của ghế đó (VD: giá tiền, loại ghế)
-    // và đồng thời khóa dòng dữ liệu của ghế đó lại để tránh trường hợp 2 người cùng bấm chọn 1 ghế.
+    /**
+     * Tìm một ghế theo ID và khóa dòng dữ liệu để cập nhật an toàn.
+     *
+     * Query fetch trước các quan hệ cần dùng để tránh lazy loading khi xử lý giữ
+     * ghế; khóa bi quan giúp tránh hai người chọn cùng một ghế.
+     *
+     * @param seatId ID ghế cần khóa.
+     * @return ghế nếu tồn tại.
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
     @Query("""
@@ -49,8 +73,15 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
             """)
     Optional<Seat> findByIdForUpdate(@Param("seatId") Long seatId);
 
-    // PHỤC VỤ BATCH LOCK: Tìm nhiều ghế cùng lúc với PESSIMISTIC_WRITE lock
-    // Dùng khi user chọn nhiều ghế (VD: A1, A2, A3) rồi bấm "Tiếp tục"
+    /**
+     * Tìm nhiều ghế theo ID và khóa dòng dữ liệu theo thứ tự tăng dần.
+     *
+     * Sắp xếp theo ID giúp giảm nguy cơ deadlock khi nhiều request khóa nhiều
+     * ghế cùng lúc.
+     *
+     * @param seatIds danh sách ID ghế cần khóa.
+     * @return danh sách ghế được khóa.
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
     @Query("""
@@ -68,8 +99,19 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
             """)
     List<Seat> findByIdsForUpdate(@Param("seatIds") List<Long> seatIds);
 
-    // Tìm các ghế đang bị khóa bởi 1 đơn hàng cụ thể (Dùng khi user hủy đơn, muốn nhả ghế ra)
+    /**
+     * Tìm các ghế thuộc một đơn đặt vé.
+     *
+     * @param reservationId ID đơn đặt vé.
+     * @return danh sách ghế của đơn.
+     */
     List<Seat> findByReservationId(Long reservationId);
 
+    /**
+     * Đếm số ghế của một suất chiếu.
+     *
+     * @param showtimeid ID suất chiếu.
+     * @return số ghế của suất chiếu.
+     */
     long countByShowtimeId(Long showtimeid);
 }

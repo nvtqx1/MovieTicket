@@ -1,8 +1,8 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.GenerateSeatRequest;
-import com.ticketrush.backend.dto.GenerateSeatResponse;
-import com.ticketrush.backend.dto.SeatResponse;
+import com.ticketrush.backend.dto.request.GenerateSeatRequest;
+import com.ticketrush.backend.dto.response.GenerateSeatResponse;
+import com.ticketrush.backend.dto.response.SeatResponse;
 import com.ticketrush.backend.entity.Seat;
 import com.ticketrush.backend.entity.SeatType;
 import com.ticketrush.backend.entity.Showtime;
@@ -248,6 +248,13 @@ public class SeatServiceImpl implements SeatService {
      * Map Seat entity sang SeatResponse DTO
      * Bao gồm tính giá bán cuối cùng dựa trên seat type multiplier
      */
+    /**
+     * Chuyển Seat sang DTO và tính giá cuối cùng theo hệ số loại ghế.
+     *
+     * @param seat entity ghế cần chuyển đổi.
+     * @param showtime suất chiếu chứa giá cơ bản.
+     * @return DTO ghế kèm giá cuối cùng.
+     */
     private SeatResponse mapToSeatResponse(Seat seat, Showtime showtime) {
         BigDecimal basePrice = showtime.getPrice() != null ? showtime.getPrice() : BigDecimal.ZERO;
         BigDecimal priceMultiplier = seat.getSeatType() != null && seat.getSeatType().getPriceMultiplier() != null 
@@ -265,6 +272,13 @@ public class SeatServiceImpl implements SeatService {
                 .build();
     }
 
+    /**
+     * Xóa toàn bộ ghế của một suất chiếu nếu chưa có ghế nào được đặt.
+     * {@code @Transactional} đảm bảo thao tác xóa được rollback nếu phát hiện ghế đã đặt.
+     *
+     * @param showtimeId ID suất chiếu cần xóa ghế.
+     * @throws RuntimeException nếu đã có ghế được đặt.
+     */
     @Override
     @Transactional
     public void deleteSeatsByShowtime(Long showtimeId) {

@@ -3,6 +3,11 @@ package com.ticketrush.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entity lưu giá trị master data theo từng loại component.
+ *
+ * Ràng buộc unique đảm bảo một loại component không có hai giá trị trùng nhau.
+ */
 @Entity
 @Table(
         name = "master_data",

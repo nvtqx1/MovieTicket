@@ -11,24 +11,59 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository thao tác dữ liệu suất chiếu.
+ */
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
 
+    /**
+     * Kiểm tra phòng đã có suất chiếu nào hay chưa.
+     *
+     * @param roomId ID phòng chiếu.
+     * @return true nếu phòng đã có ít nhất một suất chiếu.
+     */
     boolean existsByRoomId(Long roomId);
 
     /**
-     * Kiểm tra phòng có lịch chiếu từ ngày chỉ định trở đi không.
-     * Dùng cho logic Soft Delete: chỉ chặn xóa nếu CÒN lịch chiếu tương lai.
+     * Kiểm tra phòng còn lịch chiếu từ ngày chỉ định trở đi hay không.
+     *
+     * @param roomId ID phòng chiếu.
+     * @param date ngày bắt đầu kiểm tra.
+     * @return true nếu còn suất chiếu từ ngày chỉ định trở đi.
      */
     boolean existsByRoomIdAndShowDateGreaterThanEqual(Long roomId, LocalDate date);
 
-    // PHỤC VỤ NGÀY 5-6 (API GET /showtimes):
-    // Lấy các suất chiếu của 1 Phim, trong 1 Ngày cụ thể, Sắp xếp giờ từ sớm đến muộn
+    /**
+     * Lấy suất chiếu của một phim trong một ngày, sắp xếp theo giờ.
+     *
+     * @param movieId ID phim.
+     * @param showDate ngày chiếu.
+     * @return danh sách suất chiếu phù hợp.
+     */
     List<Showtime> findByMovieIdAndShowDateOrderByShowTimeAsc(Long movieId, LocalDate showDate);
 
-    // Tùy chọn thêm: Tìm suất chiếu theo Rạp và Ngày (dành cho màn hình "Chọn Rạp trước, chọn Phim sau")
+    /**
+     * Lấy suất chiếu của một rạp trong một ngày, sắp xếp theo giờ.
+     *
+     * @param theaterId ID rạp.
+     * @param showDate ngày chiếu.
+     * @return danh sách suất chiếu phù hợp.
+     */
     List<Showtime> findByRoomTheaterIdAndShowDateOrderByShowTimeAsc(Long theaterId, LocalDate showDate);
 
+    /**
+     * Tìm suất chiếu theo phim, rạp và ngày.
+     *
+     * Annotation {@link Query} dùng JPQL fetch join để lấy sẵn phim, phòng và
+     * rạp, tránh truy vấn lười lặp lại khi dựng response.
+     *
+     * @param movieId ID phim cần lọc, có thể null.
+     * @param theaterId ID rạp cần lọc, có thể null.
+     * @param showDate ngày chiếu cụ thể, có thể null.
+     * @param fromDate ngày bắt đầu khi không truyền showDate.
+     * @return danh sách suất chiếu phù hợp.
+     */
     @Query("""
             SELECT s
             FROM Showtime s
@@ -50,7 +85,14 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("fromDate") LocalDate fromDate
     );
 
-    // Task 2.2: Lấy lịch chiếu của phim từ hôm nay trở đi, có thể filter theo rạp
+    /**
+     * Lấy lịch chiếu sắp tới của một phim, có thể lọc theo rạp.
+     *
+     * @param movieId ID phim.
+     * @param fromDate ngày bắt đầu lấy lịch.
+     * @param theaterId ID rạp cần lọc, có thể null.
+     * @return danh sách suất chiếu sắp tới.
+     */
     @Query("""
             SELECT s
             FROM Showtime s
@@ -68,7 +110,14 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("theaterId") Long theaterId
     );
 
-    // Task 2.2: Lấy lịch chiếu của rạp trong khoảng ngày
+    /**
+     * Lấy lịch chiếu của rạp trong một khoảng ngày.
+     *
+     * @param theaterId ID rạp.
+     * @param startDate ngày bắt đầu.
+     * @param endDate ngày kết thúc.
+     * @return danh sách suất chiếu của rạp trong khoảng ngày.
+     */
     @Query("""
             SELECT s
             FROM Showtime s
@@ -84,5 +133,14 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    /**
+     * Tìm suất chiếu đầu tiên theo phòng, ngày và giờ.
+     *
+     * @param roomId ID phòng chiếu.
+     * @param showDate ngày chiếu.
+     * @param showTime giờ chiếu.
+     * @return suất chiếu nếu tồn tại.
+     */
     Optional<Showtime> findFirstByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
 }

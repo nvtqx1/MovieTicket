@@ -22,6 +22,9 @@ import java.util.Base64;
  * @author TicketRush Team
  * @version 1.0
  */
+/**
+ * Tiện ích tạo QR code dạng ảnh PNG Base64 và Data URI.
+ */
 @Slf4j
 @Component
 public class QrCodeUtil {
@@ -40,6 +43,14 @@ public class QrCodeUtil {
      * @param data Chuỗi dữ liệu để mã hóa (VD: "ORDER_123#abc123xyz")
      * @return Chuỗi Base64 biểu diễn ảnh PNG của mã QR
      * @throws Exception nếu quá trình mã hóa thất bại
+     */
+    /**
+     * Tạo ảnh QR code từ chuỗi dữ liệu và trả về dạng Base64.
+     *
+     * @param data dữ liệu cần mã hóa vào QR code.
+     * @return chuỗi Base64 của ảnh QR định dạng PNG.
+     * @throws IllegalArgumentException nếu dữ liệu rỗng hoặc null.
+     * @throws Exception nếu ZXing không mã hóa được dữ liệu hoặc lỗi tạo ảnh.
      */
     public String generateQrCodeBase64(String data) throws Exception {
         try {
@@ -88,6 +99,15 @@ public class QrCodeUtil {
      * @return Chuỗi Base64 biểu diễn ảnh PNG của mã QR
      * @throws Exception nếu quá trình mã hóa thất bại
      */
+    /**
+     * Tạo QR code cho đơn đặt vé theo định dạng {@code RESERVATION_{id}#{hash}}.
+     *
+     * @param reservationId ID đơn đặt vé.
+     * @param secretHash hash bí mật dùng để xác thực đơn.
+     * @return chuỗi Base64 của ảnh QR định dạng PNG.
+     * @throws IllegalArgumentException nếu reservationId hoặc secretHash không hợp lệ.
+     * @throws Exception nếu tạo QR thất bại.
+     */
     public String generateReservationQrCode(Long reservationId, String secretHash) throws Exception {
         if (reservationId == null || reservationId <= 0) {
             throw new IllegalArgumentException("❌ ID đơn đặt vé không hợp lệ");
@@ -109,6 +129,15 @@ public class QrCodeUtil {
      * @return Chuỗi Base64 biểu diễn ảnh PNG của mã QR
      * @throws Exception nếu quá trình mã hóa thất bại
      */
+    /**
+     * Tạo QR code cho vé theo định dạng {@code TICKET_{id}#{hash}}.
+     *
+     * @param ticketId ID vé.
+     * @param verificationHash hash xác minh vé.
+     * @return chuỗi Base64 của ảnh QR định dạng PNG.
+     * @throws IllegalArgumentException nếu ticketId hoặc verificationHash không hợp lệ.
+     * @throws Exception nếu tạo QR thất bại.
+     */
     public String generateTicketQrCode(Long ticketId, String verificationHash) throws Exception {
         if (ticketId == null || ticketId <= 0) {
             throw new IllegalArgumentException("❌ ID vé không hợp lệ");
@@ -129,6 +158,13 @@ public class QrCodeUtil {
      * @return Mảng byte chứa dữ liệu ảnh PNG
      * @throws IOException nếu ghi ảnh thất bại
      */
+    /**
+     * Chuyển ma trận QR của ZXing thành mảng byte ảnh PNG.
+     *
+     * @param bitMatrix ma trận điểm ảnh QR.
+     * @return mảng byte của ảnh PNG.
+     * @throws IOException nếu ghi ảnh vào stream thất bại.
+     */
     private byte[] convertBitMatrixToImage(BitMatrix bitMatrix) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             MatrixToImageWriter.writeToStream(bitMatrix, IMAGE_FORMAT, outputStream);
@@ -146,6 +182,12 @@ public class QrCodeUtil {
      * @param base64String Chuỗi Base64 của ảnh QR code
      * @return Data URI string
      */
+    /**
+     * Tạo Data URI để hiển thị QR trực tiếp trong thẻ HTML {@code img}.
+     *
+     * @param base64String chuỗi Base64 của ảnh QR.
+     * @return Data URI dạng {@code data:image/png;base64,...}.
+     */
     public String createDataUri(String base64String) {
         return String.format("data:image/%s;base64,%s", IMAGE_FORMAT.toLowerCase(), base64String);
     }
@@ -156,6 +198,11 @@ public class QrCodeUtil {
      *
      * @return Mô tả kích thước tối đa
      */
+    /**
+     * Lấy mô tả dung lượng dữ liệu tối đa của QR code.
+     *
+     * @return chuỗi mô tả dung lượng QR code.
+     */
     public String getQrCodeCapacity() {
         return String.format("📊 Mã QR %dx%d có thể chứa tối đa ~4296 ký tự (maximum alphanumeric data)", 
                 QR_CODE_WIDTH, QR_CODE_HEIGHT);
@@ -165,6 +212,11 @@ public class QrCodeUtil {
      * Lấy thông tin cấu hình QR code hiện tại.
      *
      * @return Chuỗi mô tả cấu hình
+     */
+    /**
+     * Lấy mô tả cấu hình QR code hiện tại.
+     *
+     * @return chuỗi mô tả định dạng, kích thước và kiểu mã hóa QR.
      */
     public String getQrCodeInfo() {
         return String.format("🎫 Cấu hình QR Code:%n" +

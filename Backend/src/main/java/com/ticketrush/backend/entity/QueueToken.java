@@ -7,6 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity lưu token hàng chờ ảo của người dùng cho một suất chiếu.
+ */
 @Entity
 @Table(name = "queue_tokens")
 @Setter

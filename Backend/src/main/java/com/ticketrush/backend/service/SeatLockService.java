@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.SeatLockResponse;
+import com.ticketrush.backend.dto.response.SeatLockResponse;
 import com.ticketrush.backend.entity.Reservation;
 import com.ticketrush.backend.entity.Seat;
 import com.ticketrush.backend.entity.User;
@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Dịch vụ khóa ghế tạm thời bằng Redis và reservation trong database.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,6 +51,16 @@ public class SeatLockService {
      * Flow: Validate ALL → SET Redis ALL → INSERT MySQL → Broadcast
      *       Nếu Redis fail giữa chừng → xóa các key đã SET
      *       Nếu MySQL fail → xóa toàn bộ key Redis
+     */
+    /**
+     * Khóa nhiều ghế theo cơ chế all-or-nothing bằng Redis và database.
+     * {@code @Transactional} kết hợp khóa ghi từ repository để tránh hai người giữ cùng một ghế.
+     *
+     * @param seatIds danh sách ID ghế cần khóa.
+     * @param userId ID người dùng thực hiện khóa.
+     * @return thông tin các ghế đã khóa và thời điểm hết hạn.
+     * @throws IllegalArgumentException nếu danh sách ghế rỗng, ghế/user không tồn tại hoặc ghế khác suất chiếu.
+     * @throws IllegalStateException nếu ghế đã bán hoặc đang bị khóa.
      */
     @Transactional
     public SeatLockResponse lockSeats(List<Long> seatIds, Long userId) {
@@ -169,6 +182,13 @@ public class SeatLockService {
                 .build();
     }
 
+    /**
+     * Giải phóng khóa ghế nếu khóa đã hết hạn.
+     * {@code @Transactional} đảm bảo cập nhật ghế, reservation và Redis nhất quán.
+     *
+     * @param seatId ID ghế cần kiểm tra và giải phóng.
+     * @throws IllegalArgumentException nếu ghế không tồn tại.
+     */
     @Transactional
     public void releaseExpiredSeatLock(Long seatId) {
         Seat seat = seatRepository.findByIdForUpdate(seatId)
@@ -180,12 +200,26 @@ public class SeatLockService {
         }
     }
 
+    /**
+     * Tạo key Redis dùng để lưu trạng thái khóa ghế.
+     *
+     * @param seatId ID ghế.
+     * @return Redis key của ghế.
+     */
     public String buildSeatLockKey(Long seatId) {
         return SEAT_LOCK_KEY_PREFIX + seatId;
     }
 
     /**
      * Tạo 1 Reservation chung cho nhiều ghế, tổng giá = sum(giá từng ghế)
+     */
+    /**
+     * Tạo reservation LOCKED cho danh sách ghế đã khóa.
+     *
+     * @param seats danh sách ghế được khóa.
+     * @param user người dùng giữ ghế.
+     * @param lockedUntil thời điểm hết hạn giữ ghế.
+     * @return reservation đã được lưu.
      */
     private Reservation createReservation(List<Seat> seats, User user, LocalDateTime lockedUntil) {
         Reservation reservation = new Reservation();
@@ -207,6 +241,11 @@ public class SeatLockService {
     /**
      * Rollback: xóa tất cả Redis key đã SET thành công
      */
+    /**
+     * Xóa các key Redis đã tạo khi một bước khóa ghế bị lỗi.
+     *
+     * @param keys danh sách key Redis cần xóa.
+     */
     private void rollbackRedisKeys(List<String> keys) {
         if (keys.isEmpty()) return;
         try {
@@ -217,6 +256,14 @@ public class SeatLockService {
         }
     }
 
+    /**
+     * Giải phóng reservation hết hạn của một ghế nếu ghế chưa được thanh toán.
+     *
+     * @param seat ghế cần kiểm tra.
+     * @param now thời điểm hiện tại dùng để so sánh hạn khóa.
+     * @param broadcast có gửi thông báo realtime sau khi giải phóng hay không.
+     * @return {@code true} nếu đã giải phóng, ngược lại {@code false}.
+     */
     private Boolean releaseIfExpired(Seat seat, LocalDateTime now, boolean broadcast) {
         Reservation reservation = seat.getReservation();
         if (reservation == null) {

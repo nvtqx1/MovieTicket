@@ -54,6 +54,11 @@ public class VirtualQueueService {
 
     private SimpMessagingTemplate messagingTemplate;
 
+    /**
+     * Inject template gửi trạng thái hàng chờ qua WebSocket.
+     *
+     * @param messagingTemplate template gửi message STOMP.
+     */
     @Autowired
     public void setMessagingTemplate(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
@@ -97,6 +102,13 @@ public class VirtualQueueService {
     /**
      * Kiểm tra trạng thái queue của user
      */
+    /**
+     * Lấy trạng thái hàng chờ hiện tại của người dùng.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @param userId ID người dùng.
+     * @return trạng thái hàng chờ, vị trí và token nếu đã tới lượt.
+     */
     public QueueStatus getStatus(Long showtimeId, Long userId) {
         ConcurrentLinkedQueue<QueueEntry> queue = queues.get(showtimeId);
         if (queue == null) {
@@ -121,6 +133,12 @@ public class VirtualQueueService {
     /**
      * Validate token — Booking API gọi trước khi cho user vào trang chọn ghế
      */
+    /**
+     * Kiểm tra token hàng chờ trước khi cho người dùng vào bước chọn ghế.
+     *
+     * @param token token cần kiểm tra.
+     * @return {@code true} nếu token tồn tại và chưa hết hạn, ngược lại {@code false}.
+     */
     public boolean validateToken(String token) {
         TokenInfo info = activeTokens.get(token);
         if (info == null) return false;
@@ -140,6 +158,10 @@ public class VirtualQueueService {
      * 1. Lấy BATCH_SIZE entries đầu tiên chưa có token
      * 2. Gán token cho họ
      * 3. Broadcast cập nhật position qua WebSocket
+     */
+    /**
+     * Định kỳ nhả một batch người dùng khỏi hàng chờ và dọn token hết hạn.
+     * {@code @Scheduled(fixedRate = 5000)} chạy mỗi 5 giây để cập nhật lượt vào booking.
      */
     @Scheduled(fixedRate = 5000) // 5 giây
     public void releaseBatch() {
@@ -213,6 +235,13 @@ public class VirtualQueueService {
 
     // ═══════ HELPER ═══════
 
+    /**
+     * Tính vị trí hiện tại của người dùng trong queue chưa được nhả.
+     *
+     * @param queue hàng chờ của một suất chiếu.
+     * @param userId ID người dùng cần tìm.
+     * @return vị trí trong hàng chờ, hoặc 0 nếu không có.
+     */
     private int getPosition(ConcurrentLinkedQueue<QueueEntry> queue, Long userId) {
         int pos = 1;
         for (QueueEntry e : queue) {
@@ -225,6 +254,9 @@ public class VirtualQueueService {
 
     // ═══════ INNER CLASSES ═══════
 
+    /**
+     * Phần tử đại diện cho một người dùng trong hàng chờ.
+     */
     @Data
     @AllArgsConstructor
     public static class QueueEntry {
@@ -234,6 +266,9 @@ public class VirtualQueueService {
         private int assignedPosition;
     }
 
+    /**
+     * DTO trạng thái hàng chờ trả về cho client.
+     */
     @Data
     @AllArgsConstructor
     public static class QueueStatus {
@@ -245,6 +280,9 @@ public class VirtualQueueService {
         private int totalInQueue;
     }
 
+    /**
+     * Thông tin token đã được cấp cho người dùng khi tới lượt.
+     */
     @Data
     @AllArgsConstructor
     public static class TokenInfo {

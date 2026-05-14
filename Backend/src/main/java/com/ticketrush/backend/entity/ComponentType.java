@@ -3,6 +3,9 @@ package com.ticketrush.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entity lưu loại dữ liệu master dùng để phân nhóm các giá trị cấu hình.
+ */
 @Entity
 @Table(name = "component_types")
 @Setter

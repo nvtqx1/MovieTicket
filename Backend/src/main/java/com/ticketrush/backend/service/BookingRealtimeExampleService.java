@@ -1,6 +1,6 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.SeatStatusPayload;
+import com.ticketrush.backend.dto.payload.SeatStatusPayload;
 import com.ticketrush.backend.entity.Reservation;
 import com.ticketrush.backend.entity.Seat;
 import com.ticketrush.backend.repository.ReservationRepository;
@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
  * Example Service - Cách sử dụng SeatRealtimeService trong thực tế
  * Cập nhật: Nhân viên có thể copy logic này vào BookingService của họ
  */
+/**
+ * Dịch vụ minh họa cách cập nhật trạng thái ghế realtime qua WebSocket.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +36,14 @@ public class BookingRealtimeExampleService {
      * @param showtimeId ID suất chiếu
      * @param seatNumbers Danh sách ghế (VD: ["A1", "A2"])
      * @param userId ID user đang chọn
+     */
+    /**
+     * Khóa tạm thời danh sách ghế và phát trạng thái LOCKED tới client.
+     * {@code @Transactional} đảm bảo các cập nhật ghế trong database cùng rollback nếu có lỗi.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @param seatNumbers danh sách mã ghế cần khóa.
+     * @param userId ID người dùng đang giữ ghế.
      */
     @Transactional
     public void lockSeatsTemporarily(Long showtimeId, List<String> seatNumbers, Long userId) {
@@ -73,6 +84,14 @@ public class BookingRealtimeExampleService {
      * @param seatNumbers Danh sách ghế
      * @param reservationId ID đơn đặt
      */
+    /**
+     * Xác nhận đơn đặt vé và phát trạng thái SOLD cho danh sách ghế.
+     * {@code @Transactional} giữ việc đọc reservation và phát thay đổi trạng thái trong cùng giao dịch.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @param seatNumbers danh sách mã ghế đã đặt.
+     * @param reservationId ID đơn đặt vé được xác nhận.
+     */
     @Transactional
     public void confirmBooking(Long showtimeId, List<String> seatNumbers, Long reservationId) {
         try {
@@ -107,6 +126,14 @@ public class BookingRealtimeExampleService {
      * @param showtimeId ID suất chiếu
      * @param seatNumbers Danh sách ghế
      * @param reason Lý do nhả ghế
+     */
+    /**
+     * Nhả ghế về trạng thái AVAILABLE và phát lý do thay đổi qua WebSocket.
+     * {@code @Transactional} đảm bảo toàn bộ ghế được cập nhật nhất quán.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @param seatNumbers danh sách mã ghế cần nhả.
+     * @param reason lý do nhả ghế.
      */
     @Transactional
     public void releaseSeats(Long showtimeId, List<String> seatNumbers, String reason) {
@@ -143,6 +170,12 @@ public class BookingRealtimeExampleService {
      * 
      * @param reservationId ID đơn đặt
      */
+    /**
+     * Hủy đơn đặt vé và nhả toàn bộ ghế gắn với đơn.
+     * {@code @Transactional} đảm bảo thao tác lấy đơn, tìm ghế và nhả ghế cùng một giao dịch.
+     *
+     * @param reservationId ID đơn đặt vé cần hủy.
+     */
     @Transactional
     public void cancelBooking(Long reservationId) {
         try {
@@ -172,6 +205,10 @@ public class BookingRealtimeExampleService {
     /**
      * Auto-release seats - Được gọi bởi @Scheduled task mỗi phút
      * Kiểm tra tất cả đặt vé quá hạn và nhả lại ghế
+     */
+    /**
+     * Tự động kiểm tra các reservation hết hạn để chuẩn bị nhả ghế.
+     * {@code @Transactional} dùng để gom việc đọc đơn hết hạn và cập nhật trạng thái trong một giao dịch.
      */
     @Transactional
     public void autoReleaseExpiredSeats() {
@@ -225,6 +262,13 @@ public class BookingRealtimeExampleService {
      * @param showtimeId ID suất chiếu
      * @param seatNumbers Danh sách ghế
      * @param customMessage Thông báo tùy chỉnh
+     */
+    /**
+     * Phát payload thông báo tùy chỉnh tới các client theo suất chiếu.
+     *
+     * @param showtimeId ID suất chiếu nhận thông báo.
+     * @param seatNumbers danh sách mã ghế liên quan.
+     * @param customMessage nội dung thông báo tùy chỉnh.
      */
     public void broadcastCustomMessage(Long showtimeId, List<String> seatNumbers, String customMessage) {
         try {

@@ -14,20 +14,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controller quản trị người dùng.
+ *
+ * Annotation {@link Tag} nhóm endpoint trên Swagger; {@link RequiredArgsConstructor}
+ * inject repository qua constructor.
+ */
 @RestController
 @RequestMapping("/v1/admin/users")
 @RequiredArgsConstructor
-@Tag(name = "👥 Admin User Management", description = "API quản lý người dùng (Admin)")
+@Tag(name = "Admin User Management", description = "API quản lý người dùng cho Admin")
 public class AdminUserController {
 
     private final UserRepository userRepository;
 
+    /**
+     * Lấy danh sách toàn bộ người dùng.
+     *
+     * Dùng {@link HashMap} để chấp nhận giá trị null khi dựng response.
+     *
+     * @return danh sách người dùng ở dạng map dữ liệu đơn giản.
+     */
     @GetMapping
-    @Operation(summary = "📋 Lấy danh sách người dùng", security = @SecurityRequirement(name = "bearer-jwt"))
+    @Operation(summary = "Lấy danh sách người dùng", security = @SecurityRequirement(name = "bearer-jwt"))
     public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
         List<User> users = userRepository.findAll();
         List<Map<String, Object>> response = users.stream().map(u -> {
-            // Dùng HashMap thay vì Map.of vì Map.of không cho phép null
             Map<String, Object> map = new HashMap<>();
             map.put("id", u.getId());
             map.put("userName", u.getUserName());
@@ -44,11 +56,13 @@ public class AdminUserController {
     }
 
     /**
-     * Task 1.3: Ban/Unban user (toggle)
-     * PUT /v1/admin/users/{id}/ban
+     * Đảo trạng thái khóa tài khoản của người dùng.
+     *
+     * @param id ID người dùng cần khóa hoặc mở khóa.
+     * @return thông tin trạng thái khóa mới hoặc 404 nếu không tìm thấy.
      */
     @PutMapping("/{id}/ban")
-    @Operation(summary = "🚫 Ban/Unban người dùng", security = @SecurityRequirement(name = "bearer-jwt"))
+    @Operation(summary = "Khóa hoặc mở khóa người dùng", security = @SecurityRequirement(name = "bearer-jwt"))
     public ResponseEntity<?> toggleBanUser(@PathVariable Long id) {
         User user = userRepository.findById(id)
                 .orElse(null);
@@ -56,7 +70,6 @@ public class AdminUserController {
             return ResponseEntity.notFound().build();
         }
 
-        // Toggle ban status
         boolean newStatus = !(user.getIsBanned() != null && user.getIsBanned());
         user.setIsBanned(newStatus);
         userRepository.save(user);
@@ -69,8 +82,17 @@ public class AdminUserController {
         ));
     }
 
+    /**
+     * Xóa cứng người dùng khỏi hệ thống.
+     *
+     * Chặn xóa khi người dùng đã phát sinh dữ liệu liên quan để tránh lỗi toàn
+     * vẹn dữ liệu.
+     *
+     * @param id ID người dùng cần xóa.
+     * @return phản hồi rỗng khi thành công hoặc thông báo lỗi khi không thể xóa.
+     */
     @DeleteMapping("/{id}")
-    @Operation(summary = "🗑️ Xóa người dùng (Hard delete)", security = @SecurityRequirement(name = "bearer-jwt"))
+    @Operation(summary = "Xóa người dùng", security = @SecurityRequirement(name = "bearer-jwt"))
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {
             if (userRepository.existsById(id)) {
@@ -79,7 +101,7 @@ public class AdminUserController {
             }
             return ResponseEntity.notFound().build();
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Không thể xóa người dùng này vì họ đã phát sinh dữ liệu (vé đặt, đánh giá...). Để bảo toàn doanh thu, hệ thống chặn thao tác này."));
+            return ResponseEntity.badRequest().body(Map.of("message", "Không thể xóa người dùng này vì họ đã phát sinh dữ liệu."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Lỗi hệ thống khi xóa người dùng: " + e.getMessage()));
         }

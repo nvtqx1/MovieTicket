@@ -1,7 +1,7 @@
 package com.ticketrush.backend.service.impl;
 
-import com.ticketrush.backend.dto.CreateShowtimeRequest;
-import com.ticketrush.backend.dto.ShowtimeResponse;
+import com.ticketrush.backend.dto.request.CreateShowtimeRequest;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
 import com.ticketrush.backend.entity.Movie;
 import com.ticketrush.backend.entity.Room;
 import com.ticketrush.backend.entity.Seat;
@@ -152,6 +152,15 @@ public class AdminServiceImpl implements AdminService {
     // TASK 1.2: Filtered Showtime List + Delete
     // ═══════════════════════════════════════════════
 
+    /**
+     * Lọc danh sách suất chiếu theo rạp, phim hoặc ngày.
+     * {@code @Transactional(readOnly = true)} tối ưu truy vấn chỉ đọc và không ghi database.
+     *
+     * @param theaterId ID rạp cần lọc, có thể null.
+     * @param movieId ID phim cần lọc, có thể null.
+     * @param date ngày chiếu cần lọc, có thể null.
+     * @return danh sách suất chiếu phù hợp.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ShowtimeResponse> getFilteredShowtimes(Long theaterId, Long movieId, LocalDate date) {
@@ -182,6 +191,13 @@ public class AdminServiceImpl implements AdminService {
                 .toList();
     }
 
+    /**
+     * Xóa suất chiếu và toàn bộ ghế nếu chưa có ghế được đặt.
+     * {@code @Transactional} đảm bảo xóa ghế và suất chiếu trong cùng giao dịch.
+     *
+     * @param showtimeId ID suất chiếu cần xóa.
+     * @throws IllegalArgumentException nếu suất chiếu không tồn tại hoặc đã có vé được đặt.
+     */
     @Override
     @Transactional
     public void deleteShowtime(Long showtimeId) {

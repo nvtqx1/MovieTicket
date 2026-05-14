@@ -1,10 +1,10 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.ConfirmReservationRequest;
-import com.ticketrush.backend.dto.CreateReservationRequest;
-import com.ticketrush.backend.dto.CreateReservationResponse;
-import com.ticketrush.backend.dto.ReservationResponse;
-import com.ticketrush.backend.dto.TicketResponse;
+import com.ticketrush.backend.dto.request.ConfirmReservationRequest;
+import com.ticketrush.backend.dto.request.CreateReservationRequest;
+import com.ticketrush.backend.dto.response.CreateReservationResponse;
+import com.ticketrush.backend.dto.response.ReservationResponse;
+import com.ticketrush.backend.dto.response.TicketResponse;
 import com.ticketrush.backend.entity.*;
 import com.ticketrush.backend.entity.enums.PaymentStatus;
 import com.ticketrush.backend.entity.enums.ReservationStatus;
@@ -34,6 +34,9 @@ import java.util.UUID;
  *
  * @author TicketRush Team
  * @version 1.0
+ */
+/**
+ * Dịch vụ tạo, xác nhận, hủy và tra cứu đơn đặt vé.
  */
 @Slf4j
 @Service
@@ -67,6 +70,15 @@ public class ReservationService {
      * @param request Request chÃ¡Â»Â©a ID Ã„â€˜Ã†Â¡n, mÃƒÂ£ giao dÃ¡Â»â€¹ch, danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿
      * @return ReservationResponse chÃ¡Â»Â©a thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜ÃƒÂ£ chÃ¡Â»â€˜t + mÃƒÂ£ QR
      * @throws Exception nÃ¡ÂºÂ¿u xÃ¡ÂºÂ£y ra lÃ¡Â»â€”i trong quÃƒÂ¡ trÃƒÂ¬nh xÃ¡Â»Â­ lÃƒÂ½
+     */
+    /**
+     * Xác nhận thanh toán cho reservation và tạo QR vé.
+     * {@code @Transactional} rollback toàn bộ nếu validate, cập nhật ghế, lưu payment hoặc tạo QR thất bại.
+     *
+     * @param userId ID người dùng xác nhận đơn.
+     * @param request thông tin xác nhận thanh toán.
+     * @return thông tin reservation sau khi xác nhận.
+     * @throws Exception nếu xử lý xác nhận thất bại.
      */
     @Transactional
     public ReservationResponse confirmReservation(Long userId, ConfirmReservationRequest request) throws Exception {
@@ -241,6 +253,13 @@ public class ReservationService {
      * @param transactionCode MÃƒÂ£ giao dÃ¡Â»â€¹ch
      * @return Hash bÃƒÂ­ mÃ¡ÂºÂ­t
      */
+    /**
+     * Sinh hash bí mật dùng làm dữ liệu xác thực QR.
+     *
+     * @param reservationId ID đơn đặt vé.
+     * @param transactionCode mã giao dịch thanh toán.
+     * @return hash bí mật đã mã hóa Base64.
+     */
     private String generateSecretHash(Long reservationId, String transactionCode) {
         String rawData = String.format(
                 "%d_%s_%d_%s",
@@ -254,6 +273,12 @@ public class ReservationService {
         return Base64.getEncoder().encodeToString(rawData.getBytes());
     }
 
+    /**
+     * Chuẩn hóa tên nhà cung cấp thanh toán.
+     *
+     * @param provider tên provider từ request, có thể null.
+     * @return provider đã chuẩn hóa.
+     */
     private String resolveProvider(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
             return "VNPAY";
@@ -261,6 +286,14 @@ public class ReservationService {
         return provider.trim().toUpperCase();
     }
 
+    /**
+     * Kiểm tra và lấy voucher hợp lệ cho tổng tiền hiện tại.
+     *
+     * @param voucherCode mã voucher, có thể null.
+     * @param totalPrice tổng tiền trước giảm giá.
+     * @return voucher hợp lệ hoặc null nếu không truyền mã.
+     * @throws IllegalArgumentException nếu voucher không tồn tại, hết hạn hoặc hết lượt dùng.
+     */
     private Voucher resolveVoucher(String voucherCode, BigDecimal totalPrice) {
         if (voucherCode == null || voucherCode.trim().isEmpty()) {
             return null;
@@ -300,6 +333,15 @@ public class ReservationService {
      * @param request Request chÃ¡Â»Â©a showtimeId, seatNumbers, voucherCode
      * @return CreateReservationResponse chÃ¡Â»Â©a thÃƒÂ´ng tin Ã„â€˜Ã†Â¡n vÃ¡Â»Â«a tÃ¡ÂºÂ¡o
      * @throws Exception nÃ¡ÂºÂ¿u xÃ¡ÂºÂ£y ra lÃ¡Â»â€”i
+     */
+    /**
+     * Tạo reservation LOCKED cho danh sách ghế người dùng chọn.
+     * {@code @Transactional} đảm bảo khóa ghế, tạo đơn và cập nhật số ghế còn trống cùng rollback khi lỗi.
+     *
+     * @param userId ID người dùng tạo đơn.
+     * @param request thông tin suất chiếu và danh sách ghế.
+     * @return thông tin đơn tạm giữ vừa tạo.
+     * @throws Exception nếu tạo đơn thất bại.
      */
     @Transactional
     public CreateReservationResponse createReservation(Long userId, CreateReservationRequest request) throws Exception {
@@ -458,6 +500,13 @@ public class ReservationService {
      * @return List<TicketResponse> danh sÃƒÂ¡ch vÃƒÂ© cÃ¡Â»Â§a ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng
      * @throws Exception nÃ¡ÂºÂ¿u khÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y user
      */
+    /**
+     * Lấy danh sách vé/đơn đặt vé của người dùng theo email.
+     *
+     * @param userEmail email người dùng.
+     * @return danh sách vé của người dùng.
+     * @throws Exception nếu không tìm thấy người dùng hoặc truy vấn thất bại.
+     */
     public List<TicketResponse> getUserReservations(String userEmail) throws Exception {
         try {
             log.info("Ã°Å¸Å½Â« LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch vÃƒÂ© cÃ¡Â»Â§a user: {}", userEmail);
@@ -485,6 +534,12 @@ public class ReservationService {
      * Map Reservation entity sang TicketResponse DTO
      * VÃ¡Â»â‚¬ LÃ¡Â»â€“ HÃ¡Â»â€NG 2: BÃ¡ÂºÂ¯t buÃ¡Â»â„¢c phÃ¡ÂºÂ£i cÃƒÂ³ roomName Ã„â€˜Ã¡Â»Æ’ khÃƒÂ¡ch biÃ¡ÂºÂ¿t Ã„â€˜Ã†Â°Ã¡Â»Âng Ã„â€˜i
      * Format: "RÃ¡ÂºÂ¡p: Beta Cinemas - PhÃƒÂ²ng: IMAX 01"
+     */
+    /**
+     * Chuyển Reservation sang DTO vé hiển thị cho người dùng.
+     *
+     * @param reservation entity reservation cần chuyển đổi.
+     * @return DTO vé.
      */
     private TicketResponse mapToTicketResponse(Reservation reservation) {
         String theaterName = reservation.getShowtime().getTheater().getName();
@@ -521,6 +576,14 @@ public class ReservationService {
      * @param userId ID ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng
      * @return ThÃƒÂ´ng tin Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ©
      * @throws Exception nÃ¡ÂºÂ¿u khÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y hoÃ¡ÂºÂ·c khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân
+     */
+    /**
+     * Lấy chi tiết reservation và kiểm tra quyền sở hữu.
+     *
+     * @param reservationId ID reservation.
+     * @param userId ID người dùng yêu cầu xem.
+     * @return thông tin reservation.
+     * @throws Exception nếu reservation không tồn tại hoặc user không có quyền.
      */
     public ReservationResponse getReservation(Long reservationId, Long userId) throws Exception {
         try {
@@ -581,8 +644,16 @@ public class ReservationService {
      * @return Response xÃƒÂ¡c nhÃ¡ÂºÂ­n Ã„â€˜ÃƒÂ£ xÃ¡Â»Â­ lÃƒÂ½
      * @throws Exception nÃ¡ÂºÂ¿u validate fail hoÃ¡ÂºÂ·c reservation khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
      */
+    /**
+     * Xử lý callback thanh toán, cập nhật reservation, payment và phát realtime.
+     * {@code @Transactional} rollback nếu callback không hợp lệ hoặc cập nhật dữ liệu thất bại.
+     *
+     * @param request dữ liệu callback từ cổng thanh toán.
+     * @return thông tin reservation sau khi xử lý callback.
+     * @throws Exception nếu xử lý callback thất bại.
+     */
     @Transactional
-    public ReservationResponse handlePaymentCallback(com.ticketrush.backend.dto.PaymentCallbackRequest request) throws Exception {
+    public ReservationResponse handlePaymentCallback(com.ticketrush.backend.dto.request.PaymentCallbackRequest request) throws Exception {
         try {
             log.info("Ã°Å¸â€™Â³ Payment Callback tÃ¡Â»Â« {}: Transaction {} cho Reservation {}",
                     request.getProvider(), request.getTransactionCode(), request.getReservationId());
@@ -730,6 +801,14 @@ public class ReservationService {
     /**
      * HÃ¡Â»Â§y Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© do ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng yÃƒÂªu cÃ¡ÂºÂ§u
      */
+    /**
+     * Hủy reservation của người dùng và giải phóng các ghế liên quan.
+     * {@code @Transactional} đảm bảo trạng thái đơn, ghế và realtime được cập nhật nhất quán.
+     *
+     * @param reservationId ID reservation cần hủy.
+     * @param userId ID người dùng yêu cầu hủy.
+     * @throws IllegalArgumentException nếu reservation không tồn tại, không thuộc user hoặc đã hủy.
+     */
     @Transactional
     public void cancelReservation(Long reservationId, Long userId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -749,6 +828,14 @@ public class ReservationService {
         log.info("Ã¢Å“â€¦ Ã„ÂÃƒÂ£ hÃ¡Â»Â§y Ã„â€˜Ã†Â¡n {} vÃƒÂ  giÃ¡ÂºÂ£i phÃƒÂ³ng {} ghÃ¡ÂºÂ¿", reservationId, seats.size());
     }
 
+    /**
+     * Giải phóng toàn bộ ghế của reservation và phát trạng thái AVAILABLE.
+     *
+     * @param reservation reservation cần giải phóng ghế.
+     * @param realtimeMessage nội dung realtime gửi tới client.
+     * @param actorUserId ID người thực hiện, có thể null khi job hệ thống chạy.
+     * @return danh sách ghế đã giải phóng.
+     */
     private List<Seat> releaseReservationSeats(Reservation reservation, String realtimeMessage, Long actorUserId) {
         reservation.setStatus(ReservationStatus.CANCELED);
         reservation.setPaid(false);
@@ -785,6 +872,10 @@ public class ReservationService {
      * TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng dÃ¡Â»Ân dÃ¡ÂºÂ¹p cÃƒÂ¡c Ã„â€˜Ã†Â¡n Ã„â€˜Ã¡ÂºÂ·t vÃƒÂ© Ã„â€˜ÃƒÂ£ quÃƒÂ¡ hÃ¡ÂºÂ¡n giÃ¡Â»Â¯ ghÃ¡ÂºÂ¿ (chÃ¡ÂºÂ¡y mÃ¡Â»â€”i phÃƒÂºt).
      * GiÃ¡ÂºÂ£i phÃƒÂ³ng ghÃ¡ÂºÂ¿ cho ngÃ†Â°Ã¡Â»Âi khÃƒÂ¡c mua.
      */
+    /**
+     * Dọn các reservation LOCKED đã hết hạn mỗi phút.
+     * {@code @Scheduled(fixedRate = 60000)} chạy định kỳ; {@code @Transactional} đảm bảo hủy đơn và nhả ghế cùng giao dịch.
+     */
     @Transactional
     @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
     public void cleanupExpiredReservations() {
@@ -811,8 +902,17 @@ public class ReservationService {
      * TrÃ¡ÂºÂ£ vÃ¡Â»Â: TÃƒÂªn phim, RÃ¡ÂºÂ¡p, PhÃƒÂ²ng (Hall), DÃƒÂ£y (Row), SÃ¡Â»â€˜ ghÃ¡ÂºÂ¿ (Seat), GiÃ¡Â»Â chiÃ¡ÂºÂ¿u
      * DÃƒÂ¹ng Ã„â€˜Ã¡Â»Æ’ render UI vÃƒÂ© giÃ¡ÂºÂ¥y truyÃ¡Â»Ân thÃ¡Â»â€˜ng vÃƒÂ  mÃƒÂ£ hÃƒÂ³a QR Code
      */
+    /**
+     * Lấy chi tiết vé để hiển thị và tạo QR nếu có hash.
+     * {@code @Transactional(readOnly = true)} tối ưu truy vấn chỉ đọc.
+     *
+     * @param reservationId ID reservation cần xem.
+     * @param userId ID người dùng yêu cầu xem.
+     * @return chi tiết vé.
+     * @throws IllegalArgumentException nếu reservation không tồn tại hoặc user không có quyền.
+     */
     @Transactional(readOnly = true)
-    public com.ticketrush.backend.dto.TicketDetailResponse getTicketDetail(Long reservationId, Long userId) {
+    public com.ticketrush.backend.dto.response.TicketDetailResponse getTicketDetail(Long reservationId, Long userId) {
         log.info("Ã°Å¸Å½Â« LÃ¡ÂºÂ¥y chi tiÃ¡ÂºÂ¿t vÃƒÂ© ID: {} cho user: {}", reservationId, userId);
 
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -831,14 +931,14 @@ public class ReservationService {
         // LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch ghÃ¡ÂºÂ¿
         List<Seat> seats = seatRepository.findByReservationId(reservationId);
 
-        List<com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail> seatDetails = seats.stream()
+        List<com.ticketrush.backend.dto.response.TicketDetailResponse.SeatDetail> seatDetails = seats.stream()
                 .map(seat -> {
                     String seatNumber = seat.getSeatNumber();
                     // TÃƒÂ¡ch dÃƒÂ£y (Row) vÃƒÂ  sÃ¡Â»â€˜ ghÃ¡ÂºÂ¿ (Col) tÃ¡Â»Â« seatNumber VD "A12" Ã¢â€ â€™ row="A", col="12"
                     String row = seatNumber.replaceAll("[0-9]", "");
                     String col = seatNumber.replaceAll("[^0-9]", "");
 
-                    return com.ticketrush.backend.dto.TicketDetailResponse.SeatDetail.builder()
+                    return com.ticketrush.backend.dto.response.TicketDetailResponse.SeatDetail.builder()
                             .seatNumber(seatNumber)
                             .row(row)
                             .col(col)
@@ -858,7 +958,7 @@ public class ReservationService {
             }
         }
 
-        return com.ticketrush.backend.dto.TicketDetailResponse.builder()
+        return com.ticketrush.backend.dto.response.TicketDetailResponse.builder()
                 .reservationId(reservation.getId())
                 .movieTitle(movie.getTitle())
                 .moviePosterUrl(movie.getPosterImageUrl())

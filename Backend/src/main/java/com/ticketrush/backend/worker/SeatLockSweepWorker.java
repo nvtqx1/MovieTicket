@@ -24,6 +24,9 @@ import java.util.List;
  * - Redis listener = fast path (xử lý ngay khi key expire)
  * - Scheduled sweep = safety net (dọn dẹp những gì bị sót)
  */
+/**
+ * Worker định kỳ dọn reservation LOCKED đã hết hạn nếu Redis event bị bỏ sót.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -39,6 +42,10 @@ public class SeatLockSweepWorker {
     /**
      * Chạy mỗi 60 giây, quét tìm reservation LOCKED có expiresAt < now
      * và giải phóng ghế + xóa key Redis (nếu còn tồn tại)
+     */
+    /**
+     * Quét reservation LOCKED đã hết hạn, nhả ghế và xóa key Redis còn sót.
+     * {@code @Scheduled} chạy mỗi 60 giây sau delay 30 giây; {@code @Transactional} đảm bảo cập nhật ghế và reservation cùng giao dịch.
      */
     @Scheduled(fixedRate = 60_000, initialDelay = 30_000)
     @Transactional
@@ -63,6 +70,11 @@ public class SeatLockSweepWorker {
         }
     }
 
+    /**
+     * Giải phóng toàn bộ ghế của reservation hết hạn và phát realtime AVAILABLE.
+     *
+     * @param reservation reservation LOCKED đã hết hạn.
+     */
     private void releaseReservation(Reservation reservation) {
         // Tìm tất cả ghế thuộc reservation này
         List<Seat> seats = seatRepository.findByReservationId(reservation.getId());

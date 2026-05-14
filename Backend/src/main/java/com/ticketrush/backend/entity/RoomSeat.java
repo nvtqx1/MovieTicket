@@ -4,15 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * Entity đại diện cho Ghế cố định trong Phòng chiếu.
- * 
- * Mỗi Room có 1 bộ ghế cố định (VD: A1-A15, B1-B15...).
- * Khi Admin tạo Showtime, hệ thống sẽ copy danh sách ghế này
- * sang bảng seats (ghế theo suất chiếu) để tracking đặt vé.
+ * Entity biểu diễn ghế cố định trong phòng chiếu.
  *
- * Quan hệ:
- *   Room (1) ←→ (N) RoomSeat
- *   SeatType (1) ←→ (N) RoomSeat
+ * Dữ liệu này là sơ đồ ghế mẫu của phòng và được dùng để tạo ghế theo từng
+ * suất chiếu.
  */
 @Entity
 @Table(name = "room_seats")

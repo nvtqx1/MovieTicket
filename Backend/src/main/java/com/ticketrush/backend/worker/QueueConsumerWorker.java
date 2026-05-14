@@ -2,7 +2,7 @@ package com.ticketrush.backend.worker;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticketrush.backend.dto.SeatStatusPayload;
+import com.ticketrush.backend.dto.payload.SeatStatusPayload;
 import com.ticketrush.backend.service.QueueTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+/**
+ * Worker tiêu thụ yêu cầu hàng chờ từ Kafka và cấp token vào booking.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,6 +28,12 @@ public class QueueConsumerWorker {
      * Lắng nghe từ Topic ticket_requests
      * containerFactory = "kafkaListenerContainerFactory" đã được cấu hình trong KafkaConfig
      * để lấy tối đa 50 messages/lần (MAX_POLL_RECORDS)
+     */
+    /**
+     * Lắng nghe topic Kafka, sinh queue token và gửi thông báo tới user qua WebSocket.
+     * {@code @KafkaListener} dùng container factory đã cấu hình để xử lý message theo group consumer.
+     *
+     * @param message payload JSON chứa userId và showtimeId.
      */
     @KafkaListener(
             topics = "${ticketrush.queue.topic:ticket_requests}",

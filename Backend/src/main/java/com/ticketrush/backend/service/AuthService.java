@@ -1,8 +1,8 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.JwtResponse;
-import com.ticketrush.backend.dto.LoginRequest;
-import com.ticketrush.backend.dto.SignupRequest;
+import com.ticketrush.backend.dto.response.JwtResponse;
+import com.ticketrush.backend.dto.request.LoginRequest;
+import com.ticketrush.backend.dto.request.SignupRequest;
 import com.ticketrush.backend.entity.Role;
 import com.ticketrush.backend.entity.User;
 import com.ticketrush.backend.repository.RoleRepository;
@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Dịch vụ xử lý đăng nhập, đăng ký và phát hành JWT cho người dùng.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,6 +33,13 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final PasswordEncoder encoder;
 
+    /**
+     * Xác thực email, mật khẩu và tạo JWT kèm danh sách quyền.
+     *
+     * @param loginRequest thông tin đăng nhập của người dùng.
+     * @return phản hồi chứa JWT, email và danh sách quyền.
+     * @throws org.springframework.security.core.AuthenticationException nếu thông tin đăng nhập không hợp lệ.
+     */
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         // 1. Xác thực tài khoản
         Authentication authentication = authenticationManager.authenticate(
@@ -50,6 +60,13 @@ public class AuthService {
         return new JwtResponse(jwt, userDetails.getUsername(), roles);
     }
 
+    /**
+     * Đăng ký tài khoản mới với quyền mặc định ROLE_USER.
+     * {@code @Transactional} đảm bảo rollback nếu kiểm tra trùng hoặc lưu user thất bại.
+     *
+     * @param signUpRequest thông tin đăng ký của người dùng.
+     * @throws RuntimeException nếu email, username đã tồn tại hoặc không tìm thấy quyền mặc định.
+     */
     @Transactional
     public void registerUser(SignupRequest signUpRequest) {
         // Kiểm tra email đã tồn tại

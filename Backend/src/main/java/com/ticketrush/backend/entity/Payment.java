@@ -9,6 +9,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entity lưu giao dịch thanh toán của một đơn đặt vé.
+ *
+ * Annotation {@link CreationTimestamp} và {@link UpdateTimestamp} tự động ghi
+ * thời điểm tạo và cập nhật bản ghi.
+ */
 @Entity
 @Table(name = "payments")
 @Setter

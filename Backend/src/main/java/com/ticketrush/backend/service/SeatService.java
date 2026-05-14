@@ -1,8 +1,8 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.GenerateSeatRequest;
-import com.ticketrush.backend.dto.GenerateSeatResponse;
-import com.ticketrush.backend.dto.SeatResponse;
+import com.ticketrush.backend.dto.request.GenerateSeatRequest;
+import com.ticketrush.backend.dto.response.GenerateSeatResponse;
+import com.ticketrush.backend.dto.response.SeatResponse;
 
 import java.util.List;
 
@@ -26,6 +26,9 @@ import java.util.List;
  * @author Backend Team
  * @version 1.0
  * @since NGÀY 7 (2026-04-17)
+ */
+/**
+ * Dịch vụ quản lý sơ đồ ghế của suất chiếu.
  */
 public interface SeatService {
     
@@ -78,6 +81,13 @@ public interface SeatService {
      *         - message: Thông báo success bằng tiếng Việt
      * @throws RuntimeException nếu suất chiếu không tồn tại hoặc ghế đã tồn tại
      */
+    /**
+     * Sinh hoặc cập nhật ma trận ghế cho một suất chiếu.
+     *
+     * @param request thông tin suất chiếu, số hàng và số cột.
+     * @return kết quả sinh ghế và tổng số ghế sau khi xử lý.
+     * @throws RuntimeException nếu suất chiếu hoặc loại ghế bắt buộc không tồn tại.
+     */
     GenerateSeatResponse generateSeatMatrix(GenerateSeatRequest request);
 
     /**
@@ -91,6 +101,13 @@ public interface SeatService {
      * @return Danh sách ghế với trạng thái is_reserved
      * @throws IllegalArgumentException nếu suất chiếu không tồn tại
      */
+    /**
+     * Lấy danh sách ghế của một suất chiếu.
+     *
+     * @param showtimeId ID suất chiếu.
+     * @return danh sách ghế kèm trạng thái và giá.
+     * @throws IllegalArgumentException nếu suất chiếu không tồn tại.
+     */
     List<SeatResponse> getSeatsByShowtime(Long showtimeId);
 
     /**
@@ -100,6 +117,12 @@ public interface SeatService {
      * 
      * @param showtimeId ID của suất chiếu
      * @throws RuntimeException nếu suất chiếu đang có vé đã đặt
+     */
+    /**
+     * Xóa toàn bộ ghế của một suất chiếu nếu chưa có ghế được đặt.
+     *
+     * @param showtimeId ID suất chiếu cần xóa ghế.
+     * @throws RuntimeException nếu suất chiếu đang có vé đã đặt.
      */
     void deleteSeatsByShowtime(Long showtimeId);
 }

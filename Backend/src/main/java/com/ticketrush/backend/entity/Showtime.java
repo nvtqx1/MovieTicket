@@ -8,6 +8,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+/**
+ * Entity biểu diễn suất chiếu của một phim trong một phòng chiếu.
+ */
 @Entity
 @Table(name = "showtimes")
 @Setter
@@ -47,8 +50,9 @@ public class Showtime {
     private Boolean isFlashSale = false;
 
     /**
-     * Convert showDate and showTime to LocalDateTime
-     * @return LocalDateTime combining date and time
+     * Ghép ngày chiếu và giờ chiếu thành thời điểm bắt đầu.
+     *
+     * @return thời điểm bắt đầu suất chiếu, hoặc null nếu thiếu ngày hoặc giờ.
      */
     public LocalDateTime getStartTime() {
         if (showDate != null && showTime != null) {
@@ -57,6 +61,14 @@ public class Showtime {
         return null;
     }
 
+    /**
+     * Lấy rạp chiếu thông qua phòng chiếu.
+     *
+     * Annotation {@link Transient} đánh dấu đây là thuộc tính tính toán, không
+     * ánh xạ thành cột trong database.
+     *
+     * @return rạp của phòng chiếu, hoặc null nếu chưa có phòng.
+     */
     @Transient
     public Theater getTheater() {
         return room != null ? room.getTheater() : null;

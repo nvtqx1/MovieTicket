@@ -1,10 +1,10 @@
 package com.ticketrush.backend.controller;
 
-import com.ticketrush.backend.dto.CreateRoomRequest;
-import com.ticketrush.backend.dto.CreateTheaterRequest;
-import com.ticketrush.backend.dto.RoomResponse;
-import com.ticketrush.backend.dto.ShowtimeResponse;
-import com.ticketrush.backend.dto.TheaterResponse;
+import com.ticketrush.backend.dto.request.CreateRoomRequest;
+import com.ticketrush.backend.dto.request.CreateTheaterRequest;
+import com.ticketrush.backend.dto.response.RoomResponse;
+import com.ticketrush.backend.dto.response.ShowtimeResponse;
+import com.ticketrush.backend.dto.response.TheaterResponse;
 import com.ticketrush.backend.entity.Theater;
 import com.ticketrush.backend.repository.ShowtimeRepository;
 import com.ticketrush.backend.repository.TheaterRepository;
@@ -27,22 +27,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller quản lý Rạp chiếu và Phòng chiếu
- * 
- * Endpoints:
- * - GET /v1/theaters: Lấy danh sách rạp
- * - GET /v1/theaters/{id}/schedule: Lịch chiếu 6 ngày tới (Task 2.2)
- * - POST /v1/admin/theaters: Admin tạo rạp mới
- * - POST /v1/admin/theaters/{theaterId}/rooms: Admin tạo phòng
- * - GET /v1/theaters/{theaterId}/rooms: Lấy danh sách phòng của rạp
- * 
- * @author TicketRush Team
- * @version 2.0
+ * Controller quản lý rạp chiếu và phòng chiếu.
+ *
+ * Lịch chiếu theo rạp được nhóm bằng {@link TreeMap} để giữ thứ tự ngày tăng dần.
  */
 @RestController
 @RequestMapping("/v1/theaters")
 @RequiredArgsConstructor
-@Tag(name = "🏛️ Theater Management", description = "API quản lý rạp chiếu")
+@Tag(name = "Theater Management", description = "API quản lý rạp chiếu")
 public class TheaterController {
 
     private final TheaterService theaterService;
@@ -51,42 +43,34 @@ public class TheaterController {
     private final TheaterRepository theaterRepository;
 
     /**
-     * GET /v1/theaters
-     * Lấy danh sách tất cả rạp chiếu
+     * Lấy danh sách tất cả rạp chiếu đang hoạt động.
+     *
+     * @return danh sách rạp chiếu.
      */
     @GetMapping
-    @Operation(summary = "📋 Lấy danh sách rạp", description = "Lấy tất cả rạp chiếu đang hoạt động")
-    @ApiResponse(responseCode = "200", description = "✅ Lấy thành công")
+    @Operation(summary = "Lấy danh sách rạp")
+    @ApiResponse(responseCode = "200", description = "Lấy thành công")
     public ResponseEntity<List<TheaterResponse>> getAllTheaters() {
         return ResponseEntity.ok(theaterService.getAllTheaters());
     }
 
     /**
-     * Task 2.2: GET /v1/theaters/{id}/schedule
-     * Lấy lịch chiếu của rạp trong 6 ngày tới, nhóm theo ngày
-     * 
-     * Response format:
-     * {
-     *   "theaterId": 1,
-     *   "theaterName": "CGV Hồ Tây",
-     *   "schedule": {
-     *     "2026-05-07": [ ShowtimeResponse, ... ],
-     *     "2026-05-08": [ ShowtimeResponse, ... ]
-     *   }
-     * }
+     * Lấy lịch chiếu của rạp trong 6 ngày tính từ hôm nay.
+     *
+     * @param id ID rạp cần lấy lịch.
+     * @return thông tin rạp và lịch chiếu nhóm theo ngày.
      */
     @GetMapping("/{id}/schedule")
-    @Operation(summary = "📅 Lấy lịch chiếu của rạp (6 ngày tới)")
+    @Operation(summary = "Lấy lịch chiếu của rạp")
     public ResponseEntity<?> getTheaterSchedule(@PathVariable Long id) {
         Theater theater = theaterRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Rạp không tồn tại"));
 
         LocalDate today = LocalDate.now();
-        LocalDate endDate = today.plusDays(5); // 6 ngày (hôm nay + 5)
+        LocalDate endDate = today.plusDays(5);
 
         var showtimes = showtimeRepository.findByTheaterAndDateRange(id, today, endDate);
 
-        // Nhóm theo ngày, sắp xếp theo thứ tự ngày
         Map<LocalDate, List<ShowtimeResponse>> schedule = showtimes.stream()
                 .map(showtimeServiceImpl::toResponse)
                 .collect(Collectors.groupingBy(
@@ -105,20 +89,22 @@ public class TheaterController {
     }
 
     /**
-     * POST /v1/theaters - Admin tạo rạp mới
+     * Tạo rạp chiếu mới.
+     *
+     * @param request dữ liệu rạp cần tạo.
+     * @return rạp vừa được tạo.
      */
     @PostMapping
     @Operation(
-        summary = "➕ Admin: Tạo rạp chiếu mới",
-        description = "Admin API để tạo rạp chiếu mới",
+        summary = "Admin tạo rạp chiếu mới",
         security = @SecurityRequirement(name = "bearer-jwt")
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "✅ Tạo rạp thành công",
+        @ApiResponse(responseCode = "201", description = "Tạo rạp thành công",
             content = @Content(schema = @Schema(implementation = TheaterResponse.class))),
-        @ApiResponse(responseCode = "400", description = "❌ Dữ liệu không hợp lệ"),
-        @ApiResponse(responseCode = "401", description = "❌ Chưa đăng nhập"),
-        @ApiResponse(responseCode = "409", description = "❌ Rạp đã tồn tại")
+        @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+        @ApiResponse(responseCode = "401", description = "Chưa đăng nhập"),
+        @ApiResponse(responseCode = "409", description = "Rạp đã tồn tại")
     })
     public ResponseEntity<TheaterResponse> createTheater(@RequestBody CreateTheaterRequest request) {
         try {
@@ -130,34 +116,39 @@ public class TheaterController {
     }
 
     /**
-     * GET /v1/theaters/{theaterId}/rooms
-     * Lấy danh sách phòng chiếu của một rạp
+     * Lấy danh sách phòng chiếu của một rạp.
+     *
+     * @param theaterId ID rạp cần lấy phòng.
+     * @return danh sách phòng chiếu của rạp.
      */
     @GetMapping("/{theaterId}/rooms")
-    @Operation(summary = "🎬 Lấy danh sách phòng của rạp", description = "Lấy tất cả phòng chiếu trong một rạp")
+    @Operation(summary = "Lấy danh sách phòng của rạp")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "✅ Lấy thành công"),
-        @ApiResponse(responseCode = "404", description = "❌ Rạp không tồn tại")
+        @ApiResponse(responseCode = "200", description = "Lấy thành công"),
+        @ApiResponse(responseCode = "404", description = "Rạp không tồn tại")
     })
     public ResponseEntity<List<RoomResponse>> getRoomsByTheater(@PathVariable Long theaterId) {
         return ResponseEntity.ok(theaterService.getRoomsByTheater(theaterId));
     }
 
     /**
-     * POST /v1/theaters/{theaterId}/rooms - Admin tạo phòng
+     * Tạo phòng chiếu mới cho một rạp.
+     *
+     * @param theaterId ID rạp chứa phòng mới.
+     * @param request dữ liệu phòng cần tạo.
+     * @return phòng chiếu vừa tạo.
      */
     @PostMapping("/{theaterId}/rooms")
     @Operation(
-        summary = "➕ Admin: Tạo phòng chiếu mới",
-        description = "Admin API để tạo phòng chiếu cho một rạp",
+        summary = "Admin tạo phòng chiếu mới",
         security = @SecurityRequirement(name = "bearer-jwt")
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "✅ Tạo phòng thành công",
+        @ApiResponse(responseCode = "201", description = "Tạo phòng thành công",
             content = @Content(schema = @Schema(implementation = RoomResponse.class))),
-        @ApiResponse(responseCode = "400", description = "❌ Dữ liệu không hợp lệ"),
-        @ApiResponse(responseCode = "401", description = "❌ Chưa đăng nhập"),
-        @ApiResponse(responseCode = "404", description = "❌ Rạp không tồn tại")
+        @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+        @ApiResponse(responseCode = "401", description = "Chưa đăng nhập"),
+        @ApiResponse(responseCode = "404", description = "Rạp không tồn tại")
     })
     public ResponseEntity<RoomResponse> createRoom(
         @PathVariable Long theaterId,
@@ -171,6 +162,13 @@ public class TheaterController {
         }
     }
 
+    /**
+     * Cập nhật thông tin rạp chiếu.
+     *
+     * @param id ID rạp cần cập nhật.
+     * @param request dữ liệu cập nhật.
+     * @return thông tin rạp sau cập nhật.
+     */
     @PutMapping("/{id}")
     @Operation(summary = "Sửa rạp chiếu")
     public ResponseEntity<TheaterResponse> updateTheater(
@@ -184,6 +182,12 @@ public class TheaterController {
         }
     }
 
+    /**
+     * Xóa rạp chiếu.
+     *
+     * @param id ID rạp cần xóa.
+     * @return phản hồi rỗng khi xóa thành công.
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa rạp chiếu")
     public ResponseEntity<Void> deleteTheater(@PathVariable Long id) {
@@ -195,13 +199,17 @@ public class TheaterController {
         }
     }
 
-    // ═══════════════════════════════════════════════
-    // TASK 1.1: Room CRUD — Sửa/Xóa Phòng chiếu
-    // ═══════════════════════════════════════════════
-
+    /**
+     * Cập nhật phòng chiếu thuộc một rạp.
+     *
+     * @param theaterId ID rạp chứa phòng.
+     * @param roomId ID phòng cần cập nhật.
+     * @param request dữ liệu cập nhật phòng.
+     * @return thông tin phòng sau cập nhật hoặc thông báo lỗi.
+     */
     @PutMapping("/{theaterId}/rooms/{roomId}")
     @Operation(
-        summary = "✏️ Admin: Sửa phòng chiếu",
+        summary = "Admin sửa phòng chiếu",
         security = @SecurityRequirement(name = "bearer-jwt")
     )
     public ResponseEntity<?> updateRoom(
@@ -217,9 +225,16 @@ public class TheaterController {
         }
     }
 
+    /**
+     * Xóa phòng chiếu khỏi một rạp.
+     *
+     * @param theaterId ID rạp chứa phòng.
+     * @param roomId ID phòng cần xóa.
+     * @return thông báo xóa thành công hoặc lỗi nghiệp vụ.
+     */
     @DeleteMapping("/{theaterId}/rooms/{roomId}")
     @Operation(
-        summary = "🗑️ Admin: Xóa phòng chiếu",
+        summary = "Admin xóa phòng chiếu",
         security = @SecurityRequirement(name = "bearer-jwt")
     )
     public ResponseEntity<?> deleteRoom(

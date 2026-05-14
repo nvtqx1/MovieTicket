@@ -1,7 +1,7 @@
 package com.ticketrush.backend.service;
 
-import com.ticketrush.backend.dto.HoldSeatRequest;
-import com.ticketrush.backend.dto.HoldSeatResponse;
+import com.ticketrush.backend.dto.request.HoldSeatRequest;
+import com.ticketrush.backend.dto.response.HoldSeatResponse;
 import com.ticketrush.backend.entity.*;
 import com.ticketrush.backend.entity.enums.ReservationStatus;
 import com.ticketrush.backend.repository.*;
@@ -36,6 +36,9 @@ import java.util.UUID;
  * Lock timeout: 3 giây (nếu Thread 1 xử lý quá lâu → Thread 2 timeout)
  * Hold timeout: 10 phút (nếu user không thanh toán → CronJob nhả ghế)
  */
+/**
+ * Dịch vụ đặt vé, giữ ghế chống tranh chấp và mô phỏng thanh toán.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -61,6 +64,15 @@ public class BookingService {
      * @param userId ID người dùng
      * @param request {showtimeId, seatNumbers}
      * @return HoldSeatResponse
+     */
+    /**
+     * Giữ ghế bằng pessimistic lock và tạo reservation LOCKED trong 10 phút.
+     * Repository dùng {@code @Lock(PESSIMISTIC_WRITE)} để buộc các request cùng ghế xử lý tuần tự.
+     *
+     * @param userId ID người dùng giữ ghế.
+     * @param request thông tin suất chiếu và danh sách ghế.
+     * @return kết quả giữ ghế, reservationId và hạn thanh toán.
+     * @throws IllegalArgumentException nếu suất chiếu hoặc người dùng không tồn tại.
      */
     @Transactional
     public HoldSeatResponse holdSeats(Long userId, HoldSeatRequest request) {
@@ -180,6 +192,16 @@ public class BookingService {
      * @param reservationId ID đơn đặt vé
      * @param paymentMethod Phương thức thanh toán (VD: "MOMO", "VNPAY", "CASH")
      */
+    /**
+     * Mô phỏng thanh toán cho reservation đang khóa và chuyển ghế sang SOLD.
+     * {@code @Transactional} đảm bảo cập nhật reservation, QR và realtime trong cùng giao dịch.
+     *
+     * @param userId ID người dùng thanh toán.
+     * @param reservationId ID đơn đặt vé cần thanh toán.
+     * @param paymentMethod phương thức thanh toán mô phỏng.
+     * @return dữ liệu kết quả thanh toán.
+     * @throws IllegalArgumentException nếu đơn không tồn tại, sai chủ sở hữu, sai trạng thái hoặc đã hết hạn.
+     */
     @Transactional
     public Map<String, Object> mockCheckout(Long userId, Long reservationId, String paymentMethod) {
         log.info("💳 [CHECKOUT] User {} thanh toán đơn {} bằng {}",
@@ -244,6 +266,13 @@ public class BookingService {
         );
     }
 
+    /**
+     * Giải phóng ghế của reservation đang khóa và phát realtime trạng thái AVAILABLE.
+     *
+     * @param reservation reservation cần hủy khóa.
+     * @param realtimeMessage nội dung gửi realtime.
+     * @param actorUserId ID người thực hiện hành động, có thể null.
+     */
     private void releaseLockedReservation(Reservation reservation, String realtimeMessage, Long actorUserId) {
         List<Seat> seats = seatRepository.findByReservationId(reservation.getId());
         for (Seat seat : seats) {

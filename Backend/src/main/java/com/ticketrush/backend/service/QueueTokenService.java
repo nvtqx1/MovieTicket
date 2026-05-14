@@ -25,6 +25,9 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Dịch vụ sinh và kiểm tra token truy cập hàng chờ.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,12 +46,25 @@ public class QueueTokenService {
 
     private static final String QUEUE_REDIS_PREFIX = "queue_token:";
 
+    /**
+     * Tạo khóa ký JWT từ secret cấu hình.
+     *
+     * @return khóa HMAC dùng để ký và xác thực JWT.
+     */
     private Key key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
     /**
      * Sinh token cấp phép cho User vào mua vé
+     */
+    /**
+     * Sinh JWT ngắn hạn cho người dùng được vào mua vé và lưu token vào MySQL, Redis.
+     *
+     * @param userId ID người dùng được cấp token.
+     * @param showtimeId ID suất chiếu tương ứng với token.
+     * @return JWT dùng để truy cập bước đặt vé.
+     * @throws IllegalArgumentException nếu user hoặc suất chiếu không tồn tại.
      */
     public String generateAndSaveQueueToken(Long userId, Long showtimeId) {
         User user = userRepository.findById(userId)
@@ -93,6 +109,14 @@ public class QueueTokenService {
 
     /**
      * Xác thực Token khi User gọi API /seats/lock
+     */
+    /**
+     * Kiểm tra chữ ký, hạn dùng, nội dung JWT và bản ghi token trong Redis.
+     *
+     * @param token JWT cần kiểm tra.
+     * @param userId ID người dùng đang gọi API.
+     * @param showtimeId ID suất chiếu đang thao tác.
+     * @return {@code true} nếu token hợp lệ và còn hiệu lực, ngược lại {@code false}.
      */
     public boolean validateQueueToken(String token, Long userId, Long showtimeId) {
         try {

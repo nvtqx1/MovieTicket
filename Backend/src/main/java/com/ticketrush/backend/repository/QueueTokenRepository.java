@@ -6,10 +6,24 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/**
+ * Repository thao tác token hàng chờ ảo.
+ */
 @Repository
 public interface QueueTokenRepository extends JpaRepository<QueueToken, Long> {
+
+    /**
+     * Tìm token hàng chờ theo chuỗi token.
+     *
+     * @param token chuỗi token cần tìm.
+     * @return token hàng chờ nếu tồn tại.
+     */
     Optional<QueueToken> findByToken(String token);
 
-    // Câu lệnh này dùng để viết 1 con Bot chạy ngầm: Tự động xóa các Token đã hết hạn
+    /**
+     * Xóa các token đã hết hạn trước thời điểm chỉ định.
+     *
+     * @param now thời điểm dùng làm mốc hết hạn.
+     */
     void deleteByExpiresAtBefore(LocalDateTime now);
 }

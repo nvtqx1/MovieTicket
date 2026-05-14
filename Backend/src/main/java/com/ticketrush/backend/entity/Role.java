@@ -3,6 +3,9 @@ package com.ticketrush.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entity lưu vai trò phân quyền của người dùng.
+ */
 @Entity
 @Table(name = "roles")
 @Getter

@@ -17,6 +17,12 @@ import org.springframework.kafka.annotation.EnableKafka;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Cấu hình Kafka cho producer, consumer và topic xử lý yêu cầu đặt vé.
+ *
+ * Annotation {@link EnableKafka} kích hoạt cơ chế lắng nghe Kafka qua
+ * {@code @KafkaListener}; {@link Configuration} đăng ký các bean cấu hình.
+ */
 @EnableKafka
 @Configuration
 public class KafkaConfig {
@@ -32,8 +38,11 @@ public class KafkaConfig {
     // ==========================================
 
     /**
-     * Tự động tạo topic "ticket_requests" khi app khởi động (nếu chưa tồn tại).
-     * partitions=1 đảm bảo thứ tự FIFO (ai vào trước được xử lý trước).
+     * Tạo topic {@code ticket_requests} nếu chưa tồn tại.
+     *
+     * Topic dùng một partition để giữ thứ tự xử lý FIFO cho các yêu cầu đặt vé.
+     *
+     * @return topic Kafka cho hàng đợi yêu cầu đặt vé.
      */
     @Bean
     public NewTopic ticketRequestsTopic() {
@@ -47,6 +56,11 @@ public class KafkaConfig {
     // PRODUCER
     // ==========================================
 
+    /**
+     * Tạo factory cấu hình producer Kafka dùng key và value kiểu chuỗi.
+     *
+     * @return factory dùng để tạo Kafka producer.
+     */
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -56,6 +70,11 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
+    /**
+     * Tạo {@link KafkaTemplate} để gửi thông điệp chuỗi lên Kafka.
+     *
+     * @return template gửi thông điệp Kafka.
+     */
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
@@ -65,6 +84,14 @@ public class KafkaConfig {
     // CONSUMER
     // ==========================================
 
+    /**
+     * Tạo factory cấu hình consumer Kafka dùng key và value kiểu chuỗi.
+     *
+     * Consumer đọc từ offset sớm nhất khi chưa có offset và giới hạn mỗi lần poll
+     * tối đa 50 record để kiểm soát tốc độ xử lý.
+     *
+     * @return factory dùng để tạo Kafka consumer.
+     */
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -73,17 +100,25 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        // Giới hạn mỗi lần poll chỉ lấy 50 record → kiểm soát tốc độ xử lý
+        // Giới hạn mỗi lần poll chỉ lấy 50 record để kiểm soát tốc độ xử lý.
         configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
 
+    /**
+     * Tạo factory cho các listener Kafka.
+     *
+     * Concurrency bằng 1 để chỉ chạy một consumer thread, giúp giữ thứ tự xử lý
+     * của topic một partition.
+     *
+     * @return factory container cho {@code @KafkaListener}.
+     */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        // concurrency=1: chỉ 1 consumer thread → đảm bảo thứ tự + giới hạn tốc độ
+        // Chỉ 1 consumer thread để đảm bảo thứ tự và giới hạn tốc độ xử lý.
         factory.setConcurrency(1);
         return factory;
     }
