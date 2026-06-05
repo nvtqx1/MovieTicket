@@ -60,7 +60,7 @@
 | Thông Tin | Chi Tiết |
 |-----------|----------|
 | **Đề tài** | Xây dựng hệ thống đặt vé xem phim trực tuyến |
-| **Loại** | Khóa luận tốt nghiệp |
+| **Loại** | Dự án kết thúc học phần |
 | **Ngôn ngữ** | Java, JavaScript |
 | **Mô hình** | Full-stack Web Application |
 | **Trạng thái** | ✅ Hoàn thành |
@@ -115,33 +115,33 @@
 │  │   (React + Vite) │          │    (React + Vite)        │     │
 │  │   Port: 5173     │          │    Port: 5174            │     │
 │  └────────┬─────────┘          └─────────┬────────────────┘     │
-│           │           REST API / WebSocket│                      │
+│           │           REST API / WebSocket│                     │
 └───────────┼──────────────────────────────┼──────────────────────┘
             │                              │
 ┌───────────┴──────────────────────────────┴──────────────────────┐
-│                      SERVER LAYER                                │
+│                      SERVER LAYER                               │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │              Spring Boot Application                      │   │
-│  │              (Port: 8080)                                 │   │
+│  │              Spring Boot Application                     │   │
+│  │              (Port: 8080)                                │   │
 │  │  ┌────────────┐ ┌──────────┐ ┌─────────────────────┐     │   │
-│  │  │ Controllers│ │ Services │ │    Repositories      │     │   │
-│  │  │  (22 APIs) │→│(24 logic)│→│   (18 JPA repos)     │     │   │
+│  │  │ Controllers│ │ Services │ │   Repositories      │     │   │
+│  │  │  (22 APIs) │→│(24 logic)│→│  (18 JPA repos)     │     │   │
 │  │  └────────────┘ └──────────┘ └─────────────────────┘     │   │
 │  │  ┌────────────┐ ┌──────────┐ ┌─────────────────────┐     │   │
-│  │  │  Security  │ │WebSocket │ │   Kafka Workers      │     │   │
-│  │  │  (JWT)     │ │ (STOMP)  │ │   (Queue Processing) │     │   │
+│  │  │  Security  │ │WebSocket │ │  Kafka Workers      │     │   │
+│  │  │  (JWT)     │ │ (STOMP)  │ │  (Queue Processing) │     │   │
 │  │  └────────────┘ └──────────┘ └─────────────────────┘     │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────┬───────────────────────────────────────┘
                           │
 ┌─────────────────────────┴───────────────────────────────────────┐
-│                    DATA & MESSAGING LAYER                         │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐   ┌───────────┐  │
-│  │  MySQL   │    │  Redis   │    │  Kafka   │   │ Zookeeper │  │
-│  │  8.0.45  │    │  7.2     │    │  7.7.0   │   │           │  │
-│  │  :3306   │    │  :6379   │    │  :9092   │   │  :2181    │  │
-│  └──────────┘    └──────────┘    └──────────┘   └───────────┘  │
-│                    Docker Compose                                 │
+│                    DATA & MESSAGING LAYER                       │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐   ┌───────────┐   │
+│  │  MySQL   │    │  Redis   │    │  Kafka   │   │ Zookeeper │   │
+│  │  8.0.45  │    │  7.2     │    │  7.7.0   │   │           │   │
+│  │  :3306   │    │  :6379   │    │  :9092   │   │  :2181    │   │
+│  └──────────┘    └──────────┘    └──────────┘   └───────────┘   │
+│                    Docker Compose                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -480,7 +480,7 @@ MovieTicket/
 ### Bước 1: Clone Repository
 
 ```bash
-git clone https://github.com/<your-username>/MovieTicket.git
+git clone https://github.com/nvtqx1/MovieTicket.git
 cd MovieTicket
 ```
 
@@ -612,28 +612,6 @@ cd Frontend && npm install && npm run dev
 
 > ⚠️ **Lưu ý**: Tài khoản mặc định được tạo bởi Data Seeder khi khởi động lần đầu.
 
----
-
-## 📸 Screenshots
-
-> 📌 *Thêm screenshots của ứng dụng vào thư mục `docs/screenshots/` và cập nhật phần này.*
-
-<!--
-### Trang Chủ
-![Home Page](docs/screenshots/home.png)
-
-### Danh Sách Phim
-![Movies Page](docs/screenshots/movies.png)
-
-### Chọn Ghế (Real-time)
-![Seat Selection](docs/screenshots/seat-selection.png)
-
-### Admin Dashboard
-![Admin Dashboard](docs/screenshots/admin-dashboard.png)
-
-### Thanh Toán
-![Checkout](docs/screenshots/checkout.png)
--->
 
 ---
 
@@ -698,43 +676,3 @@ Seat Status Change → SeatRealtimeService → STOMP Broadcast → All Connected
 > Mỗi khi trạng thái ghế thay đổi (AVAILABLE → LOCKED → BOOKED), tất cả người dùng đang xem cùng suất chiếu sẽ nhận được **cập nhật tức thì** mà không cần refresh trang.
 
 ---
-
-## 🤝 Đóng Góp
-
-Dự án này được phát triển như đề tài khóa luận tốt nghiệp. Mọi đóng góp và góp ý đều được hoan nghênh!
-
-1. **Fork** repository
-2. Tạo **feature branch** (`git checkout -b feature/AmazingFeature`)
-3. **Commit** thay đổi (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** lên branch (`git push origin feature/AmazingFeature`)
-5. Mở **Pull Request**
-
----
-
-## 📄 Giấy Phép
-
-Dự án này được phân phối theo giấy phép **MIT License**. Xem file [LICENSE](LICENSE) để biết thêm chi tiết.
-
----
-
-## 📞 Thông Tin Liên Hệ
-
-| Thông Tin | Chi Tiết |
-|-----------|----------|
-| **Tác giả** | *[Họ và tên sinh viên]* |
-| **MSSV** | *[Mã số sinh viên]* |
-| **Email** | *[Email sinh viên]* |
-| **Trường** | *[Tên trường đại học]* |
-| **Khoa** | *[Tên khoa]* |
-| **GVHD** | *[Tên giảng viên hướng dẫn]* |
-| **Năm** | 2026 |
-
----
-
-<p align="center">
-  <b>⭐ Nếu dự án này hữu ích, hãy cho một star trên GitHub! ⭐</b>
-</p>
-
-<p align="center">
-  Made with ❤️ for Graduation Thesis
-</p>
